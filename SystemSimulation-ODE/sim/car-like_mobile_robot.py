@@ -6,7 +6,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-
 def ode(x, t, prmtrs):
     """Function of the robots kinematics
 
@@ -89,6 +88,86 @@ def plot_data(fig_width, fig_height, save=False):
         plt.savefig('state_trajectory.pgf')  # for easy export to LaTex
     return None
 
+
+def car_animation(prmtrs):
+    """Animation function
+
+    Args:
+        car_length: car length in m
+
+    Returns: None
+
+    """
+    dx = 1.5 * prmtrs.l
+    dy = 1.5 * prmtrs.l
+    fig2, ax = plt.subplots()
+    ax.set_xlim([min(min(x_traj[:, 0] - dx), -dx), max(max(x_traj[:, 0] + dx), dx)])
+    ax.set_ylim([min(min(x_traj[:, 1] - dy), -dy), max(max(x_traj[:, 1] + dy), dy)])
+    ax.set_aspect('equal')
+    ax.set_xlabel(r'$y_1$')
+    ax.set_ylabel(r'$y_2$')
+
+    x_ref_plot, = ax.plot([], [], 'r') # reference trajectory in the y1-y2-plane
+    x_traj_plot, = ax.plot([], [], 'b') # state trajectory in the y1-y2-plane
+    car, = ax.plot([], [], 'k', lw=2) # car
+
+    def car_plot(x, u):
+        """Mapping from state x and action u to the position of the car elements
+
+        Args:
+            x: state vector
+            u: action vector
+
+        Returns:
+            car:
+
+        """
+
+        # empty value (to disconnect points, define where no line should be plotted)
+        empty = [np.nan, np.nan]
+
+        # concatenate set of coordinates
+        data_y1 = [rear_ax_y1, empty, front_ax_y1, empty ,chassis_y1,
+                   empty, rear_l_wl_y1, empty, rear_r_wl_y1,
+                   empty, front_l_wl_y1, empty, front_r_wl_y1]
+        data_y2 = [rear_ax_y2, empty, front_ax_y2, empty, chassis_y2,
+                   empty, rear_l_wl_y2, empty, rear_r_wl_y2,
+                   empty, front_l_wl_y2, empty, front_r_wl_y2]
+
+        # set data
+        car.set_data(data_y1, data_y2)
+        return car,
+
+    def init():  # only required for blitting to give a clean slate.
+        x_ref_plot.set_data([], [])
+        x_traj_plot.set_data([], [])
+        car.set_data([], [])
+        return x_ref_plot,
+
+    def animate(i):
+        """
+
+        Args:
+            i:
+
+        Returns:
+
+        """
+        k = i % len(tt)
+        ax.set_title('Time (s): ' + str(tt[k]), loc='left')
+        x_ref_plot.set_data([], [])
+        x_traj_plot.set_xdata(x_traj[0:k, 0])
+        x_traj_plot.set_ydata(x_traj[0:k, 1])
+        car_plot(x_traj[k, :], control(x_traj[k, :], tt[k]))
+        return x_ref_plot,
+
+    ani = animation.FuncAnimation(fig2, animate, init_func=init, frames=len(tt)+1,
+                                  interval = dt * 1000, blit=True)
+
+    ani.save('animation.mp4', writer='ffmpeg', fps = 1/dt)
+    plt.show()
+    return None
+
 class Parameters(object):
     pass
 
@@ -113,6 +192,9 @@ x0 = [0, 0, 0]
 x_traj = odeint(ode, x0, tt, args=(prmtrs, ))
 
 # plot
-plot_data(12, 8)
+plot_data(12, 8, True)
+
+#animation
+car_animation(prmtrs)
 
 plt.show()

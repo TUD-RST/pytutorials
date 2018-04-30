@@ -1,0 +1,380 @@
+\documentclass{article}
+\synctex=1
+\usepackage[utf8]{inputenc}
+%\usepackage{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{xcolor}
+\usepackage[a4paper]{geometry}
+\usepackage{csquotes}
+\usepackage{listings}
+\definecolor{light-gray}{gray}{0.95}
+\definecolor{dark-blue}{rgb}{0, 0, 0.5}
+\definecolor{dark-red}{rgb}{0.5, 0, 0}
+\definecolor{dark-green}{rgb}{0, 0.5, 0}
+\lstset{language=Python, backgroundcolor = \color{light-gray}}
+\lstset{
+language=Python, 
+backgroundcolor = \color{light-gray},
+basicstyle=\small\sffamily,
+stringstyle=\color{orange},
+breaklines=true,
+keywordstyle=\bfseries\color{dark-blue}\textit, % Schlüsselwörter fett und schwarz drucken
+commentstyle=\color{dark-green}, % Kommentare blau drucken
+%stringstyle=\ttfamily, % Strings im Code Schreibmaschinenähnlich - setzt sich etwas vom Code ab
+showstringspaces=false} % Strings im Code ohne Kenntlichmachung von Leerzeichen - finde ich angebracht und empfehlenswert
+\newtheorem{defi}{Definition}[section]
+
+% Kommentare beginnen mit dem Zeichen "%"
+
+% Einstellung die verhindert, dass unschöne Rahmen um Links gezogen werden
+\hypersetup{
+    colorlinks = true, % false bedeutet Rahmen (nicht schön)
+    linkcolor={red!20!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black},
+}
+
+
+% Abkürzungen einführen (alphabetische Sortierung empfehlenswert):
+
+\newcommand{\ad}{\mathrm{ad}}
+% renew weil \d schon belegt ist
+\renewcommand{\d}{\mathrm{d}} % aufrechtes d (für Differentialformen)
+\newcommand{\NV}{{\cal N}\,}
+\newcommand{\rang}{\mathrm{rang}}
+\newcommand{\im}{\mathrm{im}}
+\newcommand{\spann}{\mathrm{span}}
+\newcommand{\R}{\mathbb{R}} % doppeltes R
+\newcommand{\py}{\emph{Python}\,}
+\newcommand{\scipy}{\emph{SciPy}\,}
+\newcommand{\mpl}{\emph{Matplotlib}\,}
+\title{Control Theory Tutorial - Car-Like Mobile Robot}
+%\institution{Institute of Control Theory - Technical University Dresden, Germany}
+\date{}
+\author{}
+% Hier beginnt das eigentliche Dokument
+\begin{document}
+\maketitle
+\section{Introduction}
+The goal of this tutorial is to teach the usage of the programming language \py as a tool for developing and simulating control systems.
+\section{Model of a car-like mobile robot}
+\begin{figure}[ht]
+	\centering
+	\def\svgwidth{0.7\textwidth}
+	\input{img/car-like_mobile_robot.pdf_tex}
+	\caption{Car-like mobile robot}
+	\label{fig:car}
+\end{figure}
+Given is a nonlinear kinematic model of a car-like mobile robot, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the robots lateral velocity $v=\left| \vec{v} \right| $. 
+\begin{subequations}\label{eq:syseq}
+\begin{align}
+\dot{y_1}&=v \cos (\theta) \\
+\dot{y_2}&=v \sin (\theta) \\
+\tan(\phi) &= \frac{l\dot{\theta}}{v}
+\end{align}
+\end{subequations}
+To simulate this system of 1st order ordinary differential equations (ODEs), we define a state vector $\mathbf{x}=(x_1,x_2,x_3)^\mathrm{T}$ and a control vector $\mathbf{u}=(u_1,u_2)^\mathrm{T}$:
+\begin{align*}
+x_1 &= y_1 & u_1 = v\\
+x_2 &= y_2 & u_2 = \phi \\
+x_3 &= \theta 
+\end{align*}
+Now we can express \eqref{eq:syseq} in a general form $\dot{\mathbf{x}}=f(\mathbf{x},\mathbf{u})$:
+\label{eq:ss_system}
+\begin{align}
+\underbrace{\begin{pmatrix} \dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 \end{pmatrix}}_{\dot{\mathbf{x}}} = \underbrace{\begin{pmatrix}  u_1 \cos(x_3) \\ u_1 \sin(x_3) \\ \frac{1}{l}u_1 \tan(u_2) \end{pmatrix}}_{f(\mathbf{x},\mathbf{u})}
+\end{align}
+\section{Storing parameters}
+We store the parameters of our system in a class \emph{Parameters()}.
+\begin{lstlisting}
+class Parameters(object):
+    pass
+\end{lstlisting}
+We therefore create an entity of \emph{Parameters()} and assign attributes.
+\begin{lstlisting}
+prmtrs = Parameters() # entity of class Parameters
+prmtrs.l = 0.3 # define car length
+prmtrs.w = prmtrs.l*0.3 # define car width
+\end{lstlisting}
+\section{Simulation with SciPy's integrate package}
+\label{sec:simulation}
+To simulate \eqref{eq:ss_system} we need to implement the ODE system as a function in \py.
+\begin{lstlisting}
+def ode(x, t, prmtrs):
+    """Function of the robots kinematics
+
+    Args:
+        x: state
+        t: time
+        prmtrs(object): parameter container class
+
+    Returns:
+        dxdt: state derivative
+    """
+    x1, x2, x3 = x # state vector
+    u1, u2 = control(x, t) # control vector
+    # dxdt = f(x, u)
+    dxdt = np.array([u1 * cos(x3),
+                     u1 * sin(x3),
+                     1 / prmtrs.l * u1 * tan(u2)])
+
+    # return state derivative
+    return dxdt
+\end{lstlisting}
+In order to use $\cos(\cdot), \sin(\cdot)$ and $\tan(\cdot)$ we need to import these functions at the beginning of our code from the \emph{numpy} library.
+\begin{lstlisting}
+import numpy as np 
+from numpy import cos, sin, tan
+\end{lstlisting}
+The control law is also implemented as function.
+\begin{lstlisting}
+def control(x, t):
+    """Function of the control law
+
+    Args:
+        x: state vector
+        t: time
+
+    Returns:
+        u: control vector
+
+    """
+    u = [1, 0.25] # v, phi
+    
+    return u
+\end{lstlisting}
+As a first simple heuristic, we set $(u_1, u_2)$ equal to constant values. Later we can implement an arbitrary function, for expample a feedback law $\mathbf{u}=k(\mathbf{x})$.
+
+\subsection{Solution of the initial value problem (IVP) using \scipy}
+To simulate \eqref{eq:ss_system} we need to solve an IVP. In \py we can use the library \scipy and its sub-package \emph{integrate}, which delivers different solvers for IVPs.
+\begin{lstlisting}
+from scipy.integrate import odeint
+\end{lstlisting}
+We then define the simulation time and the initial state value.
+\begin{lstlisting}
+t0 = 0 # start 
+tend = 10 # end
+dt = 0.01 # stepsize (not of the solver, just evaluation points)
+tt = np.arange(t0, tend, dt) # simulation interval
+
+x0 = [0, 0, 0] # initial state value
+\end{lstlisting}
+Now we can parse these parameters and our ODE function to the solver.
+\begin{lstlisting}
+x_traj = odeint(ode, x0, tt, args=(prmtrs, )) # solution of the IVP
+\end{lstlisting}
+The output is an array of size length(tt)$\times$lenght($\mathbf{x}$).
+\section{Plotting using \mpl}
+\label{sec:plot}
+For plotting the output of our simulation, we use the library \mpl and its sub-package \emph{pyplot}, which delivers a user experience similar to \emph{MATLAB}.
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+\end{lstlisting}
+We encase our plotting instructions in a function. This way, we can define parameters of our plot, which we would like to change easily, for example figure width, or if the figure should be saved on the hard drive.
+\begin{lstlisting}
+def plot_data(fig_width, fig_height, save=False):
+    """Plotting function of simulated state and actions
+
+    Args:
+        fig_width: figure width in cm
+        fig_height: figure height in cm
+        save (bool) : save figure (default: False)
+
+    Returns: None
+
+    """
+    # creating a figure with 2 subplots, that share the x-axis
+    fig1, (ax1, ax2) = plt.subplots(2, sharex=True)
+
+    # set figure size to desired values
+    fig1.set_size_inches(fig_width / 2.54, fig_height / 2.54)
+
+    # plot y_1 in subplot 1
+    ax1.plot(tt, x_traj[:, 0], label='$y_1(t)$', lw=1, color='r')
+
+    # plot y_2 in subplot 1
+    ax1.plot(tt, x_traj[:, 1], label='$y_2(t)$', lw=1, color='b')
+
+    # plot theta in subplot 2
+    ax2.plot(tt, x_traj[:, 2], label=r'$\theta(t)$', lw=1, color='g')
+
+    ax1.grid(True)
+    ax2.grid(True)
+    # set the labels on the x and y axis in subplot 1
+    ax1.set_ylabel(r'm')
+    ax1.set_xlabel(r't in s')
+    ax2.set_ylabel(r'rad')
+    ax2.set_xlabel(r't in s')
+
+    # put a legend in the plot
+    ax1.legend()
+    ax2.legend()
+
+    #automatically adjusts subplot to fit in figure window
+    plt.tight_layout()
+
+    # save the figure in the working directory
+    if save:
+        plt.savefig('state_trajectory.pdf')  # save output as pdf
+        plt.savefig('state_trajectory.pgf')  # for easy export to LaTex
+    return None
+\end{lstlisting}
+Finally, we have to execute
+\begin{lstlisting}
+plt.show()
+\end{lstlisting}
+to display the results. If your not satisfied with the result, you can change other properties of the plot, like linewidth or -color and many others easily. Just look up the documentation of \mpl : \url{https://matplotlib.org/index.html}
+\begin{figure}[h]
+\label{fig:state_traj}
+   \centering      
+   \input{img/state_trajectory.pgf}      
+ \caption{State trajectory plot created with \mpl}
+ \label{fig:Test}
+\end{figure} 
+
+
+\newpage
+\section{Animation using \mpl}
+\label{sec:animation}
+Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visiual represantation of the system to get a better understanding of what is actually happening. This applies especially for mechanical systems.
+\mpl provides the sub-package \emph{animation}, which can be used for such a purpose. We therefore need to add 
+\begin{lstlisting}
+from matplotlib import animation
+\end{lstlisting}
+to the top of our code. Then we create a figure with some plot objects
+\begin{lstlisting}
+dx = 1.5*prmtrs.l
+dy = 1.5*prmtrs.l
+fig2, ax = plt.subplots()
+    
+# set axes limit, 
+ax.set_xlim([min(min(x_traj[:, 0] - dx), -dx), 
+         max(max(x_traj[:, 0] + dx), dx)])
+ax.set_ylim([min(min(x_traj[:, 1] - dy), -dy), 
+         max(max(x_traj[:, 1] + dy), dy)])
+ax.set_aspect('equal')
+ax.set_xlabel(r'$y_1$')
+ax.set_ylabel(r'$y_2$')
+
+# reference trajectory in the y1-y2-plane
+x_ref_plot, = ax.plot([], [], 'r') 
+
+# state trajectory in the y1-y2-plane
+x_traj_plot, = ax.plot([], [], 'b') 
+car, = ax.plot([], [], 'k', lw=2) # car
+\end{lstlisting}
+Now we want to display a representation of our car in the figure. We do this by plotting lines. All lines that represent the car are defined by points, which depend on the current state $\mathbf{x}$ and control signal $\mathbf{u}$. This means we need to define a function that maps from $\mathbf{x}$ and $\mathbf{u}$ to a set of points in the $y_1-y_2$-plane using simple geometry and passes these to the plot instance \emph{car}.
+\begin{lstlisting}
+def car_plot(x, u):
+    """Mapping from state x and action u to the position of the car elements
+
+    Args:
+        x: state vector
+        u: action vector
+
+    Returns:
+        car:
+
+    """
+    wl_length = 0.1 * prmtrs.l # wheel length
+    y1, y2, theta = x
+    v, phi = u
+
+    # define chassis lines
+    chassis_y1 = [y1, y1 + prmtrs.l * cos(theta)]
+    chassis_y2 = [y2, y2 + prmtrs.l * sin(theta)]
+
+    # define lines for the front and rear axle
+    rear_ax_y1 = [y1 + prmtrs.w * sin(theta), y1 - prmtrs.w * sin(theta)]
+    rear_ax_y2 = [y2 - prmtrs.w * cos(theta), y2 + prmtrs.w * cos(theta)]
+    front_ax_y1 = [chassis_y1[1] + prmtrs.w * sin(theta + phi),
+                   chassis_y1[1] - prmtrs.w * sin(theta + phi)]
+    front_ax_y2 = [chassis_y2[1] - prmtrs.w * cos(theta + phi),
+                   chassis_y2[1] + prmtrs.w * cos(theta + phi)]
+
+    # define wheel lines
+    rear_l_wl_y1 = [rear_ax_y1[1] + wl_length * cos(theta),
+                    rear_ax_y1[1] - wl_length * cos(theta)]
+    rear_l_wl_y2 = [rear_ax_y2[1] + wl_length * sin(theta),
+                    rear_ax_y2[1] - wl_length * sin(theta)]
+    rear_r_wl_y1 = [rear_ax_y1[0] + wl_length * cos(theta),
+                    rear_ax_y1[0] - wl_length * cos(theta)]
+    rear_r_wl_y2 = [rear_ax_y2[0] + wl_length * sin(theta),
+                    rear_ax_y2[0] - wl_length * sin(theta)]
+    front_l_wl_y1 = [front_ax_y1[1] + wl_length * cos(theta + phi),
+                     front_ax_y1[1] - wl_length * cos(theta + phi)]
+    front_l_wl_y2 = [front_ax_y2[1] + wl_length * sin(theta + phi),
+                     front_ax_y2[1] - wl_length * sin(theta + phi)]
+    front_r_wl_y1 = [front_ax_y1[0] + wl_length * cos(theta + phi),
+                     front_ax_y1[0] - wl_length * cos(theta + phi)]
+    front_r_wl_y2 = [front_ax_y2[0] + wl_length * sin(theta + phi),
+                     front_ax_y2[0] - wl_length * sin(theta + phi)]
+                     
+    # empty value (to disconnect points)
+    empty = [np.nan, np.nan]
+   
+    # concatenate set of coordinates
+    data_y1 = [rear_ax_y1, empty, front_ax_y1, empty ,chassis_y1,
+               empty, rear_l_wl_y1, empty, rear_r_wl_y1,
+               empty, front_l_wl_y1, empty, front_r_wl_y1]
+    data_y2 = [rear_ax_y2, empty, front_ax_y2, empty, chassis_y2,
+               empty, rear_l_wl_y2, empty, rear_r_wl_y2,
+               empty, front_l_wl_y2, empty, front_r_wl_y2]
+
+    # set data
+    car.set_data(data_y1, data_y2)
+    return car,
+\end{lstlisting}
+For the animation to work we need to define another two functions, \emph{init()} and \emph{animate(i)}. The \emph{init()}-function defines which objects change during the animation.
+\begin{lstlisting}
+def init():  # only required for blitting to give a clean slate.
+    x_ref_plot.set_data([], [])
+    x_traj_plot.set_data([], [])
+    car.set_data([], [])
+    return x_ref_plot,
+\end{lstlisting}
+The \emph{animate(i)}-function assigns data to the changing objects, in our case the car and trajectory plots and the simulation time.
+\begin{lstlisting}
+def animate(i):
+    """
+
+    Args:
+        i:
+
+    Returns:
+
+    """
+    k = i % len(tt)
+    ax.set_title('Time (s): ' + str(tt[k]), loc='left')
+    x_ref_plot.set_data([], [])
+    x_traj_plot.set_xdata(x_traj[0:k, 0])
+    x_traj_plot.set_ydata(x_traj[0:k, 1])
+    car_plot(x_traj[k, :], control(x_traj[k, :], tt[k]))
+    return x_ref_plot,
+\end{lstlisting}
+Finally we have to pass these functions and the figure we created to \emph{animation.FuncAnimation()}.
+\begin{lstlisting}
+# animate
+ani = animation.FuncAnimation(fig2, animate, init_func=init, 
+                              frames=len(tt)+1,
+                              interval = dt * 1000, blit=True)
+                              
+# save animation to mp4-file
+ani.save('animation.mp4', writer='ffmpeg', fps = 1/dt)
+
+# show animation
+plt.show()
+\end{lstlisting}
+Now we have all things set up to simulate our system and animate it. In the next tutorial you'll learn how to design a tracking controller for this system.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.7\textwidth]{img/animation}
+	\caption{Car animation}
+	\label{fig:animation}
+\end{figure}
+\end{document}
