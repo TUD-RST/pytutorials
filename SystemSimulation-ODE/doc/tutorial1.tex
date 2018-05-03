@@ -1,21 +1,23 @@
-\documentclass{article}
-\synctex=1
-\usepackage[utf8]{inputenc}
-%\usepackage{babel}
+\documentclass[a4paper,11pt,headings=standardclasses]{scrartcl}% see <http://www.komascript.de>
+% ----------------------------------------------------------------------------
+% font, style, etc.
+\usepackage[utf8]{inputenc} % defines
+\usepackage{csquotes}
+
+
+% mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{hyperref}
+
+% figures, tables, etc.
+\usepackage{hyperref} %
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{pgf}
 \usepackage{xcolor}
-\usepackage[a4paper]{geometry}
-\usepackage{csquotes}
+
+% code
 \usepackage{listings}
-\definecolor{light-gray}{gray}{0.95}
-\definecolor{dark-blue}{rgb}{0, 0, 0.5}
-\definecolor{dark-red}{rgb}{0.5, 0, 0}
-\definecolor{dark-green}{rgb}{0, 0.5, 0}
 \lstset{language=Python, backgroundcolor = \color{light-gray}}
 \lstset{
 language=Python, 
@@ -23,43 +25,54 @@ backgroundcolor = \color{light-gray},
 basicstyle=\small\sffamily,
 stringstyle=\color{orange},
 breaklines=true,
-keywordstyle=\bfseries\color{dark-blue}\textit, % Schlüsselwörter fett und schwarz drucken
-commentstyle=\color{dark-green}, % Kommentare blau drucken
-%stringstyle=\ttfamily, % Strings im Code Schreibmaschinenähnlich - setzt sich etwas vom Code ab
-showstringspaces=false} % Strings im Code ohne Kenntlichmachung von Leerzeichen - finde ich angebracht und empfehlenswert
+keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
+commentstyle=\color{dark-green}, % print comments dark-green
+showstringspaces=false} % spacing between strings not showed
+
+% theorems
 \newtheorem{defi}{Definition}[section]
 
-% Kommentare beginnen mit dem Zeichen "%"
-
-% Einstellung die verhindert, dass unschöne Rahmen um Links gezogen werden
+% setup the appearance of links
 \hypersetup{
-    colorlinks = true, % false bedeutet Rahmen (nicht schön)
+    colorlinks = true, % false -> red box arround links (not very nice)
     linkcolor={red!20!black},
     citecolor={blue!50!black},
     urlcolor={blue!80!black},
 }
 
 
-% Abkürzungen einführen (alphabetische Sortierung empfehlenswert):
-
+% define shortcuts
 \newcommand{\ad}{\mathrm{ad}}
-% renew weil \d schon belegt ist
-\renewcommand{\d}{\mathrm{d}} % aufrechtes d (für Differentialformen)
+\renewcommand{\d}{\mathrm{d}} % d vor differential forms
 \newcommand{\NV}{{\cal N}\,}
 \newcommand{\rang}{\mathrm{rang}}
 \newcommand{\im}{\mathrm{im}}
 \newcommand{\spann}{\mathrm{span}}
-\newcommand{\R}{\mathbb{R}} % doppeltes R
+\newcommand{\R}{\mathbb{R}} %  set of real numbers
 \newcommand{\py}{\emph{Python}\,}
 \newcommand{\scipy}{\emph{SciPy}\,}
 \newcommand{\mpl}{\emph{Matplotlib}\,}
-\title{Control Theory Tutorial - Car-Like Mobile Robot}
-%\institution{Institute of Control Theory - Technical University Dresden, Germany}
-\date{}
+
+% color definitions
+\definecolor{light-gray}{gray}{0.95}
+\definecolor{dark-blue}{rgb}{0, 0, 0.5}
+\definecolor{dark-red}{rgb}{0.5, 0, 0}
+\definecolor{dark-green}{rgb}{0, 0.5, 0}
+
+% ----------------------------------------------------------------------------
+%\titlehead{Prof. Dr.-Ing. habli. Dipl.-Math. Klaus Röbenack \\ Institute of Control Theory \\ Faculty of Electrical and Computer Engineering \\TU Dresden, Germany}% optional
+\subject{Control Theory Tutorial}% optional
+\title{Car-Like Mobile Robot}
+\subtitle{Plotting and animation in \py}% optional
 \author{}
-% Hier beginnt das eigentliche Dokument
+\date{}
+%\publishers{}% optional
+% ----------------------------------------------------------------------------
+% begin of the actual document
 \begin{document}
-\maketitle
+\maketitle% create title
+\tableofcontents
+\newpage
 \section{Introduction}
 The goal of this tutorial is to teach the usage of the programming language \py as a tool for developing and simulating control systems.
 \section{Model of a car-like mobile robot}
@@ -377,4 +390,10 @@ Now we have all things set up to simulate our system and animate it. In the next
 	\caption{Car animation}
 	\label{fig:animation}
 \end{figure}
+\section{(Differential) flatness based tracking control}
+\subsection{Transformation to BINF, determine control laws}
+\subsection{Creating the reference trajectory (path planner)}
+\subsection{Implementation of the controller}
+\subsection{Plotresults}
+
 \end{document}
