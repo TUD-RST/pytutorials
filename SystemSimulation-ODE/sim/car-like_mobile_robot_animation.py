@@ -100,7 +100,7 @@ def car_animation(x, u, t, prmtrs):
         x(ndarray): state-vector trajectory
         u(ndarray): control vector trajectory
         t(ndarray): time vector
-        prmtrs(object): paramers
+        prmtrs(object): parameters
 
     Returns: None
 

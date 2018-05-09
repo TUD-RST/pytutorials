@@ -17,13 +17,13 @@
 
 % code
 \usepackage{listings}
-\lstset{language=Python, backgroundcolor = \color{light-gray}}
 \lstset{
 language=Python, 
 backgroundcolor = \color{light-gray},
 basicstyle=\scriptsize\sffamily,
 stringstyle=\color{orange},
 breaklines=true,
+numberstyle=\tiny\color{gray},
 keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
 commentstyle=\color{dark-green}, % print comments dark-green
 showstringspaces=false} % spacing between strings not showed
@@ -59,7 +59,7 @@ showstringspaces=false} % spacing between strings not showed
 \definecolor{dark-blue}{rgb}{0, 0, 0.5}
 \definecolor{dark-red}{rgb}{0.5, 0, 0}
 \definecolor{dark-green}{rgb}{0, 0.5, 0}
-
+\definecolor{gray}{rgb}{0.5, 0.5, 0.5}
 
 % ----------------------------------------------------------------------------
 %\titlehead{Prof. Dr.-Ing. habli. Dipl.-Math. Klaus Röbenack \\ Institute of Control Theory \\ Faculty of Electrical and Computer Engineering \\TU Dresden, Germany}% optional
@@ -125,7 +125,7 @@ In order to use $\cos(\cdot), \sin(\cdot)$ and $\tan(\cdot)$ we need to import t
 import numpy as np 
 from numpy import cos, sin, tan
 \end{lstlisting}
-To simulate \eqref{eq:ss_system} we need to solve an initial IVP. In \py we can use the library \scipy and its sub-package \emph{integrate}, which delivers different solvers for IVPs.
+To simulate \eqref{eq:ss_system} we need to solve an initial value problem (IVP). In \py we can use the library \scipy and its sub-package \emph{integrate}, which delivers different solvers for IVPs.
 \begin{lstlisting}
 from scipy.integrate import odeint
 \end{lstlisting}
@@ -139,7 +139,7 @@ import matplotlib.pyplot as plt
 To simulate \eqref{eq:ss_system} we need to implement the ODE system as a function in \py.
 \lstinputlisting[numbers=left,firstnumber=7,firstline=7,lastline=26]{../sim/car-like_mobile_robot_plotting.py}
 The control law is also implemented as function.
-\lstinputlisting[numbers=left,firstnumber=28,firstline=28,lastline=41]{../sim/car-like_mobile_robot_plotting.py}
+\lstinputlisting[numbers=left,firstnumber=29,firstline=29,lastline=41]{../sim/car-like_mobile_robot_plotting.py}
 As a first simple heuristic, we set $(u_1, u_2)$ equal to constant values. Later we can implement an arbitrary function, for expample a feedback law $\mathbf{u}=k(\mathbf{x})$.
 
 \subsection{Solution of the initial value problem (IVP) using \scipy}
@@ -153,9 +153,9 @@ The output is an array of size length(tt)$\times$length($\mathbf{x}$).
 \label{sec:plot}
 We encase our plotting instructions in a function. This way, we can define parameters of our plot, which we would like to change easily, for example figure width, or if the figure should be saved on the hard drive.
 % def plot_data():
-\lstinputlisting[numbers=left,firstnumber=42,firstline=42,lastline=89]{../sim/car-like_mobile_robot_plotting.py}
+\lstinputlisting[numbers=left,firstnumber=44,firstline=44,lastline=91]{../sim/car-like_mobile_robot_plotting.py}
 Now that we have defined our plotting function, we  can execute it with the calculated trajectories and our desired values for the functions parameters.
-\lstinputlisting[numbers=left,firstnumber=112,firstline=112,lastline=115]{../sim/car-like_mobile_robot_plotting.py}
+\lstinputlisting[numbers=left,firstnumber=115,firstline=115,lastline=118]{../sim/car-like_mobile_robot_plotting.py}
 If your not satisfied with the result, you can change other properties of the plot, like linewidth or -color and many others easily. Just look up the documentation of \mpl : \url{https://matplotlib.org/index.html}
 \begin{figure}[h]
 \label{fig:state_traj}
@@ -177,7 +177,9 @@ from matplotlib import animation
 to the top of our code. We encapsulate all functions for the animation in a function \emph{car\_animation()}. At first we create a figure like we did in \ref{sec:plot}.
 \lstinputlisting[numbers=left,firstnumber=96,firstline=96,lastline=121]{../sim/car-like_mobile_robot_animation.py}
 Now we want to display a representation of our car in the figure. We do this by plotting lines. All lines that represent the car are defined by points, which depend on the current state $\mathbf{x}$ and control signal $\mathbf{u}$. This means we need to define a function inside \emph{car\_animation()} that maps from $\mathbf{x}$ and $\mathbf{u}$ to a set of points in the $(Y_1,Y_2)$-plane using geometry and passes these to the plot instance \emph{car}.
-\lstinputlisting[numbers=left,firstnumber=122,firstline=122,lastline=180]{../sim/car-like_mobile_robot_animation.py}
+\lstinputlisting[numbers=left,firstnumber=122,linerange={122-152}]{../sim/car-like_mobile_robot_animation.py}
+$\dots$
+\lstinputlisting[numbers=left,firstnumber=170,linerange={170-180}]{../sim/car-like_mobile_robot_animation.py}
 For the animation to work we need to define another two functions, \emph{init()} and \emph{animate(i)}. The \emph{init()}-function defines which objects change during the animation.
 \lstinputlisting[numbers=left,firstnumber=182,firstline=182,lastline=191]{../sim/car-like_mobile_robot_animation.py}
 The \emph{animate(i)}-function assigns data to the changing objects, in our case the car and trajectory plots and the simulation time.
@@ -185,18 +187,18 @@ The \emph{animate(i)}-function assigns data to the changing objects, in our case
 Finally we have to pass these functions and the figure we created to \emph{animation.FuncAnimation()}.
 \lstinputlisting[numbers=left,firstnumber=209,firstline=209,lastline=216]{../sim/car-like_mobile_robot_animation.py}
 Now we have all things set up to simulate our system and animate it.
-\lstinputlisting[numbers=left,firstnumber=244,firstline=244,lastline=245]{../sim/car-like_mobile_robot_animation.py}
-In the next section you'll learn how to design a tracking controller for this system.
+\lstinputlisting[numbers=left,firstnumber=244,firstline=244,lastline=247]{../sim/car-like_mobile_robot_animation.py}
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.7\textwidth]{img/animation}
 	\caption{Car animation}
 	\label{fig:animation}
 \end{figure}
-\section{(Differential) flatness based tracking control}
-\subsection{Transformation to BINF, determine control laws}
-\subsection{Creating the reference trajectory (path planner)}
-\subsection{Implementation of the controller}
-\subsection{Plotresults}
+\newpage
+%\section{(Differential) flatness based tracking control}
+%\subsection{Transformation to BINF, determine control laws}
+%\subsection{Creating the reference trajectory (path planner)}
+%\subsection{Implementation of the controller}
+%\subsection{Plotresults}
 
 \end{document}
