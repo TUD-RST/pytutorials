@@ -54,7 +54,7 @@
     \put(0.03748157,0.29838656){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$Y_2$}}}%
     \put(0.49375143,0.30024091){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\theta$}}}%
     \put(0.71301268,0.21633586){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\phi$}}}%
-    \put(0.28023251,0.252724){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$(y_1,y_2)$}}}%
+    \put(0.26023251,0.252724){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$(y_1,y_2)$}}}%
     \put(0.55597377,0.17913271){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$l$}}}%
     \put(0.39638997,0.32873697){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{$\vec{v}$}}}%
   \end{picture}%
