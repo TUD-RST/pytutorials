@@ -190,15 +190,38 @@ Now we have all things set up to simulate our system and animate it.
 \lstinputlisting[numbers=left,firstnumber=244,firstline=244,lastline=247]{../sim/car-like_mobile_robot_animation.py}
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.7\textwidth]{img/animation}
+	\includegraphics[width=0.65\textwidth]{img/animation}
 	\caption{Car animation}
 	\label{fig:animation}
 \end{figure}
 \newpage
+\section{Simulation with SciPy's new \emph{solve\_ivp} module and the \emph{lambda} function}
+\footnote{corresponding file: \emph{car-like\_mobile\_robot\_lambda.py}}
+In addition to the shown solution in \ref{sec:simulation} using \emph{odeint}, SciPy's integrate package contains new solver classes. To use it we have to do some small changes to our script. At first we need to import the new package.
+\begin{lstlisting}
+from scipy.integrate import solve_ivp
+\end{lstlisting}
+Then we have to switch the arguments of our \emph{ode}-function, because in \emph{solve\_ivp} the desired order of function arguments in the ODE is different. We therefore replace
+\begin{lstlisting}
+def ode(x, t, prmtrs):
+\end{lstlisting}
+with 
+\begin{lstlisting}
+def ode(t, x, prmtrs):
+\end{lstlisting}
+Now we can call the solver.
+\begin{lstlisting}
+sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), 
+               (t0, tend), x0, method='RK45',t_eval=tt)
+\end{lstlisting}
+The function argument of \emph{solve\_ivp} must have the form $f(t,x)$. In order to use our defined ODE function, which takes 3 arguments, we need to use a \emph{lambda} function. This way we encapsulate our ODE in an anonymous function, that takes just $(t, x)$ as arguments and can be evaluated by \emph{solve\_ivp}. \footnote{the lambda function corresponds to @ in \emph{MATLAB}}
+The return value \emph{sol} is an \emph{OdeResult} object. To extract the simulated state trajectory, we execute:
+\begin{lstlisting}
+x_traj = sol.y.T # size=len(x)*len(t) (.T -> transpose)
+\end{lstlisting}
 %\section{(Differential) flatness based tracking control}
 %\subsection{Transformation to BINF, determine control laws}
 %\subsection{Creating the reference trajectory (path planner)}
 %\subsection{Implementation of the controller}
 %\subsection{Plotresults}
-
 \end{document}

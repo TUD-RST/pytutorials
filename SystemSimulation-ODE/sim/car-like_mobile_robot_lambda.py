@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 
 
-def ode(t, x):
+def ode(t, x, prmtrs):
     """Function of the robots kinematics
 
     Args:
@@ -20,10 +20,9 @@ def ode(t, x):
     x1, x2, x3 = x  # state vector
     u1, u2 = control(x, t)  # control vector
     # dxdt = f(x, u)
-    l = 0.3
     dxdt = np.array([u1 * cos(x3),
                      u1 * sin(x3),
-                     1 / l * u1 * tan(u2)])
+                     1 / prmtrs.l * u1 * tan(u2)])
 
     # return state derivative
     return dxdt
@@ -236,9 +235,8 @@ tt = np.arange(t0, tend, dt)
 x0 = [0, 0, 0]
 
 # simulation
-# x_traj = odeint(ode, x0, tt, args=(prmtrs,))
-sol = solve_ivp(ode, (t0, tend),x0,method='RK45',t_eval=tt)
-x_traj = sol.y.T
+sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45',t_eval=tt)
+x_traj = sol.y.T # size=len(x)*len(t)
 u_traj = control(x_traj, tt)
 
 # plot
