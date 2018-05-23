@@ -53,7 +53,10 @@ showstringspaces=false} % spacing between strings not showed
 \newcommand{\py}{\emph{Python}\,}
 \newcommand{\scipy}{\emph{SciPy}\,}
 \newcommand{\mpl}{\emph{Matplotlib}\,}
-
+\newcommand{\uu}{\mathbf{u}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
 % color definitions
 \definecolor{light-gray}{gray}{0.95}
 \definecolor{dark-blue}{rgb}{0, 0, 0.5}
@@ -79,6 +82,7 @@ showstringspaces=false} % spacing between strings not showed
 The goal of this tutorial is to teach the usage of the programming language \py as a tool for developing and simulating control systems.
 
 \section{Model of a car-like mobile robot}
+\label{sec:model}
 \begin{figure}[ht]
 	\centering
 	\def\svgwidth{0.7\textwidth}
@@ -86,24 +90,24 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 	\caption{Car-like mobile robot}
 	\label{fig:car}
 \end{figure}
-Given is a nonlinear kinematic model of a car-like mobile robot, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the robots lateral velocity $v=\left| \vec{v} \right| $. 
+Given is a nonlinear kinematic model of a car-like mobile robot, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the robots lateral velocity $v=\left| \mathbf{v} \right| $. 
 \begin{subequations}\label{eq:syseq}
 \begin{align}
-\dot{y_1}&=v \cos (\theta) \\
-\dot{y_2}&=v \sin (\theta) \\
+\dot{y}_1&=v \cos (\theta) \\
+\dot{y}_2&=v \sin (\theta) \\
 \tan(\phi) &= \frac{l\dot{\theta}}{v}
 \end{align}
 \end{subequations}
-To simulate this system of 1st order ordinary differential equations (ODEs), we define a state vector $\mathbf{x}=(x_1,x_2,x_3)^\mathrm{T}$ and a control vector $\mathbf{u}=(u_1,u_2)^\mathrm{T}$:
+To simulate this system of 1st order ordinary differential equations (ODEs), we define a state vector $\x=(x_1,x_2,x_3)^\mathrm{T}$ and a control vector $\uu=(u_1,u_2)^\mathrm{T}$:
 \begin{align*}
 x_1 &= y_1 & u_1 = v\\
 x_2 &= y_2 & u_2 = \phi \\
 x_3 &= \theta 
 \end{align*}
-Now we can express \eqref{eq:syseq} in a general form $\dot{\mathbf{x}}=f(\mathbf{x},\mathbf{u})$:
+Now we can express \eqref{eq:syseq} in a general form $\dot{\x}=f(\x,\uu)$:
 \label{eq:ss_system}
 \begin{align}
-\underbrace{\begin{pmatrix} \dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 \end{pmatrix}}_{\dot{\mathbf{x}}} = \underbrace{\begin{pmatrix}  u_1 \cos(x_3) \\ u_1 \sin(x_3) \\ \frac{1}{l}u_1 \tan(u_2) \end{pmatrix}}_{f(\mathbf{x},\mathbf{u})}
+\underbrace{\begin{pmatrix} \dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 \end{pmatrix}}_{\dot{\x}} = \underbrace{\begin{pmatrix}  u_1 \cos(x_3) \\ u_1 \sin(x_3) \\ \frac{1}{l}u_1 \tan(u_2) \end{pmatrix}}_{f(\x,\uu)}
 \end{align}
 
 \section{Storing parameters}
@@ -140,14 +144,14 @@ To simulate \eqref{eq:ss_system} we need to implement the ODE system as a functi
 \lstinputlisting[numbers=left,firstnumber=7,firstline=7,lastline=26]{../sim/car-like_mobile_robot_plotting.py}
 The control law is also implemented as function.
 \lstinputlisting[numbers=left,firstnumber=29,firstline=29,lastline=41]{../sim/car-like_mobile_robot_plotting.py}
-As a first simple heuristic, we set $(u_1, u_2)$ equal to constant values. Later we can implement an arbitrary function, for expample a feedback law $\mathbf{u}=k(\mathbf{x})$.
+As a first simple heuristic, we set $(u_1, u_2)$ equal to constant values. Later we can implement an arbitrary function, for expample a feedback law $\uu=k(\x)$.
 
 \subsection{Solution of the initial value problem (IVP) using \scipy}
 We then define the simulation time and the initial state value.
 \lstinputlisting[numbers=left,firstnumber=98,firstline=98,lastline=106]{../sim/car-like_mobile_robot_plotting.py}
 Now we can parse these parameters and our ODE function to the solver.
 \lstinputlisting[numbers=left,firstnumber=108,firstline=108,lastline=110]{../sim/car-like_mobile_robot_plotting.py}
-The output is an array of size length(tt)$\times$length($\mathbf{x}$).
+The output is an array of size length(tt)$\times$length($\x$).
 
 \section{Plotting using \mpl}
 \label{sec:plot}
@@ -176,7 +180,7 @@ from matplotlib import animation
 \end{lstlisting}
 to the top of our code. We encapsulate all functions for the animation in a function \emph{car\_animation()}. At first we create a figure like we did in \ref{sec:plot}.
 \lstinputlisting[numbers=left,firstnumber=96,firstline=96,lastline=121]{../sim/car-like_mobile_robot_animation.py}
-Now we want to display a representation of our car in the figure. We do this by plotting lines. All lines that represent the car are defined by points, which depend on the current state $\mathbf{x}$ and control signal $\mathbf{u}$. This means we need to define a function inside \emph{car\_animation()} that maps from $\mathbf{x}$ and $\mathbf{u}$ to a set of points in the $(Y_1,Y_2)$-plane using geometry and passes these to the plot instance \emph{car}.
+Now we want to display a representation of our car in the figure. We do this by plotting lines. All lines that represent the car are defined by points, which depend on the current state $\x$ and control signal $\uu$. This means we need to define a function inside \emph{car\_animation()} that maps from $\x$ and $\uu$ to a set of points in the $(Y_1,Y_2)$-plane using geometry and passes these to the plot instance \emph{car}.
 \lstinputlisting[numbers=left,firstnumber=122,linerange={122-152}]{../sim/car-like_mobile_robot_animation.py}
 $\dots$
 \lstinputlisting[numbers=left,firstnumber=170,linerange={170-180}]{../sim/car-like_mobile_robot_animation.py}
@@ -188,16 +192,19 @@ Finally we have to pass these functions and the figure we created to \emph{anima
 \lstinputlisting[numbers=left,firstnumber=209,firstline=209,lastline=216]{../sim/car-like_mobile_robot_animation.py}
 Now we have all things set up to simulate our system and animate it.
 \lstinputlisting[numbers=left,firstnumber=244,firstline=244,lastline=247]{../sim/car-like_mobile_robot_animation.py}
+\newpage
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.65\textwidth]{img/animation}
+	\includegraphics[width=0.7\textwidth]{img/animation}
 	\caption{Car animation}
 	\label{fig:animation}
 \end{figure}
+
+
 \newpage
 \section{Simulation with SciPy's new \emph{solve\_ivp} module and the \emph{lambda} function}
 \footnote{corresponding file: \emph{car-like\_mobile\_robot\_lambda.py}}
-In addition to the shown solution in \ref{sec:simulation} using \emph{odeint}, SciPy's integrate package contains new solver classes. To use it we have to do some small changes to our script. At first we need to import the new package.
+In addition to the solution in \autoref{sec:simulation} using \emph{odeint}, SciPy's integrate package contains some newer solver classes. To use the general \emph{solve\_ivp} class, we need to import the new package.
 \begin{lstlisting}
 from scipy.integrate import solve_ivp
 \end{lstlisting}
@@ -214,14 +221,118 @@ Now we can call the solver.
 sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), 
                (t0, tend), x0, method='RK45',t_eval=tt)
 \end{lstlisting}
-The function argument of \emph{solve\_ivp} must have the form $f(t,x)$. In order to use our defined ODE function, which takes 3 arguments, we need to use a \emph{lambda} function. This way we encapsulate our ODE in an anonymous function, that takes just $(t, x)$ as arguments and can be evaluated by \emph{solve\_ivp}. \footnote{the lambda function corresponds to @ in \emph{MATLAB}}
+The arguments of \emph{solve\_ivp} differ from \emph{odeint}. The ODE must have the form $f(t,x)$. In order to use \emph{ode(t, x, prmtrs)}, which takes 3 arguments, we need to use a \emph{lambda} function. This way we encapsulate the ODE in an anonymous function, that has just $(t, x)$ as arguments and can be evaluated by \emph{solve\_ivp}.\footnote{the lambda function corresponds to @ in \emph{MATLAB}} After the ODE is passed the solver takes the following arguments: a tuple $(t0, tend)$ which defines the simulation interval, the initial value $x0$. Additionally we pass the optional arguments \emph{method}, in this case a Runge-Kutta method and \emph{t\_eval}, which defines the values at which the solution should be sampled. 
 The return value \emph{sol} is an \emph{OdeResult} object. To extract the simulated state trajectory, we execute:
 \begin{lstlisting}
-x_traj = sol.y.T # size=len(x)*len(t) (.T -> transpose)
+x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 \end{lstlisting}
-%\section{(Differential) flatness based tracking control}
+
+\newpage
+\section{(Differential) flatness based tracking control}
+For controlling a nonlinear system like \eqref{eq:ss_system}, linear control methods are not sufficient. We therefore use an advanced control method called (differential) flatness based tracking control, where we design a model based feedforward control and stabilize the system along a planned state trajectory.
+\subsection{(Differential) flatness}
+A system $\dot{\x}=f(\x,\uu)$ is called (differntially) flat, if a tuple of differential independent variables exists, from which we can derive all other system variables $\z=(\x,\uu)$, without solving an ODE. Such a tuple is called a flat output $\y=h(\x)$. The flat output has $m = s-q$ components, where $s$ is the number of system variables and $q$ is the number of equations. In system \eqref{eq:syseq}, we have 5 system variables $(y_1,y_2, \theta,v, \phi) $ and 3 equations, a flat output must therefore have 2 components. A flat output is $\y=(y_1,y_2)$. We now want to show, that a function $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$ for $\y=(y_1,y_2)$ exists.
+
+Recapture system \eqref{eq:syseq} from \autoref{sec:model}:
+\setcounter{equation}{0}
+\begin{subequations}
+\label{eq:1}
+\begin{align}
+\dot{y}_1&=v \cos (\theta) \label{eq:1a}\\
+\dot{y}_2&=v \sin (\theta) \label{eq:1b}\\
+\tan(\phi) &= \frac{l\dot{\theta}}{v} \label{eq:1c}
+\end{align}
+\end{subequations}
+\setcounter{equation}{2}
+Dividing \eqref{eq:1b} by \eqref{eq:1a} leads to:
+\begin{subequations}
+\begin{align}
+\frac{\dot{y}_2}{\dot{y}_1} &=\tan(\theta) \label{eq:3a}\\
+\Leftrightarrow  \theta &= \arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big) \label{eq:3b}
+\end{align}
+\end{subequations}
+The velocity $v$ can be derived from the time derivative of the position vector $\y$.
+\begin{align}
+\label{eq:4}
+v =\left| \mathbf{v} \right| = \left| \dot{\y} \right| = \sqrt{\dot{y}_1^2+\dot{y}_2^2}
+\end{align}
+We take the derivative of \eqref{eq:3b} and \eqref{eq:4} insert the result in \eqref{eq:1c}:
+\begin{subequations}
+\begin{align}
+\tan(\phi) &= \frac{l}{\underbrace{\sqrt{\dot{y}_1^2+\dot{y}_2^2}}_{v}} \underbrace{\frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)}}_{\dot{\theta}} \\
+\Leftrightarrow \phi &= \arctan\Big(l \frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} \Big)
+\end{align}
+\end{subequations}
+Now we have found $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$:
+\begin{align}
+\begin{pmatrix} z_1 \\ z_2 \\ z_3 \\ z_4 \\ z_5 \end{pmatrix} = 
+\begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ u_1 \\ u_2 \end{pmatrix} = 
+\begin{pmatrix} y_1 \\ y_2 \\ \theta \\v \\  \phi \end{pmatrix} =
+\begin{pmatrix} y_1 \\ y_2 \\  \arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big)\\ \sqrt{\dot{y}_1^2+\dot{y}_2^2}\\ \arctan\Big(l \frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} \Big) \end{pmatrix}
+\end{align}
+$\y = (y_1, y_2)$ is indeed a flat output.
 %\subsection{Transformation to BINF, determine control laws}
-%\subsection{Creating the reference trajectory (path planner)}
-%\subsection{Implementation of the controller}
+\subsection{Dynamic state feedback via exact input-output linearization}
+In order to determine a control law we linearize the system by defining a new input $\mathbf{w}=(w_1,w_2)$. To do this we have to take the derivative of the flat output $\y$, until the input $\uu$ shows up explicitly. 
+\begin{subequations}
+\begin{align}
+y_1 &= x_1 \\
+y_2 &= x_2 \\
+\dot{y}_1 &= \dot{x}_1 = u_1 \cos(x_3)\\
+\dot{y}_2 &= \dot{x}_2 = u_1 \sin(x_3) \overset{!}{=} w_1 \label{eq:7d}\\
+\ddot{y}_1 &= \frac{\d}{\d t}(u_1 \cos(x_3)) = \dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) \overset{!}{=} w_2 \label{eq:7e}
+\end{align}
+\end{subequations}
+With a generalized state vector $\mathbf{q} = (q_1,q_2,q_3)^\textrm{T}=(y_1,\dot{y}_1,y_2)^\textrm{T}$ we now get a new linear state space model $\dot{\mathbf{q}}=g(\mathbf{q},\mathbf{w})$:
+\begin{align}
+\label{eq:8}
+\begin{pmatrix}
+\dot{q}_1 \\\dot{q}_2 \\ \dot{q}_3
+\end{pmatrix}
+=
+\begin{pmatrix}
+q_2 \\ w_2 \\ w_1
+\end{pmatrix}
+\end{align}
+\subsubsection{Stabilizing the linearized system}
+To stabilize system \eqref{eq:8}, we define a differential equation for the tracking error $\mathbf{e}=\y-\y_d$:
+\begin{align}
+\label{eq:9}
+0 = \ddot{\mathbf{e}} + \mathbf{K}_1 \dot{\mathbf{e}}+\mathbf{K}_0 \mathbf{e}
+\end{align}
+We choose the matrices $\mathbf{K}_0$ and $\mathbf{K}_1$ such that the ODE is stable.
+If we solve \eqref{eq:9} for $\mathbf{w}$ we get:
+\begin{subequations}
+\label{eq:10}
+\begin{align}
+w_1 &=  \dot{y}_2 =\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d}) \\
+w_2 &= \ddot{y}_1 = \ddot{y}_{1,d} - k_{1,1}(\dot{y}_1-\dot{y}_{1,d})-k_{0,1}(y_1-y_{1,d})
+\end{align}
+\end{subequations}
+\subsubsection{Control law}
+To determine a control law, we substitute \eqref{eq:10} into \eqref{eq:7d} and \eqref{eq:7e} and solve for $\uu$. What we'll find is a differential equation for the input, that's why the control law is called dynamic state feedback.
+\begin{subequations}
+\begin{align}
+&u_1 = \frac{w_1}{\sin{x_3}} \\
+\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{x_3}} \\
+\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin\Big({\arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big)\Big)}}
+\end{align}
+\end{subequations}
+\begin{subequations}
+\begin{align}
+&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
+\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
+\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\Big(\dot{u}_1 \cos(x_3) - w_2 \Big)  \\
+\Leftrightarrow \quad & u_2 = \arctan\Big(\frac{l}{u_1^2\sin(x_3)}\Big(\dot{u}_1 \cos(x_3) - w_2 \Big)\Big)
+\end{align}
+\end{subequations}
+\subsection{Calculating a reference trajectory (path planner)}
+Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivitives for a given state transition.
+
+\centering{\textcolor{red}{figure: showing a state transition}}
+
+\subsection{Implementation of the controller in \py}
+\centering{\textcolor{red}{work in progress}}
+
 %\subsection{Plotresults}
 \end{document}
