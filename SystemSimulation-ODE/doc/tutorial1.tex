@@ -248,7 +248,7 @@ Dividing \eqref{eq:1b} by \eqref{eq:1a} leads to:
 \begin{subequations}
 \begin{align}
 \frac{\dot{y}_2}{\dot{y}_1} &=\tan(\theta) \label{eq:3a}\\
-\Leftrightarrow  \theta &= \arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big) \label{eq:3b}
+\Leftrightarrow  \theta &= \arctan\left(\frac{\dot{y}_2}{\dot{y}_1}\right) \label{eq:3b}
 \end{align}
 \end{subequations}
 The velocity $v$ can be derived from the time derivative of the position vector $\y$.
@@ -259,8 +259,9 @@ v =\left| \mathbf{v} \right| = \left| \dot{\y} \right| = \sqrt{\dot{y}_1^2+\dot{
 We take the derivative of \eqref{eq:3b} and \eqref{eq:4} insert the result in \eqref{eq:1c}:
 \begin{subequations}
 \begin{align}
-\tan(\phi) &= \frac{l}{\underbrace{\sqrt{\dot{y}_1^2+\dot{y}_2^2}}_{v}} \underbrace{\frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)}}_{\dot{\theta}} \\
-\Leftrightarrow \phi &= \arctan\Big(l \frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} \Big)
+\tan(\phi) &= \frac{l}{\underbrace{\sqrt{\dot{y}_1^2+\dot{y}_2^2}}_{v}} \underbrace{\frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)}}_{\dot{\theta}}\label{eq:5a} \\
+\Leftrightarrow \phi &= \arctan\left(l \frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
+\right) \label{eq:5b}
 \end{align}
 \end{subequations}
 Now we have found $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$:
@@ -268,7 +269,8 @@ Now we have found $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$:
 \begin{pmatrix} z_1 \\ z_2 \\ z_3 \\ z_4 \\ z_5 \end{pmatrix} = 
 \begin{pmatrix} x_1 \\ x_2 \\ x_3 \\ u_1 \\ u_2 \end{pmatrix} = 
 \begin{pmatrix} y_1 \\ y_2 \\ \theta \\v \\  \phi \end{pmatrix} =
-\begin{pmatrix} y_1 \\ y_2 \\  \arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big)\\ \sqrt{\dot{y}_1^2+\dot{y}_2^2}\\ \arctan\Big(l \frac{\ddot{y}_1 \ddot{y}_1 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} \Big) \end{pmatrix}
+\begin{pmatrix} y_1 \\ y_2 \\  \arctan\left(\frac{\dot{y}_2}{\dot{y}_1}\right)\\ \sqrt{\dot{y}_1^2+\dot{y}_2^2}\\ \arctan\left(l \frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
+\right) \end{pmatrix}
 \end{align}
 $\y = (y_1, y_2)$ is indeed a flat output.
 %\subsection{Transformation to BINF, determine control laws}
@@ -310,24 +312,47 @@ w_2 &= \ddot{y}_1 = \ddot{y}_{1,d} - k_{1,1}(\dot{y}_1-\dot{y}_{1,d})-k_{0,1}(y_
 \end{align}
 \end{subequations}
 \subsubsection{Control law}
-To determine a control law, we substitute \eqref{eq:10} into \eqref{eq:7d} and \eqref{eq:7e} and solve for $\uu$. What we'll find is a differential equation for the input, that's why the control law is called dynamic state feedback.
+To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:7d} and solve for $u_1$. 
 \begin{subequations}
 \begin{align}
 &u_1 = \frac{w_1}{\sin{x_3}} \\
 \Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{x_3}} \\
-\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin\Big({\arctan\Big(\frac{\dot{y}_2}{\dot{y}_1}\Big)\Big)}}
+\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{\dot{y}_2}{\dot{y}_1}\right)\right)}}
 \end{align}
 \end{subequations}
+
+%\begin{subequations}
+%\begin{align}
+%&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
+%\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
+%\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
+%\right)  \\
+%\Leftrightarrow \quad & u_2 = \arctan\left(\frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
+%\right)
+%\right)
+%\end{align}
+%\end{subequations}
+
+Then substitute $\mathbf{w}$ in \eqref{eq:5b}:
 \begin{subequations}
 \begin{align}
-&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
-\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
-\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\Big(\dot{u}_1 \cos(x_3) - w_2 \Big)  \\
-\Leftrightarrow \quad & u_2 = \arctan\Big(\frac{l}{u_1^2\sin(x_3)}\Big(\dot{u}_1 \cos(x_3) - w_2 \Big)\Big)
+u_2 &= \arctan\left(l \frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
+\right) \\
+&= \arctan\left(l \frac{w_2 w_1 - \dot{y}_1 \dot{w}_1}{(\dot{y}_1^2+w_1^2)^{\frac{3}{2}}} 
+\right) 
+\end{align}
+\end{subequations}
+The derivative of $w_1$ appears in the feedback law. We therefore have to derive the equation for it:
+\begin{subequations}
+\begin{align}
+\dot{w}_1 = \ddot{y}_2 = \frac{\d w_1}{\d t} &= \frac{\d}{\d t}(\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})) \\
+&=\ddot{y}_{2,d} - k_{0,2}(\underbrace{\dot{y}_2}_{=w_1}-\dot{y}_{2,d}) \\
+&=\ddot{y}_{2,d} - k_{0,2}(\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})-\dot{y}_{2,d}) \\
+\Leftrightarrow \quad \dot{w}_1&=\ddot{y}_{2,d} - k_{0,2}^2(y_2-y_{2,d})
 \end{align}
 \end{subequations}
 \subsection{Calculating a reference trajectory (path planner)}
-Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivitives for a given state transition.
+Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivitives (to the second order) for a given state transition.
 
 \centering{\textcolor{red}{figure: showing a state transition}}
 
