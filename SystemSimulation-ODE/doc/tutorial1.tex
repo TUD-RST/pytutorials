@@ -274,7 +274,7 @@ Now we have found $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$:
 \end{align}
 $\y = (y_1, y_2)$ is indeed a flat output.
 %\subsection{Transformation to BINF, determine control laws}
-\subsection{Dynamic state feedback via exact input-output linearization}
+\subsection{State feedback via exact input-output linearization}
 In order to determine a control law we linearize the system by defining a new input $\mathbf{w}=(w_1,w_2)$. To do this we have to take the derivative of the flat output $\y$, until the input $\uu$ shows up explicitly. 
 \begin{subequations}
 \begin{align}
@@ -352,12 +352,57 @@ The derivative of $w_1$ appears in the feedback law. We therefore have to derive
 \end{align}
 \end{subequations}
 \subsection{Calculating a reference trajectory (path planner)}
-Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivitives (to the second order) for a given state transition.
-
-\centering{\textcolor{red}{figure: showing a state transition}}
-
-\subsection{Implementation of the controller in \py}
-\centering{\textcolor{red}{work in progress}}
-
+Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivatives (to the second order) for a given state transition as shown in \autoref{fig:state_transition}.
+\begin{figure}[ht]
+	\centering
+	\includegraphics[scale=1]{img/state_transition.pdf}
+	\caption{A feasible state transition from $\mathbf{y}(t_0)$ to $\mathbf{y}(t_{end})$}
+	\label{fig:state_transition}
+\end{figure}
+A simple, but straight forward approach for a reference trajectory $\mathbf{y}_d(t)$ is a piecewise-defined function:
+\begin{align}
+\label{eq:14}
+\mathbf{y}_d(t) = \begin{cases} \mathbf{y}(t_0) &\textrm{if } t<t_0 \\ \mathbf{y}(t_0) + (\mathbf{y}(t_{end})-\mathbf{y}(t_0))\varphi_\gamma\left(\frac{t-t_0}{t_{end}-t_0}\right) &\textrm{if } t \in [t_0, t_{end}] \\ \mathbf{y}(t_{end}) &\textrm{if } t>T\end{cases}
+\end{align}
+$\tau \rightarrow \varphi_\gamma(\tau)$ is a protoype function, where $\gamma$ indicates how often $\varphi_\gamma(\tau)$ is continuously differentiable. The function has to meet the following conditions, such that the reference trajectory is feasible:
+\begin{subequations}
+\label{eq:15}
+\begin{align}
+\varphi_\gamma(0)=0 \quad \varphi^{(j)}_\gamma(0)=0 \quad j = 1,...,\gamma \\
+\varphi_\gamma(1)=1 \quad \varphi^{(j)}_\gamma(1)=0 \quad j = 1,...,\gamma 
+\end{align}
+\end{subequations}
+An approach for the derivative of $\varphi_\gamma(\tau)$, which meets the conditions \eqref{eq:15} is:
+\begin{align}
+\frac{\d \varphi_\gamma(\tau)}{\d \tau} = \alpha \frac{\tau^{\gamma}}{\gamma!}\frac{(1-\tau)^{\gamma}}{\gamma!}
+\end{align}
+Integration leads to:
+\begin{align}
+\varphi_\gamma(\tau) = \alpha \int_0^\tau\frac{\tilde{\tau}^{\gamma}}{\gamma!}\frac{(1-\tilde{\tau})^{\gamma}}{\gamma!} \d \tilde{\tau}
+\end{align}
+After $\gamma$ partial integrations we get:
+\begin{align*}
+\varphi_\gamma(\tau)= \frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
+\end{align*}
+To solve for the unknown $\alpha$, we use the condition $\varphi_\gamma(1)\overset{!}{=}1$:
+\begin{align*}
+\varphi_\gamma(1)= &\frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k}{(\gamma+k+1)} \overset{!}{=} 1 \\
+\Leftrightarrow \quad & \alpha = (2\gamma+1)!
+\end{align*}
+Finally we can define the prototype function:
+\begin{align}
+\varphi_\gamma(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
+\end{align}
+and it's $n$-th derivative:
+\begin{align}
+\frac{\d^n }{\d \tau^n}\varphi_\gamma(\tau)=\varphi_\gamma^{(n)}(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \left(\binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k-n+1}}{(\gamma+k+1)}\prod_{i=1}^n(\gamma+k-i+2)\right)
+\end{align}
+In the last step we can derive the $n$-th derivative of \eqref{eq:14} $(n=1,...,\gamma$).
+\begin{align}
+\frac{\d^n}{\d t^n}\mathbf{y}_d(t) = \begin{cases} \mathbf{0}&\textrm{if } t<t_0 \\ (\mathbf{y}(t_{end})-\mathbf{y}(t_0))\left(\frac{1}{t_{end}-t_0}\right)^n\varphi_\gamma^{(n)}\left(\frac{t-t_0}{t_{end}-t_0}\right) &\textrm{if } t \in [t_0, t_{end}] \\ \mathbf{0}&\textrm{if } t>T\end{cases}
+\end{align}
+%\newpage
+%\subsection{Implementation of the controller in \py}
+%\centering{\textcolor{red}{work in progress}}
 %\subsection{Plotresults}
 \end{document}
