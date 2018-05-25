@@ -137,9 +137,8 @@ For plotting the output of our simulation, we use the library \mpl and its sub-p
 \begin{lstlisting}
 import matplotlib.pyplot as plt
 \end{lstlisting}
-\section{Simulation with SciPy's integrate package}
+\section[Simulation with SciPy's integrate package]{Simulation with SciPy's integrate package \protect\footnote{corresponding file: \emph{car-like\_mobile\_robot\_plotting.py}}}
 \label{sec:simulation}
-\footnote{corresponding file: \emph{car-like\_mobile\_robot\_plotting.py}}
 To simulate \eqref{eq:ss_system} we need to implement the ODE system as a function in \py.
 \lstinputlisting[numbers=left,firstnumber=7,firstline=7,lastline=26]{../sim/car-like_mobile_robot_plotting.py}
 The control law is also implemented as function.
@@ -170,9 +169,8 @@ If your not satisfied with the result, you can change other properties of the pl
 \end{figure} 
 \newpage
 
-\section{Animation using \mpl}
+\section[Animation using \mpl]{Animation using \mpl \protect \footnote{corresponding file: \emph{car-like\_mobile\_robot\_animation.py}}}
 \label{sec:animation}
-\footnote{corresponding file: \emph{car-like\_mobile\_robot\_animation.py}}
 Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visiual represantation of the system to get a better understanding of what is actually happening. This applies especially for mechanical systems.
 \mpl provides the sub-package \emph{animation}, which can be used for such a purpose. We therefore need to add 
 \begin{lstlisting}
@@ -202,8 +200,7 @@ Now we have all things set up to simulate our system and animate it.
 
 
 \newpage
-\section{Simulation with SciPy's new \emph{solve\_ivp} module and the \emph{lambda} function}
-\footnote{corresponding file: \emph{car-like\_mobile\_robot\_lambda.py}}
+\section[Simulation with SciPy's new \emph{solve\_ivp} module and the \emph{lambda} function]{Simulation with SciPy's new \emph{solve\_ivp} module and the \emph{lambda} function \protect \footnote{corresponding file: \emph{car-like\_mobile\_robot\_lambda.py}}}
 In addition to the solution in \autoref{sec:simulation} using \emph{odeint}, SciPy's integrate package contains some newer solver classes. To use the general \emph{solve\_ivp} class, we need to import the new package.
 \begin{lstlisting}
 from scipy.integrate import solve_ivp
@@ -231,7 +228,7 @@ x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 \section{(Differential) flatness based tracking control}
 For controlling a nonlinear system like \eqref{eq:ss_system}, linear control methods are not sufficient. We therefore use an advanced control method called (differential) flatness based tracking control, where we design a model based feedforward control and stabilize the system along a planned state trajectory.
 \subsection{(Differential) flatness}
-A system $\dot{\x}=f(\x,\uu)$ is called (differntially) flat, if a tuple of differential independent variables exists, from which we can derive all other system variables $\z=(\x,\uu)$, without solving an ODE. Such a tuple is called a flat output $\y=h(\x)$. The flat output has $m = s-q$ components, where $s$ is the number of system variables and $q$ is the number of equations. In system \eqref{eq:syseq}, we have 5 system variables $(y_1,y_2, \theta,v, \phi) $ and 3 equations, a flat output must therefore have 2 components. A flat output is $\y=(y_1,y_2)$. We now want to show, that a function $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$ for $\y=(y_1,y_2)$ exists.
+A system $\dot{\x}=f(\x,\uu)$ is called (differentially) flat, if a tuple of differential independent variables exists, from which we can derive all other system variables $\z=(\x,\uu)$, without solving an ODE. Such a tuple is called a flat output $\y=h(\x)$. The flat output has $m = s-q$ components, where $s$ is the number of system variables and $q$ is the number of equations. In system \eqref{eq:syseq}, we have 5 system variables $(y_1,y_2, \theta,v, \phi) $ and 3 equations, a flat output must therefore have 2 components. A flat output is $\y=(y_1,y_2)$. We now want to show, that a function $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$ for $\y=(y_1,y_2)$ exists.
 
 Recapture system \eqref{eq:syseq} from \autoref{sec:model}:
 \setcounter{equation}{0}
@@ -312,7 +309,7 @@ w_2 &= \ddot{y}_1 = \ddot{y}_{1,d} - k_{1,1}(\dot{y}_1-\dot{y}_{1,d})-k_{0,1}(y_
 \end{align}
 \end{subequations}
 \subsubsection{Control law}
-To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:7d} and solve for $u_1$. 
+To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:7d} and solve for $u_1$:
 \begin{subequations}
 \begin{align}
 &u_1 = \frac{w_1}{\sin{x_3}} \\
@@ -333,7 +330,7 @@ To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:
 %\end{align}
 %\end{subequations}
 
-Then substitute $\mathbf{w}$ in \eqref{eq:5b}:
+Then substitute $\mathbf{w}$ in \eqref{eq:5b} to solve for $u_2$:
 \begin{subequations}
 \begin{align}
 u_2 &= \arctan\left(l \frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
