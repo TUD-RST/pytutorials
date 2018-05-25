@@ -22,20 +22,19 @@ def path(y0, yend, t0, tend, gamma, t):
 
     """
 
-    yd = np.zeros([len(t), len(y0)*(gamma + 1)])
-
+    yd = np.matrix(np.zeros([len(t), len(y0)*(gamma + 1)]))
     for k in range(0,len(t)):
         phi = prototype_fct((t[k] - t0) / (tend - t0), gamma)
         if t[k] < t0:
-            yd[k, 0] = y0
+            yd[k, 0:len(y0)+1] = y0
 
         elif t[k] > tend:
-            yd[k, 0] = yend
+            yd[k, 0:len(y0)+1] = yend
 
         else:
-            yd[k, 0] = y0 + (yend - y0) * phi[0]
+            yd[k, 0:len(y0)] = (y0 + (yend - y0) * phi[0]).T
             for i in range(1, gamma + 1):
-                yd[k, i] = (1/(tend-t0))**i * (y0 - yend) * phi[i]
+                yd[k, i*len(y0):i*len(y0)+2] = ((1/(tend-t0))**i * (y0 - yend) * phi[i]).T
     return yd
 
 
@@ -100,15 +99,11 @@ if test(0) and test(0.5) and test(1):
 
 
 t = np.linspace(0,1,101)
-print(t)
-y0 = np.array([0])
-yend = np.array([1])
+y0 = np.matrix([0, 0]).T
+yend = np.matrix([1, 0.5]).T
 t0 = t[0]
 tend = t[-1]
 gamma = 2
 traj = path(y0,yend,t0,tend,gamma,t)
-print(traj)
-plt.plot(t,traj[:,0])
-plt.plot(t,traj[:,1])
-plt.plot(t,traj[:,2])
+plt.plot(t,traj[:,])
 plt.show()
