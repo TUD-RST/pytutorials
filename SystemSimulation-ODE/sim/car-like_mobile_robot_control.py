@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numpy import cos, sin, tan
+from numpy import cos, sin, tan, arctan
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import path_planner
+
 
 def ode(t, x, prmtrs):
     """Function of the robots kinematics
@@ -40,7 +41,27 @@ def control(x, t):
 
     """
     yd = path_planner.path(y0, yend, t0, tend, gamma, t)
-    u = [1, 0.25]
+    y1d = yd[0, 0]
+    y2d = yd[0, 1]
+    dy1d = yd[0, 2]
+    dy2d = yd[0, 3]
+    ddy1d = yd[0, 4]
+    ddy2d = yd[0, 5]
+    y1 = x[0]
+    prmtrs.traj.append(y1)
+    y2 = x[1]
+    k02 = 1e-3
+    k01 = 1e-3
+    k11 = 1e-3
+    dy1 = dy1d
+    w1 = dy2d - k02 * (y2 - y2d)
+    dw1 = ddy2d - k02 * (y2 - y2d)
+    w2 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
+    u1 = (w1 / sin(arctan(w1 / dy1)))
+    u2 = arctan(prmtrs.l * (w2 * w1 - dy1 * dw1) / (dy1 ** 2 + w1 ** 2) ** (3 / 2))
+    u = [u1, u2]
+    prmtrs.u.append(u)
+    prmtrs.t.append(t)
     return u
 
 
@@ -224,6 +245,9 @@ class Parameters(object):
 prmtrs = Parameters()  # entity of class Parameters
 prmtrs.l = 0.3  # define car length
 prmtrs.w = prmtrs.l * 0.3  # define car width
+prmtrs.traj = []
+prmtrs.u = []
+prmtrs.t = []
 
 t0 = 0  # start time
 tend = 10  # end time
@@ -233,20 +257,21 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0, 0, 0]
+x0 = [0.05, 0.05, 0.1]
 
-y0 = x0[0:2]
-yend = [1, 1]
+y0 = [0, 0]
+yend = [-1, -0.5]
 
 gamma = 2
 
 # simulation
-sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45',t_eval=tt)
-x_traj = sol.y.T # size=len(x)*len(t)
+sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45', t_eval=tt)
+x_traj = sol.y.T  # size=len(x)*len(t)
 u_traj = control(x_traj, tt)
+#u_traj = prmtrs.u
 
 # plot
-plot_data(x_traj, u_traj, tt, 12, 8, save=True)
+plot_data(x_traj, u_traj, tt, 12, 8, save=False)
 
 # animation
 car_animation(x_traj, u_traj, tt, prmtrs)
