@@ -18,12 +18,13 @@ def ode(t, x, prmtrs):
     Returns:
         dxdt: state derivative
     """
-    x1, x2, x3 = x  # state vector
-    u1, u2 = control(x, t)  # control vector
+    x1, x2, x3, x4 = x  # state vector
+    w2, u2 = control(x, t)  # control vector
     # dxdt = f(x, u)
-    dxdt = np.array([u1 * cos(x3),
-                     u1 * sin(x3),
-                     1 / prmtrs.l * u1 * tan(u2)])
+    dxdt = np.array([x4 * cos(x3),
+                     x4 * sin(x3),
+                     1 / prmtrs.l * x4 * tan(u2),
+                     1/ prmtrs.l * x4**2* tan(x3)*tan(u2)-w2/cos(x3)])
 
     # return state derivative
     return dxdt
@@ -52,16 +53,16 @@ def control(x, t):
     y2 = x[1]
     k02 = 1e-3
     k01 = 1e-3
-    k11 = 1e-3
-    dy1 = dy1d
+    k11 = 1e-4
+    if x[3] == 0:
+        dy1 = 0.0001
+    else: dy1 = x[3]
     w1 = dy2d - k02 * (y2 - y2d)
     dw1 = ddy2d - k02 * (y2 - y2d)
     w2 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
     u1 = (w1 / sin(arctan(w1 / dy1)))
     u2 = arctan(prmtrs.l * (w2 * w1 - dy1 * dw1) / (dy1 ** 2 + w1 ** 2) ** (3 / 2))
-    u = [u1, u2]
-    prmtrs.u.append(u)
-    prmtrs.t.append(t)
+    u = [w2, u2]
     return u
 
 
@@ -225,7 +226,7 @@ def car_animation(x, u, t, prmtrs):
         ax.set_title('Time (s): ' + str(t[k]), loc='left')
         x_traj_plot.set_xdata(x[0:k, 0])
         x_traj_plot.set_ydata(x[0:k, 1])
-        car_plot(x[k, :], control(x[k, :], t[k]))
+        car_plot(x[k, :], u[k, :])
         return x_traj_plot, car
 
     ani = animation.FuncAnimation(fig2, animate, init_func=init,
@@ -248,6 +249,8 @@ prmtrs.w = prmtrs.l * 0.3  # define car width
 prmtrs.traj = []
 prmtrs.u = []
 prmtrs.t = []
+prmtrs.y1 = [0]
+prmtrs.t = [0]
 
 t0 = 0  # start time
 tend = 10  # end time
@@ -257,23 +260,24 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0.05, 0.05, 0.1]
+x0 = [0, 0, 0, 0.1]
 
-y0 = [0, 0]
-yend = [-1, -0.5]
+y0 = [0.0, 0.0]
+yend = [1, 1]
 
 gamma = 2
 
 # simulation
-sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45', t_eval=tt)
+sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45',t_eval=tt)
 x_traj = sol.y.T  # size=len(x)*len(t)
-u_traj = control(x_traj, tt)
-#u_traj = prmtrs.u
-
+x_traj = x_traj[:,0:3]
+u_traj = np.zeros([len(tt), 2])
+for i in range(0, len(tt)):
+    u_traj[i,:] = control(sol.y[:,i], tt[i])
+u_traj[:,0]=sol.y.T[:,-1]
 # plot
-plot_data(x_traj, u_traj, tt, 12, 8, save=False)
-
+plot_data(x_traj, u_traj, sol.t, 12, 8, save=False)
 # animation
-car_animation(x_traj, u_traj, tt, prmtrs)
-
+car_animation(x_traj, u_traj, sol.t, prmtrs)
+plt.plot(sol.t,sol.y.T)
 plt.show()
