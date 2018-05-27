@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numpy import cos, sin, tan, arctan
+from numpy import cos, sin, tan, arctan, pi
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from matplotlib import animation
@@ -19,12 +19,12 @@ def ode(t, x, prmtrs):
         dxdt: state derivative
     """
     x1, x2, x3, x4 = x  # state vector
-    w2, u2 = control(x, t)  # control vector
+    u1, u2 = control(x, t)  # control vector
     # dxdt = f(x, u)
     dxdt = np.array([x4 * cos(x3),
                      x4 * sin(x3),
                      1 / prmtrs.l * x4 * tan(u2),
-                     1/ prmtrs.l * x4**2* tan(x3)*tan(u2)-w2/cos(x3)])
+                     u1])
 
     # return state derivative
     return dxdt
@@ -49,24 +49,23 @@ def control(x, t):
     ddy1d = yd[0, 4]
     ddy2d = yd[0, 5]
     y1 = x[0]
-    prmtrs.traj.append(y1)
     y2 = x[1]
-    k02 = 1e-3
-    k01 = 1e-3
-    k11 = 1e-4
-    if x[3] == 0:
-        dy1 = 0.0001
-    else: dy1 = x[3]
-    w1 = dy2d - k02 * (y2 - y2d)
-    dw1 = ddy2d - k02 * (y2 - y2d)
+    k02 =  -1e-3
+    k12 =  -4e-3
+    k01 = k02
+    k11 = k12
+    dy1 = x[3]*cos(x[2])
+    dy2 = x[3]*sin(x[2])
+    w1 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
     w2 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
-    u1 = (w1 / sin(arctan(w1 / dy1)))
-    u2 = arctan(prmtrs.l * (w2 * w1 - dy1 * dw1) / (dy1 ** 2 + w1 ** 2) ** (3 / 2))
-    u = [w2, u2]
+    u2 = arctan(prmtrs.l * (w2 * dy2 - dy1 * w1) / (dy1 ** 2 + dy2 ** 2) ** (3. / 2))
+    u2 = min(abs(u2),1.5)*np.sign(u2)
+    u1 = 1 / prmtrs.l * (x[3] ** 2) * tan(x[2]) * tan(u2) - w2 / cos(x[2])
+    u = [u1, u2]
     return u
 
 
-def plot_data(x, u, t, fig_width, fig_height, save=False):
+def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     """Plotting function of simulated state and actions
 
     Args:
@@ -80,31 +79,37 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
 
     """
     # creating a figure with 2 subplots, that share the x-axis
-    fig1, (ax1, ax2) = plt.subplots(2, sharex=True)
+    fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
 
     # set figure size to desired values
     fig1.set_size_inches(fig_width / 2.54, fig_height / 2.54)
 
     # plot y_1 in subplot 1
-    ax1.plot(t, x[:, 0], label='$y_1(t)$', lw=1, color='r')
+    ax1.plot(t, x[:, 0], label='$y_1(t)$', lw=1, color='b')
+    ax1.plot(t, xref[:, 0], label='$y_{1,d}(t)$', lw=1, color='r')
 
     # plot y_2 in subplot 1
-    ax1.plot(t, x[:, 1], label='$y_2(t)$', lw=1, color='b')
+    ax2.plot(t, x[:, 1], label='$y_2(t)$', lw=1, color='b')
+    ax2.plot(t, xref[:, 1], label='$y_{2,d}(t)$', lw=1, color='r')
 
     # plot theta in subplot 2
-    ax2.plot(t, x[:, 2], label=r'$\theta(t)$', lw=1, color='g')
+    ax3.plot(t, x[:, 2], label=r'$\theta(t)$', lw=1, color='g')
 
     ax1.grid(True)
     ax2.grid(True)
+    ax3.grid(True)
     # set the labels on the x and y axis in subplot 1
     ax1.set_ylabel(r'm')
     ax1.set_xlabel(r't in s')
-    ax2.set_ylabel(r'rad')
+    ax2.set_ylabel(r'm')
     ax2.set_xlabel(r't in s')
+    ax3.set_ylabel(r'rad')
+    ax3.set_xlabel(r't in s')
 
     # put a legend in the plot
     ax1.legend()
     ax2.legend()
+    ax3.legend()
 
     # automatically adjusts subplot to fit in figure window
     plt.tight_layout()
@@ -116,7 +121,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     return None
 
 
-def car_animation(x, u, t, prmtrs):
+def car_animation(x, xref, u, t, prmtrs):
     """Animation function of the car-like mobile robot
 
     Args:
@@ -140,6 +145,8 @@ def car_animation(x, u, t, prmtrs):
     ax.set_ylabel(r'$y_2$')
 
     x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
+    x_ref_plot, = ax.plot([], [], 'r')  # reference trajectory in the y1-y2-plane
+
     car, = ax.plot([], [], 'k', lw=2)  # car
 
     def car_plot(x, u):
@@ -210,6 +217,7 @@ def car_animation(x, u, t, prmtrs):
 
         """
         x_traj_plot.set_data([], [])
+        x_ref_plot.set_data([], [])
         car.set_data([], [])
         return x_traj_plot, car
 
@@ -226,8 +234,10 @@ def car_animation(x, u, t, prmtrs):
         ax.set_title('Time (s): ' + str(t[k]), loc='left')
         x_traj_plot.set_xdata(x[0:k, 0])
         x_traj_plot.set_ydata(x[0:k, 1])
+        x_ref_plot.set_xdata(xref[0:k, 0])
+        x_ref_plot.set_ydata(xref[0:k, 1])
         car_plot(x[k, :], u[k, :])
-        return x_traj_plot, car
+        return x_traj_plot, x_ref_plot, car
 
     ani = animation.FuncAnimation(fig2, animate, init_func=init,
                                   frames=len(t) + 1,
@@ -260,24 +270,43 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0, 0, 0, 0.1]
+x0 = [0, 0.0, 0.0, 0.001, 0]
 
-y0 = [0.0, 0.0]
-yend = [1, 1]
+# y1, y2, theta, v, phi
+xend = [5.0, 5.0, 0.0, 0.001, 0.0]
+dv = 0
+dy10 = x0[3]*cos(x0[2])
+dy1end = xend[3]*cos(xend[2])
+dy20 = x0[3]*sin(x0[2])
+dy2end = xend[3]*sin(xend[2])
+ddy10 = dv*cos(x0[0])-x0[3]**2*tan(x0[4])*sin(x0[2])/prmtrs.l
+ddy1end = dv*cos(xend[0])-xend[3]**2*tan(xend[0])*sin(xend[2])/prmtrs.l
+ddy20 = dv*sin(x0[0])+x0[3]**2*tan(x0[4])*cos(x0[2])/prmtrs.l
+ddy2end = dv*sin(xend[0])+xend[3]**2*tan(xend[0])*cos(xend[2])/prmtrs.l
 
 gamma = 2
 
+y0 = [x0[0:2],[dy10, dy20], [ddy10, ddy20]]
+yend = [xend[0:2],[dy1end, dy2end], [ddy1end, ddy2end]]
 # simulation
-sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0, method='RK45',t_eval=tt)
+sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0[0:4], method='RK45',t_eval=tt)
 x_traj = sol.y.T  # size=len(x)*len(t)
 x_traj = x_traj[:,0:3]
 u_traj = np.zeros([len(tt), 2])
+
 for i in range(0, len(tt)):
     u_traj[i,:] = control(sol.y[:,i], tt[i])
+yd = path_planner.path(y0, yend, t0, 5, gamma, tt)
+x_ref = yd[:,0:2]
+
 u_traj[:,0]=sol.y.T[:,-1]
+
 # plot
-plot_data(x_traj, u_traj, sol.t, 12, 8, save=False)
+plot_data(x_traj, x_ref, u_traj, sol.t, 12, 8, save=False)
 # animation
-car_animation(x_traj, u_traj, sol.t, prmtrs)
-plt.plot(sol.t,sol.y.T)
+car_animation(x_traj, x_ref, u_traj, sol.t, prmtrs)
+#plt.plot(sol.t,sol.y.T)
+
 plt.show()
+
+print(x_traj[:,0])

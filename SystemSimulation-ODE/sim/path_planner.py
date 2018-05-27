@@ -16,25 +16,40 @@ def path(y0, yend, t0, tend, gamma, t):
         t0:
         tend:
         gamma:
-        t(ndarray):
+        t(ndarray,int):
 
     Returns: yd
 
     """
+    if isinstance(y0, (list, np.ndarray)):
+        n = len(y0[0])
+    else:
+        n = 1
+        y0 = [y0]
 
-    yd = np.matrix(np.zeros([len(t), len(y0)*(gamma + 1)]))
-    for k in range(0,len(t)):
+    if isinstance(t, (list, np.ndarray)):
+        m = len(t)
+    else:
+        m = 1
+        t = [t]
+
+    y0 = np.matrix(y0).T
+    yend = np.matrix(yend).T
+    yd = np.matrix(np.zeros([m, n*(gamma + 1)]))
+    for k in range(0,m):
         phi = prototype_fct((t[k] - t0) / (tend - t0), gamma)
         if t[k] < t0:
-            yd[k, 0:len(y0)+1] = y0
-
-        elif t[k] > tend:
-            yd[k, 0:len(y0)+1] = yend
-
-        else:
-            yd[k, 0:len(y0)] = (y0 + (yend - y0) * phi[0]).T
+            yd[k, 0:n] = y0[:,0].T
             for i in range(1, gamma + 1):
-                yd[k, i*len(y0):i*len(y0)+2] = ((1/(tend-t0))**i * (y0 - yend) * phi[i]).T
+                yd[k, i*n:i*n+2] = y0[:,i].T
+        elif t[k] > tend:
+            yd[k, 0:n] = yend[:,0].T
+            for i in range(1, gamma + 1):
+                yd[k, i*n:i*n+2] = yend[:,i].T
+        else:
+            yd[k, 0:n] = (y0[:,0] + (yend[:,0] - y0[:,0]) * phi[0]).T
+            for i in range(1, gamma + 1):
+                yd[k, i*n:i*n+2] = ((y0[:,i] - yend[:,i]) * phi[0]+(1/(tend-t0))**i * (y0[:,0] - yend[:,0]) * phi[i]).T
     return yd
 
 
@@ -94,16 +109,16 @@ def test(t):
     return result
 
 
-if test(0) and test(0.5) and test(1):
-    print("Test passed")
+#if test(0) and test(0.5) and test(1):
+#    print("Test passed")
 
 
-t = np.linspace(0,1,101)
-y0 = np.matrix([0, 0]).T
-yend = np.matrix([1, 0.5]).T
-t0 = t[0]
-tend = t[-1]
-gamma = 2
-traj = path(y0,yend,t0,tend,gamma,t)
-plt.plot(t,traj[:,])
-plt.show()
+#t = np.linspace(0,1,101)
+#y0 = [0.1, 0]
+#yend = [1, 0.5]
+#t0 = t[0]
+#tend = t[-1]
+#gamma = 3
+#traj = path(y0,yend,t0,tend,gamma,t)
+#plt.plot(t,traj[:,])
+#plt.show()
