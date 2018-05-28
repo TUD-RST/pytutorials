@@ -314,21 +314,22 @@ To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:
 \begin{align}
 &u_1 = \frac{w_1}{\sin{x_3}} \\
 \Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{x_3}} \\
-\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{\dot{y}_2}{\dot{y}_1}\right)\right)}}
+\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{w_1}{\dot{y}_1}\right)\right)}} \\
+\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\dot{y}_1}\right)\right)}} 
 \end{align}
 \end{subequations}
 
-%\begin{subequations}
-%\begin{align}
-%&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
-%\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
-%\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
-%\right)  \\
-%\Leftrightarrow \quad & u_2 = \arctan\left(\frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
-%\right)
-%\right)
-%\end{align}
-%\end{subequations}
+\begin{subequations}
+\begin{align}
+&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
+\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
+\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
+\right)  \\
+\Leftrightarrow \quad & u_2 = \arctan\left(\frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
+\right)
+\right)
+\end{align}
+\end{subequations}
 
 Then substitute $\mathbf{w}$ in \eqref{eq:5b} to solve for $u_2$:
 \begin{subequations}
@@ -396,7 +397,7 @@ and it's $n$-th derivative:
 \end{align}
 In the last step we can derive the $n$-th derivative of \eqref{eq:14} $(n=1,...,\gamma$).
 \begin{align}
-\frac{\d^n}{\d t^n}\mathbf{y}_d(t) = \begin{cases} \mathbf{0}&\textrm{if } t<t_0 \\ (\mathbf{y}(t_{end})-\mathbf{y}(t_0))\left(\frac{1}{t_{end}-t_0}\right)^n\varphi_\gamma^{(n)}\left(\frac{t-t_0}{t_{end}-t_0}\right) &\textrm{if } t \in [t_0, t_{end}] \\ \mathbf{0}&\textrm{if } t>T\end{cases}
+\frac{\d^n}{\d t^n}\mathbf{y}_d(t) = \begin{cases} \mathbf{y}^{(n)}(t_0) & \textrm{if } t<t_0 \\ \mathbf{y}^{(n)} + \sum_{i=0}^{n}\binom{n}{i}(\mathbf{y}^{(n-i)}(t_{end})-\mathbf{y}^{(n-i)}(t_0))\left(\frac{1}{t_{end}-t_0}\right)^i\varphi_\gamma^{(i)}\left(\frac{t-t_0}{t_{end}-t_0}\right) &\textrm{if } t \in [t_0, t_{end}] \\ \mathbf{y}^{(n)}(t_{end})&\textrm{if } t>T\end{cases}
 \end{align}
 %\newpage
 %\subsection{Implementation of the controller in \py}
