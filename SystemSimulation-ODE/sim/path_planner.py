@@ -37,7 +37,7 @@ def path(y0, yend, t0, tend, gamma, t):
     yend = np.matrix(yend).T
     yd = np.matrix(np.zeros([m, n*(gamma + 1)]))
     for k in range(0,m):
-        phi = prototype_fct((t[k] - t0) / (tend - t0), gamma)
+        phi = prototype_fct((t[k] - t0) / (tend - t0), gamma + 1)
         if t[k] < t0:
             yd[k, 0:n] = y0[:,0].T
             for i in range(1, gamma + 1):
@@ -47,9 +47,9 @@ def path(y0, yend, t0, tend, gamma, t):
             for i in range(1, gamma + 1):
                 yd[k, i*n:i*n+2] = yend[:,i].T
         else:
-            yd[k, 0:n] = (y0[:,0] + (yend[:,0] - y0[:,0]) * phi[0]).T
-            for i in range(1, gamma + 1):
-                yd[k, i*n:i*n+2] = ((y0[:,i] - yend[:,i]) * phi[0]+(1/(tend-t0))**i * (y0[:,0] - yend[:,0]) * phi[i]).T
+            #yd[k, 0:n] = (y0[:,0] + (yend[:,0] - y0[:,0]) * phi[0]).T
+            for i in range(0, gamma + 1):
+                yd[k, i*n:i*n+2] = y0[:,i].T + sum((bin_coeff(i,j) * (yend[:,i-j] - y0[:,i-j]) * (1/(tend-t0))**j * phi[j]).T for j in range(0, i + 1))
     return yd
 
 
@@ -108,7 +108,11 @@ def test(t):
     result = np.sum(prototype_fct(t, 3) - phi) < 1e-10
     return result
 
-
+def abssign(x):
+    if np.sign(x) == 0:
+        return 1
+    else:
+        return np.sign(x)
 #if test(0) and test(0.5) and test(1):
 #    print("Test passed")
 

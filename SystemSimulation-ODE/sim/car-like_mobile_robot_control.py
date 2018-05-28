@@ -50,17 +50,18 @@ def control(x, t):
     ddy2d = yd[0, 5]
     y1 = x[0]
     y2 = x[1]
-    k02 =  -1e-3
-    k12 =  -4e-3
+    v = path_planner.abssign(x[3])*max(abs(x[3]),0.001)
+    k02 =  -1e3
+    k12 =  0
     k01 = k02
     k11 = k12
-    dy1 = x[3]*cos(x[2])
-    dy2 = x[3]*sin(x[2])
+    dy1 = v*cos(x[2])
+    dy2 = v*sin(x[2])
     w1 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
     w2 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
     u2 = arctan(prmtrs.l * (w2 * dy2 - dy1 * w1) / (dy1 ** 2 + dy2 ** 2) ** (3. / 2))
     u2 = min(abs(u2),1.5)*np.sign(u2)
-    u1 = 1 / prmtrs.l * (x[3] ** 2) * tan(x[2]) * tan(u2) - w2 / cos(x[2])
+    u1 = 1 / prmtrs.l * (v ** 2) * tan(x[2]) * tan(u2) - w2 / cos(x[2])
     u = [u1, u2]
     return u
 
@@ -270,10 +271,10 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0, 0.0, 0.0, 0.001, 0]
+x0 = [0, 0.0, 0.0, 0.001, 0.0]
 
 # y1, y2, theta, v, phi
-xend = [5.0, 5.0, 0.0, 0.001, 0.0]
+xend = [5.0, 0.0, 0.0, 0.001, 0.0]
 dv = 0
 dy10 = x0[3]*cos(x0[2])
 dy1end = xend[3]*cos(xend[2])
