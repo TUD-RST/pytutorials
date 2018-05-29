@@ -41,27 +41,41 @@ def control(x, t):
         u: control vector
 
     """
-    yd = path_planner.path(y0, yend, t0, tend, gamma, t)
+    # calculation of the desired state values
+    yd = path_planner.path(y0, yend, t0+2, tend-2, gamma, t)
+
+    # extraction of the reference values
     y1d = yd[0, 0]
     y2d = yd[0, 1]
     dy1d = yd[0, 2]
     dy2d = yd[0, 3]
     ddy1d = yd[0, 4]
     ddy2d = yd[0, 5]
+
+    # extraction of the state
     y1 = x[0]
     y2 = x[1]
-    v = path_planner.abssign(x[3])*max(abs(x[3]),0.001)
-    k02 =  -1e3
-    k12 =  0
-    k01 = k02
-    k11 = k12
-    dy1 = v*cos(x[2])
-    dy2 = v*sin(x[2])
-    w1 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
-    w2 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
-    u2 = arctan(prmtrs.l * (w2 * dy2 - dy1 * w1) / (dy1 ** 2 + dy2 ** 2) ** (3. / 2))
-    u2 = min(abs(u2),1.5)*np.sign(u2)
-    u1 = 1 / prmtrs.l * (v ** 2) * tan(x[2]) * tan(u2) - w2 / cos(x[2])
+    phi = x[2]
+    v = x[3]
+
+    dy1 = v*cos(phi)
+    dy2 = v*sin(phi)
+
+    # tuning parameters for the tracking behavior
+    k01 = 3
+    k11 = 0
+    k02 = k01
+    k12 = k11
+
+    # calculation of the new input w
+    w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
+    w1 = ddy1d - k11 * (dy1 - dy1d) - k01 * (y1 - y1d)
+
+    # calculation of the inputs
+    u2 = arctan(prmtrs.l * (w1 * dy2 - dy1 * w2) / (dy1 ** 2 + dy2 ** 2) ** (3. / 2))
+    #u2 = min(abs(u2),1.5)*np.sign(u2)
+    u1 = w1 / cos(phi) + 1 / prmtrs.l * (v ** 2) * tan(phi) * tan(u2)
+
     u = [u1, u2]
     return u
 
@@ -271,24 +285,30 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0, 0.0, 0.0, 0.001, 0.0]
+x0 = [0, 0.0, 0.0, 0.1, 0.0]
 
 # y1, y2, theta, v, phi
-xend = [5.0, 0.0, 0.0, 0.001, 0.0]
+xend = [5.0, 2.0, 0.0, 0.1, 0.0]
 dv = 0
+
+# calculation of boundary conditions for the reference trajcetories
 dy10 = x0[3]*cos(x0[2])
 dy1end = xend[3]*cos(xend[2])
+
 dy20 = x0[3]*sin(x0[2])
 dy2end = xend[3]*sin(xend[2])
-ddy10 = dv*cos(x0[0])-x0[3]**2*tan(x0[4])*sin(x0[2])/prmtrs.l
-ddy1end = dv*cos(xend[0])-xend[3]**2*tan(xend[0])*sin(xend[2])/prmtrs.l
-ddy20 = dv*sin(x0[0])+x0[3]**2*tan(x0[4])*cos(x0[2])/prmtrs.l
-ddy2end = dv*sin(xend[0])+xend[3]**2*tan(xend[0])*cos(xend[2])/prmtrs.l
+
+ddy10 = dv*cos(x0[2]) - 1/prmtrs.l * x0[3]**2*tan(x0[4])*sin(x0[2])
+ddy1end = dv*cos(xend[2]) - 1/prmtrs.l * xend[3]**2*tan(xend[4])*sin(xend[2])
+
+ddy20 = dv*sin(x0[2]) + 1/prmtrs.l*x0[3]**2*tan(x0[4])*cos(x0[2])
+ddy2end = dv*sin(xend[2]) + 1/prmtrs.l*xend[3]**2*tan(xend[4])*cos(xend[2])
 
 gamma = 2
 
 y0 = [x0[0:2],[dy10, dy20], [ddy10, ddy20]]
 yend = [xend[0:2],[dy1end, dy2end], [ddy1end, ddy2end]]
+
 # simulation
 sol = solve_ivp(lambda t, x: ode(t, x, prmtrs), (t0, tend), x0[0:4], method='RK45',t_eval=tt)
 x_traj = sol.y.T  # size=len(x)*len(t)
