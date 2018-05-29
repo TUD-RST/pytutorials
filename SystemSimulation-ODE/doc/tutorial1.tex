@@ -271,84 +271,61 @@ Now we have found $\z = \mathbf{\psi}(\y,\dot{\y},...,\y^{(\alpha)})$:
 \end{align}
 $\y = (y_1, y_2)$ is indeed a flat output.
 %\subsection{Transformation to BINF, determine control laws}
-\subsection{State feedback via exact input-output linearization}
-In order to determine a control law we linearize the system by defining a new input $\mathbf{w}=(w_1,w_2)$. To do this we have to take the derivative of the flat output $\y$, until the input $\uu$ shows up explicitly. 
+\subsection{Dynamic state feedback via exact input-output linearization}
+In order to determine a control law we linearize the system by defining a new input $\mathbf{w}=(w_1,w_2)$. To do this we have to take the $r$-th derivative of the flat output $\y$, until the input $\uu$ shows up explicitly, then we set $\y^{(r)}=\mathbf{w}$.
 \begin{subequations}
 \begin{align}
 y_1 &= x_1 \\
 y_2 &= x_2 \\
 \dot{y}_1 &= \dot{x}_1 = u_1 \cos(x_3)\\
-\dot{y}_2 &= \dot{x}_2 = u_1 \sin(x_3) \overset{!}{=} w_1 \label{eq:7d}\\
-\ddot{y}_1 &= \frac{\d}{\d t}(u_1 \cos(x_3)) = \dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) \overset{!}{=} w_2 \label{eq:7e}
+\dot{y}_2 &= \dot{x}_2 = u_1 \sin(x_3) \\
+\ddot{y}_1 &= \frac{\d}{\d t}(u_1 \cos(x_3)) = \dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) \overset{!}{=} w_1 \label{eq:7e} \\
+\ddot{y}_2 &= \frac{\d}{\d t}(u_1 \sin(x_3)) = \dot{u}_1 \sin(x_3) + \frac{1}{l}u_1^2\cos(x_3)\tan(u_2) \overset{!}{=} w_2  \label{eq:7f}
 \end{align}
 \end{subequations}
-With a generalized state vector $\mathbf{q} = (q_1,q_2,q_3)^\textrm{T}=(y_1,\dot{y}_1,y_2)^\textrm{T}$ we now get a new linear state space model $\dot{\mathbf{q}}=g(\mathbf{q},\mathbf{w})$:
+We get a second order system for $\y$ that is linear to the input $\mathbf{w}$, this is called exact input-output linearization.
 \begin{align}
 \label{eq:8}
-\begin{pmatrix}
-\dot{q}_1 \\\dot{q}_2 \\ \dot{q}_3
-\end{pmatrix}
-=
-\begin{pmatrix}
-q_2 \\ w_2 \\ w_1
-\end{pmatrix}
+\ddot{\y} = \mathbf{w}
 \end{align}
 \subsubsection{Stabilizing the linearized system}
-To stabilize system \eqref{eq:8}, we define a differential equation for the tracking error $\mathbf{e}=\y-\y_d$:
+To stabilize system \eqref{eq:8}, we design a stabilizing feedback law for the input $\mathbf{w}$. We therefore define a differential equation for the tracking error $\mathbf{e}(t)=\y(t)-\y_d(t)$, where $\y_d$ is a reference trajectory:
 \begin{align}
 \label{eq:9}
 0 = \ddot{\mathbf{e}} + \mathbf{K}_1 \dot{\mathbf{e}}+\mathbf{K}_0 \mathbf{e}
 \end{align}
-We choose the matrices $\mathbf{K}_0$ and $\mathbf{K}_1$ such that the ODE is stable.
+We choose the matrices $\mathbf{K}_0$ and $\mathbf{K}_1$ such that the ODE is stable \footnote{$\mathbf{K}_0$ and $\mathbf{K}_1$ could be diagonal matrices with positive entries}.
 If we solve \eqref{eq:9} for $\mathbf{w}$ we get:
 \begin{subequations}
 \label{eq:10}
 \begin{align}
-w_1 &=  \dot{y}_2 =\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d}) \\
-w_2 &= \ddot{y}_1 = \ddot{y}_{1,d} - k_{1,1}(\dot{y}_1-\dot{y}_{1,d})-k_{0,1}(y_1-y_{1,d})
+w_1 &= \ddot{y}_1 = \ddot{y}_{1,d} - k_{1,1}(\dot{y}_1-\dot{y}_{1,d})-k_{0,1}(y_1-y_{1,d}) \\
+w_2 &= \ddot{y}_2 = \ddot{y}_{2,d} - k_{1,2}(\dot{y}_2-\dot{y}_{2,d})-k_{0,2}(y_2-y_{2,d})
 \end{align}
 \end{subequations}
-\subsubsection{Control law}
-To determine the control laws, we first substitute \eqref{eq:10} into \eqref{eq:7d} and solve for $u_1$:
+\subsubsection{Determining control laws}
+To determine the control laws,we first substitute $\mathbf{w}$ in \eqref{eq:5b} to solve for $u_2$:
 \begin{subequations}
-\begin{align}
-&u_1 = \frac{w_1}{\sin{x_3}} \\
-\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{x_3}} \\
-\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{w_1}{\dot{y}_1}\right)\right)}} \\
-\Leftrightarrow \quad & u_1 = \frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\sin{\left(\arctan\left(\frac{\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})}{\dot{y}_1}\right)\right)}} 
-\end{align}
-\end{subequations}
-
-\begin{subequations}
-\begin{align}
-&\dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = w_2 \\
-\Leftrightarrow \quad & \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) = \dot{u}_1 \cos(x_3) - w_2  \\
-\Leftrightarrow \quad & \tan(u_2) = \frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
-\right)  \\
-\Leftrightarrow \quad & u_2 = \arctan\left(\frac{l}{u_1^2\sin(x_3)}\left(\dot{u}_1 \cos(x_3) - w_2 
-\right)
-\right)
-\end{align}
-\end{subequations}
-
-Then substitute $\mathbf{w}$ in \eqref{eq:5b} to solve for $u_2$:
-\begin{subequations}
+\label{eq:11}
 \begin{align}
 u_2 &= \arctan\left(l \frac{\ddot{y}_1 \dot{y}_2 - \dot{y}_1 \ddot{y}_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
 \right) \\
-&= \arctan\left(l \frac{w_2 w_1 - \dot{y}_1 \dot{w}_1}{(\dot{y}_1^2+w_1^2)^{\frac{3}{2}}} 
+&= \arctan\left(l \frac{w_1 \dot{y}_2 - \dot{y}_1 w_2}{(\dot{y}_1^2+\dot{y}_2^2)^{\frac{3}{2}}} 
 \right) 
 \end{align}
-\end{subequations}
-The derivative of $w_1$ appears in the feedback law. We therefore have to derive the equation for it:
+\end{subequations} 
+Then we take \eqref{eq:7e} to solve for $u_1$, but what we find is a differential equation for $u_1$:
 \begin{subequations}
 \begin{align}
-\dot{w}_1 = \ddot{y}_2 = \frac{\d w_1}{\d t} &= \frac{\d}{\d t}(\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})) \\
-&=\ddot{y}_{2,d} - k_{0,2}(\underbrace{\dot{y}_2}_{=w_1}-\dot{y}_{2,d}) \\
-&=\ddot{y}_{2,d} - k_{0,2}(\dot{y}_{2,d} - k_{0,2}(y_2-y_{2,d})-\dot{y}_{2,d}) \\
-\Leftrightarrow \quad \dot{w}_1&=\ddot{y}_{2,d} - k_{0,2}^2(y_2-y_{2,d})
+\ddot{y}_1 = \dot{u}_1 \cos(x_3) - \frac{1}{l}u_1^2\sin(x_3)\tan(u_2) \\
+\dot{u}_1 = \frac{w_2}{\cos(x_3)} + \frac{1}{l}u_1^2\tan(x_3)\tan(u_2)
 \end{align}
 \end{subequations}
+This ODE  has to be solved by the controller to determine $u_1$. This kind of feedback is called endogenous dynamic state feedback. To do this, we add a 4-th state $x_4 = u_1$ to system\,\eqref{eq:ss_system} and replace $u_2$ with \eqref{eq:11}:
+\begin{align}
+\underbrace{\begin{pmatrix} \dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 \\ \dot{x}_4\end{pmatrix}}_{\dot{\x}} = \underbrace{\begin{pmatrix}  x_4 \cos(x_3) \\ x_4 \sin(x_3) \\ x_4 \frac{w_1 x_2 - x_1 w_2}{(x_1^2+x_2^2)^{\frac{3}{2}}} \\ \frac{w_2}{\cos(x_3)} + x_4^2\tan(x_3) \frac{w_1 x_2 - x_1 w_2}{(x_1^2+x_2^2)^{\frac{3}{2}}}\end{pmatrix}}_{f(\x,\mathbf{w})}
+\end{align}
+The result is a new system $\dot{x}=f(\x,\mathbf{w})$ to the input $\matbf{w}$.
 \subsection{Calculating a reference trajectory (path planner)}
 Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivatives (to the second order) for a given state transition as shown in \autoref{fig:state_transition}.
 \begin{figure}[ht]
