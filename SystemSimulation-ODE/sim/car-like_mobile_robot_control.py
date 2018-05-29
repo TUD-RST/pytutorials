@@ -42,7 +42,7 @@ def control(x, t):
 
     """
     # calculation of the desired state values
-    yd = path_planner.path(y0, yend, t0+2, tend-2, gamma, t)
+    yd = path_planner.path(y0, yend, t0, tend, gamma, t)
 
     # extraction of the reference values
     y1d = yd[0, 0]
@@ -62,7 +62,7 @@ def control(x, t):
     dy2 = v*sin(phi)
 
     # tuning parameters for the tracking behavior
-    k01 = 3
+    k01 = 13
     k11 = 0
     k02 = k01
     k12 = k11
@@ -285,7 +285,7 @@ dt = 0.04  # step-size
 tt = np.arange(t0, tend, dt)
 
 # initial state
-x0 = [0, 0.0, 0.0, 0.1, 0.0]
+x0 = [0.0, 0.0, 0.0, 0.1, 0.0]
 
 # y1, y2, theta, v, phi
 xend = [5.0, 2.0, 0.0, 0.1, 0.0]
@@ -329,5 +329,3 @@ car_animation(x_traj, x_ref, u_traj, sol.t, prmtrs)
 #plt.plot(sol.t,sol.y.T)
 
 plt.show()
-
-print(x_traj[:,0])

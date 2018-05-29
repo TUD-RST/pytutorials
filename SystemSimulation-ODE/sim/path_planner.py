@@ -37,7 +37,7 @@ def path(y0, yend, t0, tend, gamma, t):
     yend = np.matrix(yend).T
     yd = np.matrix(np.zeros([m, n*(gamma + 1)]))
     for k in range(0,m):
-        phi = prototype_fct((t[k] - t0) / (tend - t0), gamma + 1)
+        phi = prototype_fct((t[k] - t0) / (tend - t0), gamma)
         if t[k] < t0:
             yd[k, 0:n] = y0[:,0].T
             for i in range(1, gamma + 1):
