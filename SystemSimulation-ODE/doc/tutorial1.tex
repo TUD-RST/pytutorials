@@ -359,7 +359,7 @@ This ODE  has to be solved by the controller to determine $u_1$. This kind of fe
 \begin{align}
 \underbrace{\begin{pmatrix} \dot{x}_1 \\ \dot{x}_2 \\ \dot{x}_3 \\ \dot{x}_4\end{pmatrix}}_{\dot{\x}} = \underbrace{\begin{pmatrix}  x_4 \cos(x_3) \\ x_4 \sin(x_3) \\ x_4 \frac{w_1 x_2 - x_1 w_2}{(x_1^2+x_2^2)^{\frac{3}{2}}} \\ \frac{w_2}{\cos(x_3)} + x_4^2\tan(x_3) \frac{w_1 x_2 - x_1 w_2}{(x_1^2+x_2^2)^{\frac{3}{2}}}\end{pmatrix}}_{f(\x,\mathbf{w})}
 \end{align}
-The result is a new system $\dot{x}=f(\x,\mathbf{w})$ to the input $\matbf{w}$.
+The result is a new system $\dot{x}=f(\x,\mathbf{w})$ to the input $\mathbf{w}$.
 \subsection{Calculating a reference trajectory (path planner)}
 Now that we have defined the control law we need to develop a path planner, that calculates a feasible trajectory of the flat output and its derivatives (to the second order) for a given state transition as shown in \autoref{fig:state_transition}.
 \begin{figure}[ht]
