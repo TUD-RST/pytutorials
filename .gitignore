@@ -348,3 +348,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+/SystemSimulation-ODE/sim/animation.mp4
+/SystemSimulation-ODE/sim/state_trajectory.pdf
+/SystemSimulation-ODE/sim/state_trajectory.pgf
+/SystemSimulation-ODE/doc/tutorial1.pdf
+/SystemSimulation-ODE/sim/.idea

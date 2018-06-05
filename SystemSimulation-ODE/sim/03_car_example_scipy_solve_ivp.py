@@ -1,28 +1,46 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from numpy import cos, sin, tan
-from scipy.integrate import odeint
+import scipy.integrate as sci
 import matplotlib.pyplot as plt
-from matplotlib import animation
+import matplotlib.animation as mpla
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
-def ode(x, t, prmtrs):
+class Parameters(object):
+    pass
+
+
+# Physical parameter
+para = Parameters()  # instance of class Parameters
+para.l = 0.3         # define car length
+para.w = para.l*0.3  # define car width
+
+# Simulation parameter
+sim_para = Parameters()  # instance of class Parameters
+sim_para.t0 = 0          # start time
+sim_para.tend = 10       # end time
+sim_para.dt = 0.04       # step-size
+
+
+def ode(x, t, p):
     """Function of the robots kinematics
 
     Args:
         x: state
         t: time
-        prmtrs(object): parameter container class
+        p(object): parameter container class
 
     Returns:
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
     u1, u2 = control(x, t)  # control vector
-    # dxdt = f(x, u)
+
+    # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
                      u1 * sin(x3),
-                     1 / prmtrs.l * u1 * tan(u2)])
+                     1 / p.l * u1 * tan(u2)])
 
     # return state derivative
     return dxdt
@@ -39,8 +57,9 @@ def control(x, t):
         u: control vector
 
     """
-    u = [1, 0.25]
-    return u
+    u1 = np.maximum(0, 1.0 - 0.1*t)
+    u2 = np.full(u1.shape, 0.25)
+    return np.array([u1, u2]).T
 
 
 def plot_data(x, u, t, fig_width, fig_height, save=False):
@@ -56,8 +75,8 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     Returns: None
 
     """
-    # creating a figure with 2 subplots, that share the x-axis
-    fig1, (ax1, ax2) = plt.subplots(2, sharex=True)
+    # creating a figure with 3 subplots, that share the x-axis
+    fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
 
     # set figure size to desired values
     fig1.set_size_inches(fig_width / 2.54, fig_height / 2.54)
@@ -69,19 +88,41 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     ax1.plot(t, x[:, 1], label='$y_2(t)$', lw=1, color='b')
 
     # plot theta in subplot 2
-    ax2.plot(t, x[:, 2], label=r'$\theta(t)$', lw=1, color='g')
+    ax2.plot(t, np.rad2deg(x[:, 2]), label=r'$\theta(t)$', lw=1, color='g')
 
+    # plot control in subplot 3, left axis red, right blue
+    ax3.plot(t, np.rad2deg(u[:, 0]), label=r'$v(t)$', lw=1, color='r')
+    ax3.tick_params(axis='y', colors='r')
+    ax33 = ax3.twinx()
+    ax33.plot(t, np.rad2deg(u[:, 1]), label=r'$\phi(t)$', lw=1, color='b')
+    ax33.spines["left"].set_color('r')
+    ax33.spines["right"].set_color('b')
+    ax33.tick_params(axis='y', colors='b')
+
+    # Grids
     ax1.grid(True)
     ax2.grid(True)
-    # set the labels on the x and y axis in subplot 1
+    ax3.grid(True)
+
+    # set the labels on the x and y axis and the titles
+    ax1.set_title('Position coordinates')
     ax1.set_ylabel(r'm')
     ax1.set_xlabel(r't in s')
-    ax2.set_ylabel(r'rad')
+    ax2.set_title('Orientation')
+    ax2.set_ylabel(r'deg')
     ax2.set_xlabel(r't in s')
+    ax2.set_title('Velocity / steering angle')
+    ax3.set_ylabel(r'm/s')
+    ax33.set_ylabel(r'deg')
+    ax33.set_xlabel(r't in s')
 
     # put a legend in the plot
     ax1.legend()
     ax2.legend()
+    ax3.legend()
+    li3, lab3 = ax3.get_legend_handles_labels()
+    li33, lab33 = ax33.get_legend_handles_labels()
+    ax3.legend(li3 + li33, lab3 + lab33, loc=0)
 
     # automatically adjusts subplot to fit in figure window
     plt.tight_layout()
@@ -93,20 +134,23 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     return None
 
 
-def car_animation(x, u, t, prmtrs):
+def car_animation(x, u, t, p):
     """Animation function of the car-like mobile robot
 
     Args:
         x(ndarray): state-vector trajectory
         u(ndarray): control vector trajectory
         t(ndarray): time vector
-        prmtrs(object): parameters
+        p(object): parameters
 
     Returns: None
 
     """
-    dx = 1.5 * prmtrs.l
-    dy = 1.5 * prmtrs.l
+    # Setup two empty axes with enough space around the trajectory so the car
+    # can always be completely plotted. One plot holds the sketch of the car,
+    # the other the curve
+    dx = 1.5 * p.l
+    dy = 1.5 * p.l
     fig2, ax = plt.subplots()
     ax.set_xlim([min(min(x_traj[:, 0] - dx), -dx),
                  max(max(x_traj[:, 0] + dx), dx)])
@@ -116,8 +160,9 @@ def car_animation(x, u, t, prmtrs):
     ax.set_xlabel(r'$y_1$')
     ax.set_ylabel(r'$y_2$')
 
-    x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
-    car, = ax.plot([], [], 'k', lw=2)  # car
+    # Axis handles
+    h_x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
+    h_car, = ax.plot([], [], 'k', lw=2)    # car
 
     def car_plot(x, u):
         """Mapping from state x and action u to the position of the car elements
@@ -127,24 +172,23 @@ def car_animation(x, u, t, prmtrs):
             u: action vector
 
         Returns:
-            car:
 
         """
-        wheel_length = 0.1 * prmtrs.l
+        wheel_length = 0.1 * p.l
         y1, y2, theta = x
         v, phi = u
 
         # define chassis lines
-        chassis_y1 = [y1, y1 + prmtrs.l * cos(theta)]
-        chassis_y2 = [y2, y2 + prmtrs.l * sin(theta)]
+        chassis_y1 = [y1, y1 + p.l * cos(theta)]
+        chassis_y2 = [y2, y2 + p.l * sin(theta)]
 
         # define lines for the front and rear axle
-        rear_ax_y1 = [y1 + prmtrs.w * sin(theta), y1 - prmtrs.w * sin(theta)]
-        rear_ax_y2 = [y2 - prmtrs.w * cos(theta), y2 + prmtrs.w * cos(theta)]
-        front_ax_y1 = [chassis_y1[1] + prmtrs.w * sin(theta + phi),
-                       chassis_y1[1] - prmtrs.w * sin(theta + phi)]
-        front_ax_y2 = [chassis_y2[1] - prmtrs.w * cos(theta + phi),
-                       chassis_y2[1] + prmtrs.w * cos(theta + phi)]
+        rear_ax_y1 = [y1 + p.w * sin(theta), y1 - p.w * sin(theta)]
+        rear_ax_y2 = [y2 - p.w * cos(theta), y2 + p.w * cos(theta)]
+        front_ax_y1 = [chassis_y1[1] + p.w * sin(theta + phi),
+                       chassis_y1[1] - p.w * sin(theta + phi)]
+        front_ax_y2 = [chassis_y2[1] - p.w * cos(theta + phi),
+                       chassis_y2[1] + p.w * cos(theta + phi)]
 
         # define wheel lines
         rear_l_wl_y1 = [rear_ax_y1[1] + wheel_length * cos(theta),
@@ -176,8 +220,7 @@ def car_animation(x, u, t, prmtrs):
                    empty, front_l_wl_y2, empty, front_r_wl_y2]
 
         # set data
-        car.set_data(data_y1, data_y2)
-        return car,
+        h_car.set_data(data_y1, data_y2)
 
     def init():
         """Initialize plot objects that change during animation.
@@ -186,9 +229,9 @@ def car_animation(x, u, t, prmtrs):
         Returns:
 
         """
-        x_traj_plot.set_data([], [])
-        car.set_data([], [])
-        return x_traj_plot, car
+        h_x_traj_plot.set_data([], [])
+        h_car.set_data([], [])
+        return h_x_traj_plot, h_car
 
     def animate(i):
         """Defines what should be animated
@@ -201,47 +244,35 @@ def car_animation(x, u, t, prmtrs):
         """
         k = i % len(t)
         ax.set_title('Time (s): ' + str(t[k]), loc='left')
-        x_traj_plot.set_xdata(x[0:k, 0])
-        x_traj_plot.set_ydata(x[0:k, 1])
+        h_x_traj_plot.set_xdata(x[0:k, 0])
+        h_x_traj_plot.set_ydata(x[0:k, 1])
         car_plot(x[k, :], control(x[k, :], t[k]))
-        return x_traj_plot, car
+        return h_x_traj_plot, h_car
 
-    ani = animation.FuncAnimation(fig2, animate, init_func=init,
-                                  frames=len(t) + 1,
-                                  interval=(t[1] - t[0]) * 1000,
-                                  blit=False)
+    ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
+                             interval=(t[1] - t[0]) * 1000,
+                             blit=False)
 
-    ani.save('animation.mp4', writer='ffmpeg', fps=1 / (t[1] - t[0]))
+    ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
     plt.show()
     return None
 
 
-class Parameters(object):
-    pass
-
-
-prmtrs = Parameters()  # entity of class Parameters
-prmtrs.l = 0.3  # define car length
-prmtrs.w = prmtrs.l * 0.3  # define car width
-
-t0 = 0  # start time
-tend = 10  # end time
-dt = 0.04  # step-size
-
 # time vector
-tt = np.arange(t0, tend, dt)
+tt = np.arange(sim_para.t0, sim_para.tend + sim_para.dt, sim_para.dt)
 
 # initial state
 x0 = [0, 0, 0]
 
 # simulation
-x_traj = odeint(ode, x0, tt, args=(prmtrs,))
+sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tend), x0, method='RK45',t_eval=tt)
+x_traj = sol.y.T # size = len(x) x len(tt) (.T -> transpose)
 u_traj = control(x_traj, tt)
 
 # plot
-plot_data(x_traj, u_traj, tt, 12, 8, save=True)
+plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 
 # animation
-car_animation(x_traj, u_traj, tt, prmtrs)
+car_animation(x_traj, u_traj, tt, para)
 
 plt.show()
