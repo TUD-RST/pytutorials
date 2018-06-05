@@ -62,7 +62,7 @@ def control(x, t):
     dy2 = v*sin(phi)
 
     # tuning parameters for the tracking behavior
-    k01 = 13
+    k01 = 0
     k11 = 0
     k02 = k01
     k12 = k11
@@ -73,7 +73,7 @@ def control(x, t):
 
     # calculation of the inputs
     u2 = arctan(prmtrs.l * (w1 * dy2 - dy1 * w2) / (dy1 ** 2 + dy2 ** 2) ** (3. / 2))
-    #u2 = min(abs(u2),1.5)*np.sign(u2)
+    #u2 = min(abs(u2),1.1)*np.sign(u2)
     u1 = w1 / cos(phi) + 1 / prmtrs.l * (v ** 2) * tan(phi) * tan(u2)
 
     u = [u1, u2]
@@ -324,6 +324,8 @@ u_traj[:,0]=sol.y.T[:,-1]
 
 # plot
 plot_data(x_traj, x_ref, u_traj, sol.t, 12, 8, save=False)
+
+#plt.plot(sol.t.T,u_traj)
 # animation
 car_animation(x_traj, x_ref, u_traj, sol.t, prmtrs)
 #plt.plot(sol.t,sol.y.T)
