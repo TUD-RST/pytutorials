@@ -4,7 +4,7 @@ from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
-plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 class Parameters(object):
