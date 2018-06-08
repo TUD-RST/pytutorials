@@ -111,7 +111,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     ax2.set_title('Orientation')
     ax2.set_ylabel(r'deg')
     ax2.set_xlabel(r't in s')
-    ax2.set_title('Velocity / steering angle')
+    ax3.set_title('Velocity / steering angle')
     ax3.set_ylabel(r'm/s')
     ax33.set_ylabel(r'deg')
     ax33.set_xlabel(r't in s')
