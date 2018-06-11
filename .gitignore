@@ -353,3 +353,7 @@ ENV/
 /SystemSimulation-ODE/sim/state_trajectory.pgf
 /SystemSimulation-ODE/doc/tutorial1.pdf
 /SystemSimulation-ODE/sim/.idea
+/01-System-Simulation-ODE/sim/.idea/dictionaries/*.xml
+/01-System-Simulation-ODE/sim/.idea/inspectionProfiles/*.xml
+/01-System-Simulation-ODE/sim/.idea/*.xml
+/01-System-Simulation-ODE/sim/.idea/*.iml
