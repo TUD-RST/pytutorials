@@ -15,7 +15,7 @@ class Parameters(object):
 # Physical parameters
 para = Parameters()  # instance of class Parameters
 para.l = 0.3         # define car length
-para.w = para.l*0.3  # define car width
+para.w = para.l * 0.3  # define car width
 
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
@@ -23,13 +23,13 @@ sim_para.t0 = 0          # start time
 sim_para.tend = 10       # end time
 sim_para.dt = 0.04       # step-size
 sim_para.x0 = [0, 0, 0]
-sim_para.xend = [1, 1, 0]
+sim_para.xend = [5, 5, 0]
 
 
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
-traj_para.t0 = sim_para.t0
-traj_para.tend = sim_para.tend
+traj_para.t0 = sim_para.t0 + 1
+traj_para.tend = sim_para.tend - 1
 
 def ode(x, t, p):
     """Function of the robots kinematics
@@ -289,7 +289,7 @@ x0 = sim_para.x0
 
 # simulation
 sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tend), x0, method='RK45',t_eval=tt)
-x_traj = sol.y.T # size = len(x) x len(tt) (.T -> transpose)
+x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
 u_traj = np.zeros([len(tt),2])
 for i in range(0, len(tt)):
     u_traj[i] = control(x_traj[i], tt[i], para)

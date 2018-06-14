@@ -19,13 +19,21 @@ class Planner(object):
 class PolynomialPlanner(Planner):
     def eval(self,t):
         # TODO: check if t is scalar
-        if t<self.t0:
+        if t < self.t0:
             y = self.y0
-        elif t>self.tT:
+        elif t > self.tT:
             y = self.yT
         else:
             y = np.dot(self.TMatrix(t),self.coefficients())
         return y
+
+
+    def eval_vec(self,tt):
+        y = np.zeros([len(tt),len(self.y0)])
+        for i in range(0,len(tt)):
+            y[i] = self.eval(tt[i])
+        return y
+
 
     def TMatrix(self, t):
         d = self.d
@@ -41,6 +49,7 @@ class PolynomialPlanner(Planner):
 
     def coefficients(self):
         # TODO: should be called, when instance is constructed
+        # (this way it doesn't have to be computed every time .eval() is called)
         t0 = self.t0
         tT = self.tT
         Y = np.append(self.y0, self.yT)
@@ -52,16 +61,16 @@ class PolynomialPlanner(Planner):
 
 
 
-y0 = np.array([0.5, 1])
-yT = np.array([1, 0])
-t0 = 0.2
-tT = 1
-d = 1
-pp = PolynomialPlanner(y0,yT,t0,tT,d)
+#y0 = np.array([0.5, 1, 0, 0])
+#yT = np.array([1, 0, 0, 0])
+#t0 = 0.2
+#tT = 1
+#d = 3
+#pp = PolynomialPlanner(y0,yT,t0,tT,d)
 
-print(pp.TMatrix(t0))
-print(pp.TMatrix(tT))
-print(pp.coefficients())
-print(pp.eval(t0))
-print(pp.eval(tT))
-print(pp.eval(0.5*(tT-t0)))
+#print(pp.TMatrix(t0))
+#print(pp.TMatrix(tT))
+#print(pp.coefficients())
+#print(pp.eval(t0))
+#print(pp.eval(tT))
+#print(pp.eval(0.5*(tT-t0)))
