@@ -17,7 +17,7 @@ para.w = para.l*0.3  # define car width
 # Simulation parameter
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tend = 10       # end time
+sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
 
 
@@ -55,7 +55,7 @@ def control(x, t):
         u: control vector
 
     """
-    u1 = np.maximum(0, 0.5 - 0.06*t)
+    u1 = np.maximum(0, 1.0 - 0.1 * t)
     u2 = np.full(u1.shape, 0.25)
     return np.array([u1, u2]).T
 
@@ -133,7 +133,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
 
 
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tend + sim_para.dt, sim_para.dt)
+tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
 # initial state
 x0 = [0, 0, 0]

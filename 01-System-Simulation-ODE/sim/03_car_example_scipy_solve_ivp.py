@@ -19,7 +19,7 @@ para.w = para.l*0.3  # define car width
 # Simulation parameter
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tend = 10       # end time
+sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
 
 
@@ -259,13 +259,13 @@ def car_animation(x, u, t, p):
 
 
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tend + sim_para.dt, sim_para.dt)
+tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
 # initial state
 x0 = [0, 0, 0]
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tend), x0, method='RK45',t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), x0, method='RK45',t_eval=tt)
 x_traj = sol.y.T # size = len(x) x len(tt) (.T -> transpose)
 u_traj = control(x_traj, tt)
 
