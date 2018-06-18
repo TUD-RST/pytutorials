@@ -8,8 +8,8 @@ class Planner(object):
     """ Base class for a trajectory planner.
 
     Attributes:
-        yA (int, float, ndarray): start value
-        yB (int, float, ndarray): final value
+        YA (int, float, ndarray): start value
+        YB (int, float, ndarray): final value
         t0 (int, float): start time
         tf (int, float): final time
         d (int): trajectory is smooth up to the d-th derivative
@@ -45,7 +45,7 @@ class PolynomialPlanner(Planner):
             t (int, float): time
 
         Returns:
-            y (ndarray): y and its derivatives at t
+            Y (ndarray): y and its derivatives at t
         """
         if t < self.t0:
             Y = self.YA
@@ -119,12 +119,12 @@ class PolynomialPlanner(Planner):
 
 
 # example
-YA = np.array([0,0])
-YB = np.array([1,0])
-t0 = 1
-tf = 2
-tt = np.linspace(0, 3, 500)
-d = 1
+YA = np.array([0,0]) # t = t0
+YB = np.array([1,0]) # t = tf
+t0 = 1 # start time of transition
+tf = 2 # final time of transition
+tt = np.linspace(0, 3, 500) # 0 to 3 in 500 steps
+d = 1 # smooth derivative up to order d
 yd = PolynomialPlanner(YA, YB, t0, tf, d)
 
 # display the parameter vector

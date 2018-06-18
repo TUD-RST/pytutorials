@@ -138,7 +138,13 @@ c_0 \\ c_1 \\ \vdots \\ c_{2d-1}\\ c_{2d}\\ c_{2d+1}
 \end{align}
 To calculate the parameter vector $\mathbf{c}$, we first need to define the boundary conditions of the trajectory up to degree $d$:
 \begin{align*}
-y_d(t_0)&\overset{!}{=}y^A &&&y_d(t_f)&\overset{!}{=}y^B \\ \dot{y}_d(t_0)&\overset{!}{=}\dot{y}^A &&&\dot{y}_d(t_f)&\overset{!}{=}\dot{y}^B \\  &\vdots &&& &\vdots \\ y_d^{(d)}(t_0)&\overset{!}{=}y^{(d)A} &&& y_d^{(d)}(t_f)&\overset{!}{=}y^{(d)B}
+\underbrace{\begin{pmatrix} y_d(t_0) \\ \dot{y}_d(t_0) \\ \vdots \\ y_d^{(d)}(t_0) \end{pmatrix}}_{:=\mathbf{Y}_d(t_0)}
+&\overset{!}{=}
+\underbrace{\begin{pmatrix} y^A \\ \dot{y}^A \\ \vdots \\ y^{(d)A}  \end{pmatrix}}_{:=\mathbf{Y}^A}
+&&&
+\underbrace{\begin{pmatrix} y_d(t_f) \\ \dot{y}_d(t_f) \\ \vdots \\ y_d^{(d)}(t_f) \end{pmatrix}}_{:=\mathbf{Y}_d(t_f)}
+&\overset{!}{=}
+\underbrace{\begin{pmatrix} y^B \\ \dot{y}^B \\ \vdots \\ y^{(d)B}  \end{pmatrix}}_{:=\mathbf{Y}^B}
 \end{align*}
 This leads to a linear equation system:
 \begin{align*}
@@ -198,7 +204,7 @@ A \emph{Planner} should have the following attributes:
 We also want to evaluate the planned trajectory, but how this is done should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
 \listcodeplanning{2}{27}
 \subsubsection{The \emph{PolynomialPlanner} subclass}
-To implement the planning algorithm that was developed in \autoref{sec:polynomials}, we create a new class \texttt{PolynomialPlanner} that inherits from the previous defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
+To implement the planning algorithm that was developed in \autoref{sec:polynomials}, we create a new class \texttt{PolynomialPlanner} that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
 \listcodeplanning{30}{35}
 To solve for the parameter vector $\mathbf{c}$, we have to calculate the matrix $\mathbf{T}(t)$ from \eqref{eq:1}. We therefore create a method \texttt{TMatrix()}:
 \listcodeplanning{75}{96}
@@ -210,12 +216,34 @@ Finally we define a method \texttt{eval()} that implements \eqref{eq:3}:
 \listcodeplanning{41}{56}
 as well as a second method \texttt{eval\_vec()}, that can handle a time array as an input:
 \listcodeplanning{59}{72}
-The polynomial trajectory planner is now implemented and can be tested:
-\listcodeplanning{121}{142}
+The polynomial trajectory planner is now implemented and can be tested.
+
+\textbf{Example:}
+Suppose we want to plan a trajectory from $y(t_0)=0$ to $y(t_f) = 1$ with $t_0=1s$ and $t_f = 2s$. The trajectory should be one time smooth differentiable $(d=1)$. We therefore have to define the boundary conditions for the first derivative of $y$: 
+\begin{align*}
+\dot{y}(t_0)=0 &&& \dot{y}(t_f)=0
+\end{align*}
+The total time interval for the evaluation of the trajectory is $t\in[0s,3s]$.
+
+In \py we first define the boundary conditions for $t=t_0$ and $t=t_f$:
+\listcodeplanning{122}{123}
+Then we define the start and final time of the transition and the total time interval:
+\listcodeplanning{124}{126}
+Then we set $d$ and create a \texttt{PolynomialPlanner} instance \texttt{yd} with the defined parameters.
+\listcodeplanning{127}{128}
+We can display the calculated parameters
+\listcodeplanning{130}{131}
+and sample the generated trajectory at the defined total time interval
+\listcodeplanning{133}{134}
+At last, we can plot the results
+\listcodeplanning{136}{142}
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/planned_trajectory.pdf}
 \end{figure}
+
+\newpage
+\section{Feedforward control for the car}
 \printglossaries
 \end{document}
 
