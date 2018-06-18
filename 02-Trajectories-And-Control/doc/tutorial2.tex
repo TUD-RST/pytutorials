@@ -34,6 +34,7 @@ showstringspaces=false} % spacing between strings not showed
 
 % t.b.d.
 \newcommand{\listcode}[3]{\lstinputlisting[numbers=left,firstnumber=#1,firstline=#1,lastline=#2]{#3}}
+\newcommand{\listcodeplanner}[2]{\listcode{#1}{#2}{../sim/Planner.py}}
 \newcommand{\listcodeplanning}[2]{\listcode{#1}{#2}{../sim/01_trajectory_planning.py}}
 \newcommand{\listcodecontrol}[2]{\listcode{#1}{#2}{../sim/02_car_example_control.py}}
 
@@ -105,13 +106,14 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 \item Flatness based feedback control.
 
 \end{itemize}
-\textbf{\py source code file: \texttt{01\_trajectory\_planning.py}}
 
 Later in this tutorial we will use the designed trajectory generators to design control strategies for the car model. 
 
 Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}.
 \section{Trajectories for smooth point-to-point transitions}
 In control theory, we often want to transfer a system from a starting state $y(t_0)=y^A$ at the start time $t_0$ to a new state $y(t_f)=y^B$ at time $t_f$. The objective of smooth point-to-point transition is, that the generated trajectory $y_d: t \mapsto y$ meets certain boundary conditions at $t_0$ and $t_f$. If $y$ is for example a position coordinate and we use a simple trapezoidal interpolation in time between the two points $y^A$ and $y^B$, the amount of the acceleration at $t_0$ and $t_f$ approaches infinity which cannot be fullfilled by any system, due to inertia. That is why when we are planning a point-to-point transition we have to make sure, that the derivative of the planned trajectory is smooth up to a certain degree. 
+
+\textbf{\py source code file: \texttt{Planner.py}}
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/state_transition.pdf}
@@ -190,8 +192,13 @@ The full trajectory can be defined as a piecewise function:
 \begin{align}
 y(t)=\begin{cases}y^A & \textrm{if } t<t_0 \\ y_d(t) =\sum_{i=0}^{2d+1}c_i\frac{t^i}{i!} & \textrm{if } t\in [t_0,t_f] \\y^B & \textrm{if } t>t_f\end{cases}
 \end{align}
+\subsection{Gevrey class}
+It is sometimes necessary, that a planned trajectory is infinitely differentiable. We cannot use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. In mathematics the set of infinitely differentiable functions is called \emph{Gevrey class}. 
+
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning we first create a \emph{Planner} base class. Then we create a new subclass for each new planning algorithm, we want to use.
+
+\textbf{\py source code file: \texttt{Planner.py}}
 \subsubsection{The \emph{Planner} base class}
 A \emph{Planner} should have the following attributes:
 \begin{itemize}
@@ -202,46 +209,50 @@ A \emph{Planner} should have the following attributes:
 	\item[] \texttt{d} - planned trajectory should be smooth up to the $d$-th derivative
 \end{itemize}
 We also want to evaluate the planned trajectory, but how this is done should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
-\listcodeplanning{2}{27}
+\listcodeplanner{2}{27}
 \subsubsection{The \emph{PolynomialPlanner} subclass}
 To implement the planning algorithm that was developed in \autoref{sec:polynomials}, we create a new class \texttt{PolynomialPlanner} that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
-\listcodeplanning{30}{35}
+\listcodeplanner{28}{33}
 To solve for the parameter vector $\mathbf{c}$, we have to calculate the matrix $\mathbf{T}(t)$ from \eqref{eq:1}. We therefore create a method \texttt{TMatrix()}:
-\listcodeplanning{75}{96}
+\listcodeplanner{73}{94}
 Now we we have to create a method, that solves \eqref{eq:2} and returns $\mathbf{c}$:
-\listcodeplanning{99}{118}
+\listcodeplanner{97}{116}
 Because we want to reuse the result, we create a new attribute \texttt{c}:
-\listcodeplanning{37}{39}
+\listcodeplanner{35}{79}
 Finally we define a method \texttt{eval()} that implements \eqref{eq:3}:
-\listcodeplanning{41}{56}
+\listcodeplanner{39}{54}
 as well as a second method \texttt{eval\_vec()}, that can handle a time array as an input:
-\listcodeplanning{59}{72}
+\listcodeplanner{57}{70}
 The polynomial trajectory planner is now implemented and can be tested.
 
 \textbf{Example:}
-Suppose we want to plan a trajectory from $y(t_0)=0$ to $y(t_f) = 1$ with $t_0=1s$ and $t_f = 2s$. The trajectory should be one time smooth differentiable $(d=1)$. We therefore have to define the boundary conditions for the first derivative of $y$: 
+
+\textbf{\py source code file: \texttt{01\_trajectory\_planning.py}}
+
+Suppose we want to plan a trajectory from $y(t_0)=0$ to $y(t_f) = 1$ with $t_0=1s$ and $t_f = 2s$. The trajectory should be smoothly differentiable twice $(d=2)$. We therefore have to define the boundary conditions for the first and second derivative of $y$: 
 \begin{align*}
-\dot{y}(t_0)=0 &&& \dot{y}(t_f)=0
+\dot{y}(t_0)=0 &&& \dot{y}(t_f)=0 \\
+\ddot{y}(t_0)=0 &&& \ddot{y}(t_f)=0 \\
 \end{align*}
 The total time interval for the evaluation of the trajectory is $t\in[0s,3s]$.
 
 In \py we first define the boundary conditions for $t=t_0$ and $t=t_f$:
-\listcodeplanning{122}{123}
+\listcodeplanning{7}{8}
 Then we define the start and final time of the transition and the total time interval:
-\listcodeplanning{124}{126}
+\listcodeplanning{9}{11}
 Then we set $d$ and create a \texttt{PolynomialPlanner} instance \texttt{yd} with the defined parameters.
-\listcodeplanning{127}{128}
+\listcodeplanning{12}{13}
 We can display the calculated parameters
-\listcodeplanning{130}{131}
+\listcodeplanning{15}{16}
 and sample the generated trajectory at the defined total time interval
-\listcodeplanning{133}{134}
+\listcodeplanning{18}{19}
 At last, we can plot the results
-\listcodeplanning{136}{142}
+\listcodeplanning{21}{27}
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/planned_trajectory.pdf}
 \end{figure}
-
+\subsubsection{The tanh()-Planner}
 \newpage
 \section{Feedforward control for the car}
 \printglossaries

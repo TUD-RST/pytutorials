@@ -20,16 +20,16 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tend = 10       # end time
+sim_para.tf = 10       # final time
 sim_para.dt = 0.04       # step-size
 sim_para.x0 = [0, 0, 0]
-sim_para.xend = [5, 5, 0]
+sim_para.xf = [5, 5, 0]
 
 
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
 traj_para.t0 = sim_para.t0 + 1
-traj_para.tend = sim_para.tend - 1
+traj_para.tf = sim_para.tf - 1
 
 def ode(x, t, p):
     """Function of the robots kinematics
@@ -66,18 +66,18 @@ def control(x, t, p):
 
     """
     t0 = traj_para.t0
-    tend = traj_para.tend
+    tf = traj_para.tf
     x0 = sim_para.x0
-    xend = sim_para.xend
-    Y10 = np.array([x0[0], 0])
-    Y1end = np.array([xend[0], 0])
-    Y20 = np.array([x0[1], tan(x0[2]), 0])
-    Y2end = np.array([xend[1], tan(xend[2]), 0])
-    f = PolynomialPlanner(Y20, Y2end, Y10[0], Y1end[0], 2)
-    g = PolynomialPlanner(Y10, Y1end, t0, tend, 1)
+    xf = sim_para.xf
+    Y1A = np.array([x0[0], 0])
+    Y1B = np.array([xf[0], 0])
+    Y2A = np.array([x0[1], tan(x0[2]), 0])
+    Y2B = np.array([xf[1], tan(xf[2]), 0])
+    f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
+    g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
     g_t = g.eval(t) # y1 = g(t)
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
-    u1 = g_t[1]*np.sqrt(1+f_y1[1]**2)
+    u1 = g_t[1]*np.sqrt(1 + f_y1[1]**2)
     u2 = arctan2(p.l*f_y1[2], (1 + f_y1[1]**2)**(3/2))
     return np.array([u1, u2]).T
 
@@ -282,13 +282,13 @@ def car_animation(x, u, t, p):
 
 
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tend + sim_para.dt, sim_para.dt)
+tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
 # initial state
 x0 = sim_para.x0
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tend), x0, method='RK45',t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), x0, method='RK45',t_eval=tt)
 x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
 u_traj = np.zeros([len(tt),2])
 for i in range(0, len(tt)):
@@ -304,15 +304,15 @@ car_animation(x_traj, u_traj, tt, para)
 #plt.show()
 
 t0 = traj_para.t0
-tend = traj_para.tend
+tf = traj_para.tf
 x0 = sim_para.x0
-xend = sim_para.xend
-Y10 = np.array([x0[0], 0])
-Y1end = np.array([xend[0], 0])
-Y20 = np.array([x0[1], tan(x0[2]), 0])
-Y2end = np.array([xend[1], tan(xend[2]), 0])
-f = PolynomialPlanner(Y20, Y2end, Y10[0], Y1end[0], 2)
-g = PolynomialPlanner(Y10, Y1end, t0, tend, 1)
+xf = sim_para.xf
+Y1A = np.array([x0[0], 0])
+Y1B = np.array([xf[0], 0])
+Y2A = np.array([x0[1], tan(x0[2]), 0])
+Y2B = np.array([xf[1], tan(xf[2]), 0])
+f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
+g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
 
 y1D = g.eval_vec(tt)
 y2D = f.eval_vec(y1D[:,0])
