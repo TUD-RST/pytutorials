@@ -4,7 +4,7 @@ from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
-plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 class Parameters(object):
@@ -19,7 +19,7 @@ para.w = para.l*0.3  # define car width
 # Simulation parameter
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tend = 10       # end time
+sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
 
 
@@ -111,7 +111,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     ax2.set_title('Orientation')
     ax2.set_ylabel(r'deg')
     ax2.set_xlabel(r't in s')
-    ax2.set_title('Velocity / steering angle')
+    ax3.set_title('Velocity / steering angle')
     ax3.set_ylabel(r'm/s')
     ax33.set_ylabel(r'deg')
     ax33.set_xlabel(r't in s')
@@ -259,7 +259,7 @@ def car_animation(x, u, t, p):
 
 
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tend + sim_para.dt, sim_para.dt)
+tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
 # initial state
 x0 = [0, 0, 0]

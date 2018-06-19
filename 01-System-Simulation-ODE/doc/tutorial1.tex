@@ -102,20 +102,20 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 \item Simulation of the model,
 \item Presentation of the results.
 \end{itemize}
-\textbf{Python source code file: \texttt{01\_car\_example\_plotting.py}}
+\textbf{\py source code file: \texttt{01\_car\_example\_plotting.py}}
 
 Later in this tutorial we will extend our simulation by a visualization of the moving car and some advanced methods of numerical integration.
 
-Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}.
+Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{\py List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial} if you are not familiar with the handling of containers and arrays in \py. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}.
 
 \section{Model of a car-like mobile robot}
 \label{sec:model}
 \begin{figure}[ht]
-	\centering
-	\def\svgwidth{0.7\textwidth}
-	\input{img/car-like_mobile_robot.pdf_tex}
-	\caption{Car-like mobile robot}
-	\label{fig:car}
+  \centering
+  \def\svgwidth{0.7\textwidth}
+  \input{img/car-like_mobile_robot.pdf_tex}
+  \caption{Car-like mobile robot}
+  \label{fig:car}
 \end{figure}
 Given is a nonlinear kinematic model of a car-like mobile robot, cf.~Figure \ref{fig:car}, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the robots lateral velocity $v=\left| \mathbf{v} \right| $: 
 \begin{subequations}\label{eq:syseq}
@@ -179,7 +179,7 @@ Note the way the two functions above are documented. The text within the \texttt
 \subsection{Solution of the \gls{ivp} using \scipy}
 We are now ready to perform the numerical integration of system \eqref{eq:odesys}. At first, we define a vector \texttt{tt} specifying the time values at which we would like to obtain the computed values of $\x$. Then we define the initial vector $\xZero$ and call the  \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.odeint.html}{odeint} function of the \scipy integrate package to perform the simulation\footnote{Consider using the more advanced integrators offered by \scipy, see Section \ref{sec:ScipyLambda}.}. Note that \texttt{odeint} is a variable step solver although it outputs the result at equally spaced time steps in this case. The output is an array of shape \texttt{len(tt)}$\times$\texttt{len(x0)}. Finally, the control input values are calculated from the obtained trajectory of $\x$ (we cannot directly save the values for $\uu$ in the \texttt{ode} function because it is also repeatedly called between our specified time steps by the solver).
 \listcodeplot{135}{143}
-Note that the interval specified by \texttt{np.arange} is open on the right hand side. Hence, we add \texttt{dt} to include also \texttt{tend} in the simulation. 
+Note that the interval specified by \texttt{np.arange} is open on the right hand side. Hence, we add \texttt{dt} to include also \texttt{tf} in the simulation. 
 
 
 \section{Plotting using \mpl} \label{sec:plot}
@@ -201,7 +201,7 @@ The result can be found in Figure \ref{fig:state_traj}. If your not satisfied wi
 
 \section{Animation using \mpl} \label{sec:animation}
 
-\textbf{Python source code file: \texttt{02\_car\_example\_animation.py}}
+\textbf{\py source code file: \texttt{02\_car\_example\_animation.py}}
 
 Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visiual represantation of the system to get a better understanding of what is actually happening. This applies especially for mechanical systems. \mpl provides the sub-package \emph{animation}, which can be used for such a purpose. We therefore need to add 
 \listcodeanim{6}{6}
@@ -232,10 +232,10 @@ Now we have all things set up to simulate our system and animate it.
 \listcodeanim{274}{277}
 
 \begin{figure}[ht]
-	\centering
-	\includegraphics[width=0.7\textwidth]{img/animation}
-	\caption{Car animation}
-	\label{fig:animation}
+  \centering
+  \includegraphics[width=0.7\textwidth]{img/animation}
+  \caption{Car animation}
+  \label{fig:animation}
 \end{figure}
         
 
@@ -243,14 +243,14 @@ Now we have all things set up to simulate our system and animate it.
 
 \section{Simulation with \scipy's new \emph{solve\_ivp} module and the \emph{lambda} function}\label{sec:ScipyLambda}
 
-\textbf{Python source code file: \texttt{03\_car\_example\_scipy\_solve\_ivp.py}}
+\textbf{\py source code file: \texttt{03\_car\_example\_scipy\_solve\_ivp.py}}
 
 In addition to the solution in \autoref{sec:simulation} using \emph{odeint}, \scipy's integrate package contains some newer and more powerful solver functions. One of them is the function \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html}{\texttt{solve\_ivp}}. The function \texttt{solve\_ivp} takes a function of the type \texttt{func(t, x)} calculating the value of the right hand side of \eqref{eq:odesys}. Further parameters are not allowed. In order to be able to use our previously defined ode-function \texttt{ode(x, t, p)} which additionally takes the parameter structure \texttt{p} and has a different order for \texttt{t}  and \texttt{x}, we make use of a so-called lambda-function. We call the solver as follows:
 \begin{lstlisting}
 sol = solve_ivp(lambda t, x: ode(x, t, para), 
-               (t0, tend), x0, method='RK45',t_eval=tt)
+               (t0, tf), x0, method='RK45',t_eval=tt)
 \end{lstlisting}
-This way we encapsulate our \texttt{ode} function in an anonymous function, that has just $(t, x)$ as arguments (as required by \texttt{solve\_ivp}) but evaluates as \texttt{ode(x, t, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \texttt{solve\_ivp}: A tuple $(t0, tend)$ which defines the simulation interval and the initial value $x0$. Furthermore, we pass the optional arguments \emph{method}, in this case a Runge-Kutta method and \emph{t\_eval}, which defines the values at which the solution should be sampled.
+This way we encapsulate our \texttt{ode} function in an anonymous function, that has just $(t, x)$ as arguments (as required by \texttt{solve\_ivp}) but evaluates as \texttt{ode(x, t, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \texttt{solve\_ivp}: A tuple $(t0, tf)$ which defines the simulation interval and the initial value $x0$. Furthermore, we pass the optional arguments \emph{method}, in this case a Runge-Kutta method and \emph{t\_eval}, which defines the values at which the solution should be sampled.
 
 The return value \emph{sol} is an \emph{OdeResult} object. To extract the simulated state trajectory, we execute:
 \begin{lstlisting}

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numpy import cos, sin, tan
+from numpy import cos, arccos, sin, arcsin, tan, arctan, arctan2, pi
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
+from Planner import PolynomialPlanner
 #plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
@@ -11,17 +12,24 @@ class Parameters(object):
     pass
 
 
-# Physical parameter
+# Physical parameters
 para = Parameters()  # instance of class Parameters
 para.l = 0.3         # define car length
-para.w = para.l*0.3  # define car width
+para.w = para.l * 0.3  # define car width
 
-# Simulation parameter
+# Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
+sim_para.tf = 10       # final time
 sim_para.dt = 0.04       # step-size
+sim_para.x0 = [0, 0, 0]
+sim_para.xf = [5, 5, 0]
 
+
+# Trajectory parameters
+traj_para = Parameters() # instance of class Parameters
+traj_para.t0 = sim_para.t0 + 1
+traj_para.tf = sim_para.tf - 1
 
 def ode(x, t, p):
     """Function of the robots kinematics
@@ -35,7 +43,7 @@ def ode(x, t, p):
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
-    u1, u2 = control(x, t)  # control vector
+    u1, u2 = control(x, t, p)  # control vector
 
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
@@ -46,7 +54,7 @@ def ode(x, t, p):
     return dxdt
 
 
-def control(x, t):
+def control(x, t, p):
     """Function of the control law
 
     Args:
@@ -57,12 +65,24 @@ def control(x, t):
         u: control vector
 
     """
-    u1 = np.maximum(0, 1.0 - 0.1*t)
-    u2 = np.full(u1.shape, 0.25)
+    t0 = traj_para.t0
+    tf = traj_para.tf
+    x0 = sim_para.x0
+    xf = sim_para.xf
+    Y1A = np.array([x0[0], 0])
+    Y1B = np.array([xf[0], 0])
+    Y2A = np.array([x0[1], tan(x0[2]), 0])
+    Y2B = np.array([xf[1], tan(xf[2]), 0])
+    f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
+    g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
+    g_t = g.eval(t) # y1 = g(t)
+    f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
+    u1 = g_t[1]*np.sqrt(1 + f_y1[1]**2)
+    u2 = arctan2(p.l*f_y1[2], (1 + f_y1[1]**2)**(3/2))
     return np.array([u1, u2]).T
 
 
-def plot_data(x, u, t, fig_width, fig_height, save=False):
+def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     """Plotting function of simulated state and actions
 
     Args:
@@ -83,12 +103,15 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
 
     # plot y_1 in subplot 1
     ax1.plot(t, x[:, 0], label='$y_1(t)$', lw=1, color='r')
+    ax1.plot(t, xref[:, 0], label='$y_{1,d}(t)$', lw=1, color=(0.5, 0, 0))
 
     # plot y_2 in subplot 1
     ax1.plot(t, x[:, 1], label='$y_2(t)$', lw=1, color='b')
+    ax1.plot(t, xref[:, 1], label='$y_{2,d}(t)$', lw=1, color=(0, 0, 0.5))
 
     # plot theta in subplot 2
-    ax2.plot(t, np.rad2deg(x[:, 2]), label=r'$\theta(t)$', lw=1, color='g')
+    ax2.plot(t, np.rad2deg(x[:, 2]), label=r'$\theta(t)$', lw=1, color=(0, 0.7, 0))
+    ax2.plot(t, np.rad2deg(xref[:, 2]), label=r'$\theta_d(t)$', lw=1, color='g')
 
     # plot control in subplot 3, left axis red, right blue
     ax3.plot(t, np.rad2deg(u[:, 0]), label=r'$v(t)$', lw=1, color='r')
@@ -246,7 +269,7 @@ def car_animation(x, u, t, p):
         ax.set_title('Time (s): ' + str(t[k]), loc='left')
         h_x_traj_plot.set_xdata(x[0:k, 0])
         h_x_traj_plot.set_ydata(x[0:k, 1])
-        car_plot(x[k, :], control(x[k, :], t[k]))
+        car_plot(x[k, :], control(x[k, :], t[k], p))
         return h_x_traj_plot, h_car
 
     ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
@@ -262,17 +285,41 @@ def car_animation(x, u, t, p):
 tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
 # initial state
-x0 = [0, 0, 0]
+x0 = sim_para.x0
 
 # simulation
 sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), x0, method='RK45',t_eval=tt)
-x_traj = sol.y.T # size = len(x) x len(tt) (.T -> transpose)
-u_traj = control(x_traj, tt)
+x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
+u_traj = np.zeros([len(tt),2])
+for i in range(0, len(tt)):
+    u_traj[i] = control(x_traj[i], tt[i], para)
+
 
 # plot
-plot_data(x_traj, u_traj, tt, 12, 16, save=True)
+#plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 
 # animation
 car_animation(x_traj, u_traj, tt, para)
 
+#plt.show()
+
+t0 = traj_para.t0
+tf = traj_para.tf
+x0 = sim_para.x0
+xf = sim_para.xf
+Y1A = np.array([x0[0], 0])
+Y1B = np.array([xf[0], 0])
+Y2A = np.array([x0[1], tan(x0[2]), 0])
+Y2B = np.array([xf[1], tan(xf[2]), 0])
+f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
+g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
+
+y1D = g.eval_vec(tt)
+y2D = f.eval_vec(y1D[:,0])
+
+x_ref = np.zeros_like(x_traj)
+x_ref[:,0] = y1D[:,0]
+x_ref[:,1] = y2D[:,0]
+x_ref[:,2] = arctan(y2D[:,1])
+plot_data(x_traj, x_ref, u_traj, tt, 12, 16, save=True)
 plt.show()

@@ -3,7 +3,7 @@ This tutorial shows how to implement a trajectory generator and how to establish
 based feedforward and feedback control
 
 ## The following topics are covered by the tutorial
-- Implementation of different trajectory generators in a class hirachy
+- Implementation of different trajectory generators in a class hierarchy
 - Flatness based feedforward control
 - Flatness based feedback control
 
