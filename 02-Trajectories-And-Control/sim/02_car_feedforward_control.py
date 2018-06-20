@@ -20,16 +20,29 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 10       # final time
+sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
-sim_para.x0 = [0, 0, 0]
-sim_para.xf = [5, 5, 0]
+sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
+sim_para.x0 = [0, 0, 0]  # inital state at t0
+sim_para.xf = [5, 5, 0]  # final state at tf
 
 
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
-traj_para.t0 = sim_para.t0 + 1
-traj_para.tf = sim_para.tf - 1
+traj_para.t0 = sim_para.t0 + 1 # start time of transition
+traj_para.tf = sim_para.tf - 1 # final time of transition
+
+# boundary conditions for y1
+traj_para.Y1A = np.array([sim_para.x0[0], 0])
+traj_para.Y1B = np.array([sim_para.xf[0], 0])
+
+# boundary conditions for y2
+traj_para.Y2A = np.array([sim_para.x0[1], tan(sim_para.x0[2]), 0])
+traj_para.Y2B = np.array([sim_para.xf[1], tan(sim_para.xf[2]), 0])
+
+# ininitialize the planners
+traj_para.f = PolynomialPlanner(traj_para.Y2A, traj_para.Y2B, traj_para.Y1A[0], traj_para.Y1B[0], 2)
+traj_para.g = PolynomialPlanner(traj_para.Y1A, traj_para.Y1B, traj_para.t0, traj_para.tf, 1)
 
 def ode(x, t, p):
     """Function of the robots kinematics
@@ -58,27 +71,27 @@ def control(x, t, p):
     """Function of the control law
 
     Args:
-        x: state vector
-        t: time
+        x (ndarray, int): state vector
+        t (int): time
+        p (object): parameter container class
 
     Returns:
-        u: control vector
+        u (ndarry): control vector
 
     """
-    t0 = traj_para.t0
-    tf = traj_para.tf
-    x0 = sim_para.x0
-    xf = sim_para.xf
-    Y1A = np.array([x0[0], 0])
-    Y1B = np.array([xf[0], 0])
-    Y2A = np.array([x0[1], tan(x0[2]), 0])
-    Y2B = np.array([xf[1], tan(xf[2]), 0])
-    f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
-    g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
+
+    # get planners from traj_para
+    f = traj_para.f
+    g = traj_para.g
+
+    # evaluate the planned trajectories at time t
     g_t = g.eval(t) # y1 = g(t)
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
+
+    # setting control laws
     u1 = g_t[1]*np.sqrt(1 + f_y1[1]**2)
     u2 = arctan2(p.l*f_y1[2], (1 + f_y1[1]**2)**(3/2))
+
     return np.array([u1, u2]).T
 
 
@@ -281,45 +294,25 @@ def car_animation(x, u, t, p):
     return None
 
 
-# time vector
-tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
-
-# initial state
-x0 = sim_para.x0
-
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), x0, method='RK45',t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), sim_para.x0, method='RK45',t_eval=sim_para.tt)
 x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
-u_traj = np.zeros([len(tt),2])
-for i in range(0, len(tt)):
-    u_traj[i] = control(x_traj[i], tt[i], para)
-
-
-# plot
-#plot_data(x_traj, u_traj, tt, 12, 16, save=True)
+u_traj = np.zeros([len(sim_para.tt),2])
+for i in range(0, len(sim_para.tt)):
+    u_traj[i] = control(x_traj[i], sim_para.tt[i], para)
 
 # animation
-car_animation(x_traj, u_traj, tt, para)
+car_animation(x_traj, u_traj, sim_para.tt, para)
 
-#plt.show()
-
-t0 = traj_para.t0
-tf = traj_para.tf
-x0 = sim_para.x0
-xf = sim_para.xf
-Y1A = np.array([x0[0], 0])
-Y1B = np.array([xf[0], 0])
-Y2A = np.array([x0[1], tan(x0[2]), 0])
-Y2B = np.array([xf[1], tan(xf[2]), 0])
-f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
-g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
-
-y1D = g.eval_vec(tt)
-y2D = f.eval_vec(y1D[:,0])
+# get reference trajectories
+y1D = traj_para.g.eval_vec(tt)
+y2D = traj_para.f.eval_vec(y1D[:,0])
 
 x_ref = np.zeros_like(x_traj)
 x_ref[:,0] = y1D[:,0]
 x_ref[:,1] = y2D[:,0]
 x_ref[:,2] = arctan(y2D[:,1])
-plot_data(x_traj, x_ref, u_traj, tt, 12, 16, save=True)
+
+plot_data(x_traj, x_ref, u_traj, sim_para.tt, 12, 16, save=True)
+
 plt.show()

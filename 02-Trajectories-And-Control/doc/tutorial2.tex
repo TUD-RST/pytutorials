@@ -5,6 +5,7 @@
 \usepackage{csquotes}
 \usepackage{xspace} % proper space after macros with 0 args
 \usepackage{bm}
+\usepackage{fancyref}
 
 % mathematics
 \usepackage{amsmath}
@@ -36,8 +37,18 @@ showstringspaces=false} % spacing between strings not showed
 \newcommand{\listcode}[3]{\lstinputlisting[numbers=left,firstnumber=#1,firstline=#1,lastline=#2]{#3}}
 \newcommand{\listcodeplanner}[2]{\listcode{#1}{#2}{../sim/Planner.py}}
 \newcommand{\listcodeplanning}[2]{\listcode{#1}{#2}{../sim/01_trajectory_planning.py}}
-\newcommand{\listcodecontrol}[2]{\listcode{#1}{#2}{../sim/02_car_example_control.py}}
+\newcommand{\listcodeffcontrol}[2]{\listcode{#1}{#2}{../sim/02_car_feedforward_control.py}}
+\newcommand{\listcodefbcontrol}[2]{\listcode{#1}{#2}{../sim/03_car_feedback_control.py}}
 
+\setlength{\parskip}{2ex}
+\setlength{\parindent}{0ex}
+
+%\newcommand{\test}{Ich bin ein Testsatz!}
+\newcommand{\yIZ}{y_{1A}}
+\newcommand{\yIIZ}{y_{2A}}
+\newcommand{\yIT}{y_{1B}}
+\newcommand{\yIIT}{y_{2B}}
+\newcommand{\diff}[2]{\frac{\text{d}#1}{\text{d}#2}}
 % others
 \usepackage{acronym}
 
@@ -188,12 +199,62 @@ Now we can calculate $\mathbf{Y}(t)$ in a closed form:
 \label{eq:3}
 \mathbf{Y}(t)=\mathbf{T}(t)\mathbf{c} \quad t \in [t_0,t_f] 
 \end{align}
-The full trajectory can be defined as a piecewise function:
+The full trajectory can be defined as a piecewise-defined function:
 \begin{align}
 y(t)=\begin{cases}y^A & \textrm{if } t<t_0 \\ y_d(t) =\sum_{i=0}^{2d+1}c_i\frac{t^i}{i!} & \textrm{if } t\in [t_0,t_f] \\y^B & \textrm{if } t>t_f\end{cases}
 \end{align}
-\subsection{Gevrey class}
-It is sometimes necessary, that a planned trajectory is infinitely differentiable. We cannot use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. In mathematics the set of infinitely differentiable functions is called \emph{Gevrey class}. 
+\subsection{Polynomials using a prototype function}
+A slightly different approach for a polynomial reference trajectory $y_d(t)$ is again a piecewise-defined function:
+\begin{align}
+\label{eq:5}
+y(t) = \begin{cases} y_d(t_0) &\textrm{if } t<t_0 \\ y_d(t_0) + (y_d(t_f)-y_d(t_0))\varphi_\gamma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ y_d(t_f) &\textrm{if } t>T\end{cases}
+\end{align}
+$\tau \rightarrow \varphi_\gamma(\tau)$ is a protoype function, where $\gamma$ indicates how often $\varphi_\gamma(\tau)$ is continuously differentiable. The function has to meet the following conditions, such that the reference trajectory is feasible:
+\begin{subequations}
+\label{eq:6}
+\begin{align}
+\varphi_\gamma(0)=0 \quad \varphi^{(j)}_\gamma(0)=0 \quad j = 1,...,\gamma \\
+\varphi_\gamma(1)=1 \quad \varphi^{(j)}_\gamma(1)=0 \quad j = 1,...,\gamma 
+\end{align}
+\end{subequations}
+An approach for the derivative of $\varphi_\gamma(\tau)$, which meets the conditions \eqref{eq:6} is:
+\begin{align}
+\frac{\d \varphi_\gamma(\tau)}{\d \tau} = \alpha \frac{\tau^{\gamma}}{\gamma!}\frac{(1-\tau)^{\gamma}}{\gamma!}
+\end{align}
+Integration leads to:
+\begin{align}
+\varphi_\gamma(\tau) = \alpha \int_0^\tau\frac{\tilde{\tau}^{\gamma}}{\gamma!}\frac{(1-\tilde{\tau})^{\gamma}}{\gamma!} \d \tilde{\tau}
+\end{align}
+After $\gamma$ partial integrations we get:
+\begin{align*}
+\varphi_\gamma(\tau)= \frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
+\end{align*}
+To solve for the unknown $\alpha$, we use the condition $\varphi_\gamma(1)\overset{!}{=}1$:
+\begin{align*}
+\varphi_\gamma(1)= &\frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k}{(\gamma+k+1)} \overset{!}{=} 1 \\
+\Leftrightarrow \quad & \alpha = (2\gamma+1)!
+\end{align*}
+Finally we can define the prototype function:
+\begin{align}
+\varphi_\gamma(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
+\end{align}
+and it's $n$-th derivative:
+\begin{align}
+\varphi_\gamma^{(n)}(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \left(\binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k-n+1}}{(\gamma+k+1)}\prod_{i=1}^n(\gamma+k-i+2)\right)
+\end{align}
+In the last step we can derive the $n$-th derivative of \eqref{eq:5} $(n=1,...,\gamma$).
+\begin{align}
+y^{(n)}(t) = \begin{cases} y_d^{(n)}(t_0) & \textrm{if } t<t_0 \\ 
+y_d^{(n)} + \sum_{i=0}^{n}\binom{n}{i}(y_d^{(n-i)}(t)-y_d^{(n-i)}(t_0))\left(\frac{1}{t_f-t_0}\right)^i\varphi_\gamma^{(i)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
+y_d^{(n)}(t_f)&\textrm{if } t>t_f\end{cases}
+\end{align}
+\subsection{Gevrey-functions}
+It is sometimes necessary, that a planned trajectory is infinitely differentiable. We cannot use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. 
+\begin{defi}[Gevrey-function] A function $y(t):\Omega \mapsto \R$ is called a Gevrey-function of order $\alpha$, if $y(t) \in C^\infty(\Omega)$ and positive constants $M, R$ exist, such that
+\begin{align*}
+\sup_{t\in\Omega}{|y^{(n)}(t)| \leq \frac{M}{R^n}(n!)^\alpha}.
+\end{align*}
+\end{defi}
 
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning we first create a \emph{Planner} base class. Then we create a new subclass for each new planning algorithm, we want to use.
@@ -211,6 +272,7 @@ A \emph{Planner} should have the following attributes:
 We also want to evaluate the planned trajectory, but how this is done should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
 \listcodeplanner{2}{27}
 \subsubsection{The \emph{PolynomialPlanner} subclass}
+\label{sec:polynomialplanner}
 To implement the planning algorithm that was developed in \autoref{sec:polynomials}, we create a new class \texttt{PolynomialPlanner} that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
 \listcodeplanner{28}{33}
 To solve for the parameter vector $\mathbf{c}$, we have to calculate the matrix $\mathbf{T}(t)$ from \eqref{eq:1}. We therefore create a method \texttt{TMatrix()}:
@@ -252,9 +314,115 @@ At last, we can plot the results
 \centering
 \includegraphics[scale=1]{img/planned_trajectory.pdf}
 \end{figure}
-\subsubsection{The tanh()-Planner}
+\subsubsection{The \emph{PrototypePlanner} subclass}
+Implementation can be found in the file.
 \newpage
 \section{Feedforward control for the car}
+\textbf{\py source code file: \texttt{02\_car\_feedforward\_control.py}}
+
+Recapture the model of the car from tutorial 1 \footnote{\url{https://github.com/TUD-RST/pytutorials/tree/master/01-System-Simulation-ODE}}, parameterized in time $t$:
+\begin{subequations}
+\begin{align}
+\dot y_1 &= v \cos(\theta)\\
+\dot y_2 &= v \sin(\theta)\\
+\dot \theta &= \frac{v}{l}\tan(\varphi).
+\end{align}
+\end{subequations}
+\subsection{Reparameterization of the model}
+We have to derive the model of the car, parameterized in arc length $s$ to take care of singularities, that would appear in steady-state $(v=0)$.
+
+We can assume the follwing:
+\begin{align*}
+\frac{\d}{\d t} = \frac{\d}{\d t}\frac{\d s}{\d s} = \frac{\d}{\d s}\frac{\d s}{\d t} = \frac{\d}{\d s}\dot s
+\end{align*}
+If we replace $\frac{\d}{\d t}$ in the model equations we get:
+\begin{subequations}
+\begin{align}
+\frac{\d}{\d s}\dot s y_1 &= v \cos(\theta)\\
+\frac{\d}{\d s}\dot s y_2 &= v \sin(\theta)\\
+\frac{\d}{\d s}\dot s \theta &= \frac{v}{l}\tan(\varphi).
+\end{align}
+\end{subequations}
+We know that $v = |\dot{\bm{y}}| = \sqrt{\dot y_1^2+\dot y_2^2}$. If we parametrize this equation in $s$, we get   $\sqrt{(\frac{\d}{\d s}\dot sy_1)^2+(\frac{\d}{\d s}\dot s y_2)^2}=\dot s \sqrt{(y_1^\prime)^2+(y_2^\prime)^2}$\footnote{assuming $\dot s > 0$}. If $s$ is the arc length, the Pythagorean theorem $ds^2 = dy_1^2 + dy_2^2$ leads to $\sqrt{(y_1^\prime)^2+(y_2^\prime)^2}=1$ and $v=\dot s$. 
+Finally we get the system parametrized in $s$:
+\begin{subequations}
+\begin{align}
+y_1^\prime &= \cos(\theta)\\
+y_2^\prime &= \sin(\theta)\\
+\theta^\prime &= \frac{1}{l}\tan(\varphi).
+\end{align}
+\end{subequations}
+\subsection{Deriving feedforward control laws}
+Goal: We want to drive the car in the $y_1$-$y_2$-plane frome a point $(\yIZ, \yIIZ)$ to a point $(\yIT, \yIIT)$ in time $T=t_f-t_0$. The car should be in rest at the beginning and at the end of the process and the trajectory is defined by a sufficiently smooth function $f : \mathbb{R} \to \mathbb{R}$ with $y_2 = f(y_1)$. Note that $(y_1, y_2)$ is a flat output of the system.
+
+\textbf{Step 1:} Calculate the dependency of the remaining system variables $\theta$ and $\varphi$ of the  length parameterized system on $(y_1, y_2)$:
+\begin{align}
+\tan(\theta) &= \frac{y_2^\prime}{y_1^\prime} = \diff{y_2}{y_1} = f^\prime(y_1)\\
+(1 + \tan^2(\theta))\diff{\theta}{y_1} &= f^{\prime\prime}(y_1) \nonumber \\
+\Leftrightarrow \quad \diff{\theta}{y_1}&= \frac{f^{\prime\prime}(y_1)}{1 + (f^\prime(y_1))^2} = \frac{\theta^\prime}{y_1^\prime} \nonumber\\
+\intertext{with $(y_1^\prime)^2 + (y_2^\prime)^2 = 1 \, \Leftrightarrow \, y_1^\prime = 1/\sqrt{1 + (f^\prime(y_1))^2}$ one obtains:}
+\Leftrightarrow \quad \theta^\prime &= \frac{f^{\prime\prime}(y_1)}{\left(1 + (f^\prime(y_1))^2\right)^{3/2}}\\
+\tan(\varphi) &= l\theta^\prime = \frac{lf^{\prime\prime}(y_1)}{\left(1 + (f^\prime(y_1))^2\right)^{3/2}}
+\end{align}
+
+Result: Depending on our planning $y_2 = f(y_1)$ we can calculate the required steering angle solely from $y_1$ and derivatives of $f$ w.r.t.~$y_1$ up to order 2. The planned trajectory has to fulfill the following boundary conditions:
+\begin{align*}
+f(\yIZ) = \yIIZ &&& f(\yIT) = \yIIT \\
+f^\prime(\yIZ) = \tan(\theta_A) &&& f^\prime(\yIT) = \tan(\theta_B) \\
+f^{\prime\prime}(\yIZ) = (1+\tan^2(\theta_A))\left(\frac{\frac{1}{l}\tan(\varphi_A)}{cos(\theta_A)}\right) &&& 
+f^{\prime\prime}(\yIT) = (1+\tan^2(\theta_B))\left(\frac{\frac{1}{l}\tan(\varphi_B)}{cos(\theta_B)}\right) 
+\end{align*}
+By always setting $\varphi_A=\varphi_B=0$, these conditions simplify to:
+\begin{align*}
+f^{\prime\prime}(\yIZ) = 0 &&& f^{\prime\prime}(\yIT) = 0
+\end{align*}
+\textbf{Step 2:} Calculation of the required velocity $v$. We define another function $g: \mathbb{R} \to \mathbb{R}$ with $y_1 = g(t)$ and $g(t_0) = \yIZ$, $\dot g(t_0) = 0$, $g(t_f) = \yIT$, $\dot g(t_f) = 0$. Then we have:
+\begin{align}
+v &= \sqrt{\dot y_1^2 + \dot y_2^2} = \dot y_1\sqrt{1 + (f^\prime(y_1))^2} = \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}
+\end{align}
+
+Hence, the overall, time parameterized feedforward control reads:
+\begin{subequations}
+\begin{align}
+v(t) &= \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}\\
+\varphi(t) &= \arctan\left(\frac{lf^{\prime\prime}(g(t))}{\left(1 + (f^\prime(g(t)))^2\right)^{3/2}}\right)
+\end{align}
+\end{subequations}
+
+If we choose polynomials for our two functions $f$ and $g$ we have to ensure that $f$ is of order 3 and $g$ of order 2 to make sure we get a smooth control law.
+\subsection{Implementation}
+For the implementation of the controller, we use the polynomial planner from \ref{sec:polynomialplanner}.
+At first we define all necessary simulation parameters:
+\listcodeffcontrol{21}{27}
+The we initialize the trajectory planners:
+\listcodeffcontrol{30}{45}
+Now we have to implement the control law:
+\listcodeffcontrol{70}{95}
+Now the simulation can be run by:
+\listcodeffcontrol{298}{298}
+The results can be extracted by:
+\listcodeffcontrol{299}{299}
+To get the control vector we have to evaluate \texttt{control()} with the simulated trajectory and recalculate the values that were applied to the system. 
+\listcodeffcontrol{300}{302}
+We have to do this in a \texttt{for}-loop, because \texttt{control()} works only for scalar time values.
+To plot the simulation results and the reference trajectories run:
+\listcodeffcontrol{307}{318}
+\texttt{plot\_data()} was adopted to take \texttt{x\_ref} as an argument and plot it. See the file for details.
+\subsubsection{Result}
+As an example, the transiton from $(0, 0, 0)$ to $(5, 5, 0)$, starting at $t=1s$ ending at $t=9s$ is shown in \autoref{fig:control_trajectory}. The whole simulation time interval goes from $t=0s$ to $t=10s$.
+The animation shows the behaviour of the car in the plane:
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/plane_trajectory.pdf}
+\caption{Smooth state transition from $y^A$ to $y^B$ in the plane}
+\label{fig:plane_trajectory}
+\end{figure}
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/control_trajectory.pdf}
+\caption{Planned trajectories and control signals}
+\label{fig:control_trajectory}
+\end{figure}
 \printglossaries
 \end{document}
 
