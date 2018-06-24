@@ -317,7 +317,8 @@ At last, we can plot the results
 \subsubsection{The \emph{PrototypePlanner} subclass}
 Implementation can be found in the file.
 \newpage
-\section{Feedforward control for the car}
+\section{Feedforward control design}
+\label{sec:ffcontrol}
 \textbf{\py source code file: \texttt{02\_car\_feedforward\_control.py}}
 
 Recapture the model of the car from tutorial 1 \footnote{\url{https://github.com/TUD-RST/pytutorials/tree/master/01-System-Simulation-ODE}}, parameterized in time $t$:
@@ -383,13 +384,14 @@ v &= \sqrt{\dot y_1^2 + \dot y_2^2} = \dot y_1\sqrt{1 + (f^\prime(y_1))^2} = \do
 
 Hence, the overall, time parameterized feedforward control reads:
 \begin{subequations}
+\label{eq:controllaw}
 \begin{align}
 v(t) &= \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}\\
 \varphi(t) &= \arctan\left(\frac{lf^{\prime\prime}(g(t))}{\left(1 + (f^\prime(g(t)))^2\right)^{3/2}}\right)
 \end{align}
 \end{subequations}
 
-If we choose polynomials for our two functions $f$ and $g$ we have to ensure that $f$ is of order 3 and $g$ of order 2 to make sure we get a smooth control law.
+If we choose polynomials for our two functions $f$ and $g$ we have to ensure that $f$ is of order 3 and $g$ of order 2 to make sure we get a smooth control law. The resulting $f(g)$ is of order 5.
 \subsection{Implementation}
 For the implementation of the controller, we use the polynomial planner from \ref{sec:polynomialplanner}.
 At first we define all necessary simulation parameters:
@@ -409,6 +411,7 @@ To plot the simulation results and the reference trajectories run:
 \listcodeffcontrol{307}{318}
 \texttt{plot\_data()} was adopted to take \texttt{x\_ref} as an argument and plot it. See the file for details.
 \subsubsection{Result}
+\label{subsec:result}
 As an example, the transiton from $(0, 0, 0)$ to $(5, 5, 0)$, starting at $t=1s$ ending at $t=9s$ is shown in \autoref{fig:control_trajectory}. The whole simulation time interval goes from $t=0s$ to $t=10s$.
 The animation shows the behaviour of the car in the plane:
 \begin{figure}[ht]
@@ -420,8 +423,56 @@ The animation shows the behaviour of the car in the plane:
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/control_trajectory.pdf}
-\caption{Planned trajectories and control signals}
+\caption{Feedforward control without model errors}
 \label{fig:control_trajectory}
+\end{figure}
+\newpage
+\section{Feedback control design}
+\label{sec:fbcontrol}
+\textbf{\py source code file: \texttt{03\_car\_feedback\_control.py}}
+
+In \autoref{sec:ffcontrol} the controller acts on the exact same system as it was designed for, but in the real world, model errors are inevidable and a feedforward control is not sufficient. Assuming the length of the car in the controller $\tilde{l}$ differs from the real car length $l$ by a factor of $0.9$, the feedfoward control of \ref{subsec:result} shows a bad performance, as can be seen in \autoref{fig:failed_control}. 
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/failedcontrol.pdf}
+\caption{Feedfoward control for $\tilde{l}=0.9l$}
+\label{fig:failed_control}
+\end{figure}
+\subsection{Deriving feedback control laws}
+To account for model errors, we have to design feedback control laws to fulfill the control objective. If we already have designed the feedforward control, designing a stabilizing feedback is quite simple. 
+%We linearize the system, by setting the highest derivatives that appear in the feedforward control laws $(y_1^\prime, y_2^{\prime\prime})$  equal to new inputs $w_1, w_2$:
+We stabilize the system along the planned trajectories by defining new inputs $w_1=\dot{g}(t)$ and $w_2 = f^{\prime\prime}(y_1)$:
+\begin{align*}
+w_1 &= \dot{g}_d(t) - k_{01}(y_1(t)-g_d(t)) \\&= \dot{y_1}_d(t) - k_{01}(y_1(t)-y_{1,d}(t)) \\
+w_2 &= f_d^{\prime\prime}(y_1) -  k_{12}*(f^\prime(y_1) - f^\prime_d(y_1)) - k_{02}*(f(y_1) - f_d(y_1)) \\
+&= f_d^{\prime\prime}(y_1) -  k_{12}*(\tan(\theta) - f^\prime_d(y_1)) - k_{02}*(y_2 - f_d(y_1))
+\end{align*}
+We then substitute these new inputs in the control law \eqref{eq:controllaw}:
+\begin{subequations}
+\label{eq:fbcontrollaw}
+\begin{align}
+v(t) &= \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}
+	= w_1 \sqrt{1 + \tan^2(\theta)} \\
+\varphi(t) &= \arctan\left(\frac{lf^{\prime\prime}(g(t))}{\left(1 + (f^\prime(g(t)))^2\right)^{3/2}}\right) 
+	 = \arctan\left(\frac{lw_2}{\left(1 + \tan^2(\theta)\right)^{3/2}}\right)
+\end{align}
+\end{subequations}
+\subsection{Implementation}
+The implementation of the new feedback controller is straight forward. We just add some lines to \texttt{control(x, t, p)}.
+
+At first we define the controller parameters:
+\listcodefbcontrol{91}{94}
+These have to be hand tuned in the same way one would tune a simple PID-controller to show the desired behaviour of overshoot, etc. After that we set $w_1$ and $w_2$:
+\listcodefbcontrol{96}{103}
+to finally define the control laws:
+\listcodefbcontrol{105}{109}
+\subsubsection{Result}
+We take the same experiment as in \ref{subsec:result} with the same model error as in \autoref{fig:failed_control}, but now using the feedback controller instead. As it can be seen in \autoref{fig:success_control} the control objective of following the planned trajectory succeeded, even with model errors.
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/successcontrol.pdf}
+\caption{Feedback control for $\tilde{l}=0.9l$}
+\label{fig:success_control}
 \end{figure}
 \printglossaries
 \end{document}
