@@ -10,7 +10,7 @@ class Planner(object):
         YB (int, float, ndarray): final value
         t0 (int, float): start time
         tf (int, float): final time
-        d (int): trajectory is smooth up to the d-th derivative
+        d (int): trajectory is smooth up at least to the d-th derivative
     """
 
     def __init__(self, YA, YB, t0, tf, d):
@@ -36,7 +36,7 @@ class PolynomialPlanner(Planner):
         super(PolynomialPlanner, self).__init__(YA, YB, t0, tf, d)
         self.c = self.coefficients()
 
-    def eval(self,t):
+    def eval(self, t):
         """Evaluates the planned trajectory at time t.
 
         Args:
@@ -50,11 +50,11 @@ class PolynomialPlanner(Planner):
         elif t > self.tf:
             Y = self.YB
         else:
-            Y = np.dot(self.TMatrix(t),self.c)
+            Y = np.dot(self.TMatrix(t), self.c)
         return Y
 
 
-    def eval_vec(self,tt):
+    def eval_vec(self, tt):
         """Samples the planned trajectory
 
         Args:
@@ -64,8 +64,8 @@ class PolynomialPlanner(Planner):
             Y (ndarray): y and its derivatives at the sample points
 
         """
-        Y = np.zeros([len(tt),len(self.YA)])
-        for i in range(0,len(tt)):
+        Y = np.zeros([len(tt), len(self.YA)])
+        for i in range(0, len(tt)):
             Y[i] = self.eval(tt[i])
         return Y
 
@@ -115,16 +115,20 @@ class PolynomialPlanner(Planner):
         c = np.linalg.solve(T, Y)
         return c
 
-class PrototypePlanner(Planner):
-    """Planner subclass that uses a polynomial approach for trajectory generation
 
-    Attributes:
-        c (ndarray): parameter vector of polynomial
-    """
-    def __init__(self, YA, YB, t0, tf, d):
-        super(PrototypePlanner, self).__init__(YA, YB, t0, tf, d)
+class PrototypePlanner(Planner):
+    """Planner subclass that uses a polynomial approach for trajectory generation"""
 
     def eval(self, t):
+        """Evaluates the planned trajectory at time t.
+
+                Args:
+                    t (int, float): time
+
+                Returns:
+                    Y (ndarray): y and its derivatives at t
+                """
+
         phi = self.prototype_fct((t - self.t0) / (self.tf - self.t0))
         if t < self.t0:
             Y = self.YA
@@ -169,7 +173,7 @@ class PrototypePlanner(Planner):
                          for k in range(0, self.d + 1)])
         phi[0] = self.faculty(2 * self.d + 1) / (self.faculty(self.d) ** 2) * summation
 
-        # calculate it's derivatives up to order (gamma-1)
+        # calculate it's derivatives up to order (d-1)
 
         for p in range(1, self.d + 1):
             summation = sum(
@@ -179,6 +183,7 @@ class PrototypePlanner(Planner):
 
         return phi
 
+
     def faculty(self, x):
         """Calcualtes the faculty of x"""
         result = 1
@@ -186,10 +191,12 @@ class PrototypePlanner(Planner):
             result *= i
         return result
 
+
     def bin_coeff(self, n, k):
         """Calculates the binomial coefficient of n over k"""
         result = self.faculty(n) / (self.faculty(k) * self.faculty(n - k))
         return result
+
 
     def prod_iter(self, k, p):
         """Calculates the iterative product"""
@@ -197,4 +204,54 @@ class PrototypePlanner(Planner):
         for i in range(1, p + 1):
             result *= (self.d + k + 2 - i)
         return result
+
+
+class TanhPlanner(Planner):
+    """Planner that uses a tanh approach and plans trajectories that are infinitely differentiable."""
+
+
+    def __init__(self, YA, YB, t0, tf, d):
+        super(TanhPlanner, self).__init__(YA, YB, t0, tf, d)
+
+
+    def eval(self, t):
+        """Evaluates the planned trajectory at time t.
+
+        Args:
+            t (int, float): time
+
+        Returns:
+            Y (ndarray): y and its derivatives at t
+        """
+        if t < self.t0:
+            Y = self.YA
+        elif t > self.tf:
+            Y = self.YB
+        else:
+            Y = np.dot(self.TMatrix(t),self.c)
+        return Y
+
+
+    def eval_vec(self, tt):
+        """Samples the planned trajectory
+
+        Args:
+            tt (ndarray): time vector
+
+        Returns:
+            Y (ndarray): y and its derivatives at the sample points
+
+        """
+        Y = np.zeros([len(tt), len(self.YA)])
+        for i in range(0, len(tt)):
+            Y[i] = self.eval(tt[i])
+        return Y
+
+
+    def dtanh(self, t, s):
+        """Calculates y = tanh(2 * (2t/T-1) / (4t/T * (1-t/T))^s) and it's derivatives up to order d"""
+        T = self.tf - self.t0  # transition time interval
+
+
+
 
