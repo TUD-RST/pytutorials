@@ -92,6 +92,13 @@ showstringspaces=false} % spacing between strings not showed
 \definecolor{dark-green}{rgb}{0, 0.5, 0}
 \definecolor{gray}{rgb}{0.5, 0.5, 0.5}
 
+%draft 
+\usepackage[printwatermark]{xwatermark}
+\usepackage{lipsum}
+
+\newwatermark[allpages,color=red!10,angle=45,scale=3,xpos=0,ypos=0]{DRAFT}
+
+
 % ----------------------------------------------------------------------------
 \subject{Control Theory Tutorial}% optional
 \title{Car-Like Mobile Robot}
@@ -194,20 +201,20 @@ Because $\begin{bmatrix}
 \end{align}
 Because the calculation of the invertible matrix is computationally expensive, in an implementation, it is more efficient to use a linear equation system solver, like \texttt{linalg.solve()} from \emph{Numpy}, to solve for $\mathbf{c}$
 
-Now we can calculate $\mathbf{Y}(t)$ in a closed form:
+Now we can calculate $\mathbf{Y}_d(t)$ in a closed form:
 \begin{align}
 \label{eq:3}
-\mathbf{Y}(t)=\mathbf{T}(t)\mathbf{c} \quad t \in [t_0,t_f] 
+\mathbf{Y}_d(t)=\mathbf{T}(t)\mathbf{c} \quad t \in [t_0,t_f] 
 \end{align}
 The full trajectory can be defined as a piecewise-defined function:
 \begin{align}
-y(t)=\begin{cases}y^A & \textrm{if } t<t_0 \\ y_d(t) =\sum_{i=0}^{2d+1}c_i\frac{t^i}{i!} & \textrm{if } t\in [t_0,t_f] \\y^B & \textrm{if } t>t_f\end{cases}
+y_d(t)=\begin{cases}y^A & \textrm{if } t<t_0 \\ \sum_{i=0}^{2d+1}c_i\frac{t^i}{i!} & \textrm{if } t\in [t_0,t_f] \\y^B & \textrm{if } t>t_f\end{cases}
 \end{align}
 \subsection{Polynomials using a prototype function}
 A slightly different approach for a polynomial reference trajectory $y_d(t)$ is again a piecewise-defined function:
 \begin{align}
 \label{eq:5}
-y(t) = \begin{cases} y_d(t_0) &\textrm{if } t<t_0 \\ y_d(t_0) + (y_d(t_f)-y_d(t_0))\varphi_\gamma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ y_d(t_f) &\textrm{if } t>T\end{cases}
+y_d(t) = \begin{cases} y^A &\textrm{if } t<t_0 \\ y^A + (y^B-y^A)\varphi_\gamma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\y^B &\textrm{if } t>T\end{cases}
 \end{align}
 $\tau \rightarrow \varphi_\gamma(\tau)$ is a protoype function, where $\gamma$ indicates how often $\varphi_\gamma(\tau)$ is continuously differentiable. The function has to meet the following conditions, such that the reference trajectory is feasible:
 \begin{subequations}
@@ -244,18 +251,18 @@ and it's $n$-th derivative:
 \end{align}
 In the last step we can derive the $n$-th derivative of \eqref{eq:5} $(n=1,...,\gamma$).
 \begin{align}
-y^{(n)}(t) = \begin{cases} y_d^{(n)}(t_0) & \textrm{if } t<t_0 \\ 
+y_d^{(n)}(t) = \begin{cases} y_d^{(n)}(t_0) & \textrm{if } t<t_0 \\ 
 y_d^{(n)} + \sum_{i=0}^{n}\binom{n}{i}(y_d^{(n-i)}(t)-y_d^{(n-i)}(t_0))\left(\frac{1}{t_f-t_0}\right)^i\varphi_\gamma^{(i)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
 y_d^{(n)}(t_f)&\textrm{if } t>t_f\end{cases}
 \end{align}
 \subsection{Gevrey-functions}
-It is sometimes necessary, that a planned trajectory is infinitely differentiable. We cannot use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. 
+It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example when you are controling an infinite dimensional system.}. We can't use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. One approach to deal with this problem is to use so called Gevrey-funtions.
 \begin{defi}[Gevrey-function] A function $y(t):\Omega \mapsto \R$ is called a Gevrey-function of order $\alpha$, if $y(t) \in C^\infty(\Omega)$ and positive constants $M, R$ exist, such that
 \begin{align*}
 \sup_{t\in\Omega}{|y^{(n)}(t)| \leq \frac{M}{R^n}(n!)^\alpha}.
 \end{align*}
 \end{defi}
-
+One function that belongs to the 
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning we first create a \emph{Planner} base class. Then we create a new subclass for each new planning algorithm, we want to use.
 
@@ -269,7 +276,7 @@ A \emph{Planner} should have the following attributes:
 	\item[] \texttt{tf} - final time of the point-to-point transition
 	\item[] \texttt{d} - planned trajectory should be smooth up to the $d$-th derivative
 \end{itemize}
-We also want to evaluate the planned trajectory, but how this is done should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
+We also want to evaluate the planned trajectory, but how the functionality should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
 \listcodeplanner{2}{27}
 \subsubsection{The \emph{PolynomialPlanner} subclass}
 \label{sec:polynomialplanner}
@@ -426,7 +433,7 @@ The animation shows the behaviour of the car in the plane:
 \caption{Feedforward control without model errors}
 \label{fig:control_trajectory}
 \end{figure}
-\newpage
+\clearpage
 \section{Feedback control design}
 \label{sec:fbcontrol}
 \textbf{\py source code file: \texttt{03\_car\_feedback\_control.py}}
@@ -441,11 +448,11 @@ In \autoref{sec:ffcontrol} the controller acts on the exact same system as it wa
 \subsection{Deriving feedback control laws}
 To account for model errors, we have to design feedback control laws to fulfill the control objective. If we already have designed the feedforward control, designing a stabilizing feedback is quite simple. 
 %We linearize the system, by setting the highest derivatives that appear in the feedforward control laws $(y_1^\prime, y_2^{\prime\prime})$  equal to new inputs $w_1, w_2$:
-We stabilize the system along the planned trajectories by defining new inputs $w_1=\dot{g}(t)$ and $w_2 = f^{\prime\prime}(y_1)$:
+We want to stabilize the system along the planned trajectories. We therefore define new inputs $w_1=\dot{g}(t)$ and $w_2 = f^{\prime\prime}(y_1)$.
 \begin{align*}
 w_1 &= \dot{g}_d(t) - k_{01}(y_1(t)-g_d(t)) \\&= \dot{y_1}_d(t) - k_{01}(y_1(t)-y_{1,d}(t)) \\
-w_2 &= f_d^{\prime\prime}(y_1) -  k_{12}*(f^\prime(y_1) - f^\prime_d(y_1)) - k_{02}*(f(y_1) - f_d(y_1)) \\
-&= f_d^{\prime\prime}(y_1) -  k_{12}*(\tan(\theta) - f^\prime_d(y_1)) - k_{02}*(y_2 - f_d(y_1))
+w_2 &= f_d^{\prime\prime}(y_1) -  k_{12}(f^\prime(y_1) - f^\prime_d(y_1)) - k_{02}(f(y_1) - f_d(y_1)) \\
+&= f_d^{\prime\prime}(y_1) -  k_{12}(\tan(\theta) - f^\prime_d(y_1)) - k_{02}(y_2 - f_d(y_1))
 \end{align*}
 We then substitute these new inputs in the control law \eqref{eq:controllaw}:
 \begin{subequations}
@@ -462,10 +469,11 @@ The implementation of the new feedback controller is straight forward. We just a
 
 At first we define the controller parameters:
 \listcodefbcontrol{91}{94}
-These have to be hand tuned in the same way one would tune a simple PID-controller to show the desired behaviour of overshoot, etc. After that we set $w_1$ and $w_2$:
+After that we set $w_1$ and $w_2$:
 \listcodefbcontrol{96}{103}
 to finally define the control laws:
 \listcodefbcontrol{105}{109}
+The controller parameters have to be hand tuned and must be $>0$ for the system to be stable.
 \subsubsection{Result}
 We take the same experiment as in \ref{subsec:result} with the same model error as in \autoref{fig:failed_control}, but now using the feedback controller instead. As it can be seen in \autoref{fig:success_control} the control objective of following the planned trajectory succeeded, even with model errors.
 \begin{figure}[ht]
