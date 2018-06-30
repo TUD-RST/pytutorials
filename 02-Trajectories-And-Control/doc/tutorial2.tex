@@ -125,11 +125,11 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 
 \end{itemize}
 
-Later in this tutorial we will use the designed trajectory generators to design control strategies for the car model. 
+Later in this tutorial the designed trajectory generators are used to design control strategies for the car model. 
 
 Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}.
 \section{Trajectories for smooth point-to-point transitions}
-In control theory, we often want to transfer a system from a starting state $y(t_0)=y^A$ at the start time $t_0$ to a new state $y(t_f)=y^B$ at time $t_f$. The objective of smooth point-to-point transition is, that the generated trajectory $y_d: t \mapsto y$ meets certain boundary conditions at $t_0$ and $t_f$. If $y$ is for example a position coordinate and we use a simple trapezoidal interpolation in time between the two points $y^A$ and $y^B$, the amount of the acceleration at $t_0$ and $t_f$ approaches infinity which cannot be fullfilled by any system, due to inertia. That is why when we are planning a point-to-point transition we have to make sure, that the derivative of the planned trajectory is smooth up to a certain degree. 
+In control theory, a common task is to transfer a system from a starting state $y(t_0)=y^A$ at the start time $t_0$ to a new state $y(t_f)=y^B$ at time $t_f$. The objective of smooth point-to-point transition is, that the generated trajectory $y_d: t \mapsto y$ meets certain boundary conditions at $t_0$ and $t_f$. If $y$ is for example a position coordinate and a simple trapezoidal interpolation in time between the two points $y^A$ and $y^B$ is used , the amount of the acceleration at $t_0$ and $t_f$ approaches infinity which cannot be fullfilled by any system, due to inertia. That is why when a point-to-point transition is planned, the derivative of the planned trajectory has to be smooth up to a certain degree. 
 
 \textbf{\py source code file: \texttt{Planner.py}}
 \begin{figure}[ht]
@@ -138,7 +138,7 @@ In control theory, we often want to transfer a system from a starting state $y(t
 \caption{Smooth state transition from $y^A$ to $y^B$}
 \end{figure}
 \subsection{Polynomials} \label{sec:polynomials}
-A simple way of defining a trajectory between two points in time is a polynomial $y_d(t)=\sum_{i=0}^{2d+1}c_i\frac{t^i}{i!}$ of degree $2d+1$, where $2d+2$ is the number of boundary conditions it has to fulfill. We can write down $y_d(t)$ and its successive derivatives up to order $d$ in  matrix form:
+A simple way of defining a trajectory between two points in time is a polynomial $y_d(t)=\sum_{i=0}^{2d+1}c_i\frac{t^i}{i!}$ of degree $2d+1$, where $2d+2$ is the number of boundary conditions it has to fulfill. $y_d(t)$ and its successive derivatives up to order $d$ can be written down in matrix form:
 \begin{align}
 \label{eq:1}
 \underbrace{\begin{pmatrix}
@@ -156,7 +156,7 @@ y_d(t) \\ \dot{y}_d(t) \\ \vdots \\ y_d^{(d-1)}(t) \\ y_d^{(d)}(t)
 c_0 \\ c_1 \\ \vdots \\ c_{2d-1}\\ c_{2d}\\ c_{2d+1} 
 \end{pmatrix}}_{=:\mathbf{c}\in \R^{(2d+2)}}
 \end{align}
-To calculate the parameter vector $\mathbf{c}$, we first need to define the boundary conditions of the trajectory up to degree $d$:
+To calculate the parameter vector $\mathbf{c}$, the boundary conditions of the trajectory have to be defined up to degree $d$:
 \begin{align*}
 \underbrace{\begin{pmatrix} y_d(t_0) \\ \dot{y}_d(t_0) \\ \vdots \\ y_d^{(d)}(t_0) \end{pmatrix}}_{:=\mathbf{Y}_d(t_0)}
 &\overset{!}{=}
@@ -187,7 +187,7 @@ This leads to a linear equation system:
 Because $\begin{bmatrix}
 \mathbf{T}(t_0) \\
 \mathbf{T}(t_f) 
-\end{bmatrix}$ is quadratic and not singular for $t_0,t_f\neq 0$, we can solve this linear equation system explicitly:
+\end{bmatrix}$ is quadratic and not singular for $t_0,t_f\neq 0$, this linear equation system can be solved explicitly:
 \begin{align}
 \label{eq:2}
 \mathbf{c} &= \begin{bmatrix}
@@ -201,7 +201,7 @@ Because $\begin{bmatrix}
 \end{align}
 Because the calculation of the invertible matrix is computationally expensive, in an implementation, it is more efficient to use a linear equation system solver, like \texttt{linalg.solve()} from \emph{Numpy}, to solve for $\mathbf{c}$
 
-Now we can calculate $\mathbf{Y}_d(t)$ in a closed form:
+$\mathbf{Y}_d(t)$ can be calculated in a closed form:
 \begin{align}
 \label{eq:3}
 \mathbf{Y}_d(t)=\mathbf{T}(t)\mathbf{c} \quad t \in [t_0,t_f] 
@@ -236,12 +236,12 @@ After $\gamma$ partial integrations we get:
 \begin{align*}
 \varphi_\gamma(\tau)= \frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
 \end{align*}
-To solve for the unknown $\alpha$, we use the condition $\varphi_\gamma(1)\overset{!}{=}1$:
+To solve for the unknown $\alpha$, the  condition $\varphi_\gamma(1)\overset{!}{=}1$ is used:
 \begin{align*}
 \varphi_\gamma(1)= &\frac{\alpha}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k}{(\gamma+k+1)} \overset{!}{=} 1 \\
 \Leftrightarrow \quad & \alpha = (2\gamma+1)!
 \end{align*}
-Finally we can define the prototype function:
+Finally the prototype function is defined as:
 \begin{align}
 \varphi_\gamma(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k+1}}{(\gamma+k+1)}
 \end{align}
@@ -249,22 +249,26 @@ and it's $n$-th derivative:
 \begin{align}
 \varphi_\gamma^{(n)}(\tau)= \frac{(2\gamma+1)!}{(\gamma!)^2} \sum_{k=0}^{\gamma} \left(\binom{\gamma}{k} \frac{(-1)^k\tau^{\gamma+k-n+1}}{(\gamma+k+1)}\prod_{i=1}^n(\gamma+k-i+2)\right)
 \end{align}
-In the last step we can derive the $n$-th derivative of \eqref{eq:5} $(n=1,...,\gamma$).
+In the last step the $n$-th derivative of \eqref{eq:5} $(n=1,...,\gamma$) is derived.
 \begin{align}
 y_d^{(n)}(t) = \begin{cases} y_d^{(n)}(t_0) & \textrm{if } t<t_0 \\ 
 y_d^{(n)} + \sum_{i=0}^{n}\binom{n}{i}(y_d^{(n-i)}(t)-y_d^{(n-i)}(t_0))\left(\frac{1}{t_f-t_0}\right)^i\varphi_\gamma^{(i)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
 y_d^{(n)}(t_f)&\textrm{if } t>t_f\end{cases}
 \end{align}
+The main difference of this method over the one presented in \ref{sec:polynomials} is, that no linear equation system has to be solved. This can have runtime advantages when applied on a real system.
 \subsection{Gevrey-functions}
-It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example when you are controling an infinite dimensional system.}. We can't use a polynomial approach in this case, because we would need an infinite number of parameters to construct such a polynomial. One approach to deal with this problem is to use so called Gevrey-funtions.
+It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example when you are controling an infinite dimensional system.}. A polynomial approach can't be used in this case, because an infinite number of parameters is needed to construct such a polynomial. One approach to deal with this problem is to use so called Gevrey-funtions.
 \begin{defi}[Gevrey-function] A function $y(t):\Omega \mapsto \R$ is called a Gevrey-function of order $\alpha$, if $y(t) \in C^\infty(\Omega)$ and positive constants $M, R$ exist, such that
 \begin{align*}
 \sup_{t\in\Omega}{|y^{(n)}(t)| \leq \frac{M}{R^n}(n!)^\alpha}.
 \end{align*}
 \end{defi}
-One function that belongs to the 
+One function that belongs to the Gevrey class of functions is:
+\begin{align}
+\tan(blala)
+\end{align}
 \subsection{Implementation in \py}
-In order to automate the process of trajectory planning we first create a \emph{Planner} base class. Then we create a new subclass for each new planning algorithm, we want to use.
+In order to automate the process of trajectory planning at first a \emph{Planner} base class is implemented. Then a new subclass for each new planning algorithm is created.
 
 \textbf{\py source code file: \texttt{Planner.py}}
 \subsubsection{The \emph{Planner} base class}
@@ -276,46 +280,46 @@ A \emph{Planner} should have the following attributes:
 	\item[] \texttt{tf} - final time of the point-to-point transition
 	\item[] \texttt{d} - planned trajectory should be smooth up to the $d$-th derivative
 \end{itemize}
-We also want to evaluate the planned trajectory, but how the functionality should be implemented in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
+The planned trajectory has to be evaluated at runtime, but how the this functionality should be implemented, should be defined in the specific subclass. By using in abstract base class method, we force a subclass of \emph{Planner} to have a method \texttt{eval()}.
 \listcodeplanner{2}{27}
 \subsubsection{The \emph{PolynomialPlanner} subclass}
 \label{sec:polynomialplanner}
-To implement the planning algorithm that was developed in \autoref{sec:polynomials}, we create a new class \texttt{PolynomialPlanner} that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
+To implement the planning algorithm that was developed in \autoref{sec:polynomials}, a new class \texttt{PolynomialPlanner} is created that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
 \listcodeplanner{28}{33}
-To solve for the parameter vector $\mathbf{c}$, we have to calculate the matrix $\mathbf{T}(t)$ from \eqref{eq:1}. We therefore create a method \texttt{TMatrix()}:
+To solve for the parameter vector $\mathbf{c}$, the matrix $\mathbf{T}(t)$ from \eqref{eq:1} is calculated and a method \texttt{TMatrix()} is therefore created:
 \listcodeplanner{73}{94}
-Now we we have to create a method, that solves \eqref{eq:2} and returns $\mathbf{c}$:
+Then a method, that solves \eqref{eq:2} and returns the parameter vector $\mathbf{c}$ is needed:
 \listcodeplanner{97}{116}
-Because we want to reuse the result, we create a new attribute \texttt{c}:
+Because the parameters don't change, ones they are calculated, a new attribute \texttt{c} is created:
 \listcodeplanner{35}{79}
-Finally we define a method \texttt{eval()} that implements \eqref{eq:3}:
+Finally a method \texttt{eval()} that implements \eqref{eq:3} is defined:
 \listcodeplanner{39}{54}
 as well as a second method \texttt{eval\_vec()}, that can handle a time array as an input:
 \listcodeplanner{57}{70}
-The polynomial trajectory planner is now implemented and can be tested.
+The polynomial trajectory planner is now successfully implemented and can be tested.
 
 \textbf{Example:}
 
 \textbf{\py source code file: \texttt{01\_trajectory\_planning.py}}
 
-Suppose we want to plan a trajectory from $y(t_0)=0$ to $y(t_f) = 1$ with $t_0=1s$ and $t_f = 2s$. The trajectory should be smoothly differentiable twice $(d=2)$. We therefore have to define the boundary conditions for the first and second derivative of $y$: 
+Suppose a trajectory from $y(t_0)=0$ to $y(t_f) = 1$ with $t_0=1s$ and $t_f = 2s$ has to be planned. The trajectory should be smoothly differentiable twice $(d=2)$. Therefore the boundary conditions for the first and second derivative of $y$ have to be defined: 
 \begin{align*}
 \dot{y}(t_0)=0 &&& \dot{y}(t_f)=0 \\
 \ddot{y}(t_0)=0 &&& \ddot{y}(t_f)=0 \\
 \end{align*}
 The total time interval for the evaluation of the trajectory is $t\in[0s,3s]$.
 
-In \py we first define the boundary conditions for $t=t_0$ and $t=t_f$:
+At first the boundary conditions for $t=t_0$ and $t=t_f$ are set:
 \listcodeplanning{7}{8}
-Then we define the start and final time of the transition and the total time interval:
+After that the start and final time of the transition and the total time interval:
 \listcodeplanning{9}{11}
-Then we set $d$ and create a \texttt{PolynomialPlanner} instance \texttt{yd} with the defined parameters.
+Then $d$ is set and a \texttt{PolynomialPlanner} instance \texttt{yd} with the defined parameters is created.
 \listcodeplanning{12}{13}
-We can display the calculated parameters
+The calculated parameters can be displayed
 \listcodeplanning{15}{16}
-and sample the generated trajectory at the defined total time interval
+and the generated trajectory at the defined total time interval can be sampled
 \listcodeplanning{18}{19}
-At last, we can plot the results
+At last, the results are plotted.
 \listcodeplanning{21}{27}
 \begin{figure}[ht]
 \centering
@@ -337,13 +341,13 @@ Recapture the model of the car from tutorial 1 \footnote{\url{https://github.com
 \end{align}
 \end{subequations}
 \subsection{Reparameterization of the model}
-We have to derive the model of the car, parameterized in arc length $s$ to take care of singularities, that would appear in steady-state $(v=0)$.
+The model of the car has to be parameterized in arc length $s$ to take care of singularities, that would appear in steady-state $(v=0)$.
 
-We can assume the follwing:
+The following can be assumed:
 \begin{align*}
 \frac{\d}{\d t} = \frac{\d}{\d t}\frac{\d s}{\d s} = \frac{\d}{\d s}\frac{\d s}{\d t} = \frac{\d}{\d s}\dot s
 \end{align*}
-If we replace $\frac{\d}{\d t}$ in the model equations we get:
+Replacing $\frac{\d}{\d t}$ in the model equations leads to:
 \begin{subequations}
 \begin{align}
 \frac{\d}{\d s}\dot s y_1 &= v \cos(\theta)\\
@@ -351,8 +355,23 @@ If we replace $\frac{\d}{\d t}$ in the model equations we get:
 \frac{\d}{\d s}\dot s \theta &= \frac{v}{l}\tan(\varphi).
 \end{align}
 \end{subequations}
-We know that $v = |\dot{\bm{y}}| = \sqrt{\dot y_1^2+\dot y_2^2}$. If we parametrize this equation in $s$, we get   $\sqrt{(\frac{\d}{\d s}\dot sy_1)^2+(\frac{\d}{\d s}\dot s y_2)^2}=\dot s \sqrt{(y_1^\prime)^2+(y_2^\prime)^2}$\footnote{assuming $\dot s > 0$}. If $s$ is the arc length, the Pythagorean theorem $ds^2 = dy_1^2 + dy_2^2$ leads to $\sqrt{(y_1^\prime)^2+(y_2^\prime)^2}=1$ and $v=\dot s$. 
-Finally we get the system parametrized in $s$:
+\begin{align}
+v = |\dot{\bm{y}}| = \sqrt{\dot y_1^2+\dot y_2^2}
+\end{align}
+This equation is parameterized in $s$:\footnote{assuming $\dot s > 0$} 
+\begin{align}
+v = \sqrt{(\frac{\d}{\d s}\dot sy_1)^2+(\frac{\d}{\d s}\dot s y_2)^2}=\dot s \sqrt{(y_1^\prime)^2+(y_2^\prime)^2}
+\end{align}
+ 
+If $s$ is the arc length, the Pythagorean theorem $ds^2 = dy_1^2 + dy_2^2$ leads to:
+\begin{subequations}
+\begin{align}
+&1 = \left(\frac{dy_1}{ds}\right)^2 + \left(\frac{dy_2}{ds}\right)^2  \\
+\Leftrightarrow \quad & 1 = \sqrt{(y_1^\prime)^2+(y_2^\prime)^2}
+\end{align}
+\end{subequations}
+Therfore $v=\dot s$. 
+The system paramterized in $s$ is given by:
 \begin{subequations}
 \begin{align}
 y_1^\prime &= \cos(\theta)\\
@@ -361,7 +380,7 @@ y_2^\prime &= \sin(\theta)\\
 \end{align}
 \end{subequations}
 \subsection{Deriving feedforward control laws}
-Goal: We want to drive the car in the $y_1$-$y_2$-plane frome a point $(\yIZ, \yIIZ)$ to a point $(\yIT, \yIIT)$ in time $T=t_f-t_0$. The car should be in rest at the beginning and at the end of the process and the trajectory is defined by a sufficiently smooth function $f : \mathbb{R} \to \mathbb{R}$ with $y_2 = f(y_1)$. Note that $(y_1, y_2)$ is a flat output of the system.
+Goal: Drive the car in the $y_1$-$y_2$-plane frome a point $(\yIZ, \yIIZ)$ to a point $(\yIT, \yIIT)$ in time $T=t_f-t_0$. The car should be in rest at the beginning and at the end of the process and the trajectory is defined by a sufficiently smooth function $f : \mathbb{R} \to \mathbb{R}$ with $y_2 = f(y_1)$. Note that $(y_1, y_2)$ is a flat output of the system.
 
 \textbf{Step 1:} Calculate the dependency of the remaining system variables $\theta$ and $\varphi$ of the  length parameterized system on $(y_1, y_2)$:
 \begin{align}
@@ -373,7 +392,7 @@ Goal: We want to drive the car in the $y_1$-$y_2$-plane frome a point $(\yIZ, \y
 \tan(\varphi) &= l\theta^\prime = \frac{lf^{\prime\prime}(y_1)}{\left(1 + (f^\prime(y_1))^2\right)^{3/2}}
 \end{align}
 
-Result: Depending on our planning $y_2 = f(y_1)$ we can calculate the required steering angle solely from $y_1$ and derivatives of $f$ w.r.t.~$y_1$ up to order 2. The planned trajectory has to fulfill the following boundary conditions:
+Result: Depending on the planning $y_2 = f(y_1)$ the required steering angle can be calculated solely from $y_1$ and derivatives of $f$ w.r.t.~$y_1$ up to order 2. The planned trajectory has to fulfill the following boundary conditions:
 \begin{align*}
 f(\yIZ) = \yIIZ &&& f(\yIT) = \yIIT \\
 f^\prime(\yIZ) = \tan(\theta_A) &&& f^\prime(\yIT) = \tan(\theta_B) \\
@@ -384,7 +403,7 @@ By always setting $\varphi_A=\varphi_B=0$, these conditions simplify to:
 \begin{align*}
 f^{\prime\prime}(\yIZ) = 0 &&& f^{\prime\prime}(\yIT) = 0
 \end{align*}
-\textbf{Step 2:} Calculation of the required velocity $v$. We define another function $g: \mathbb{R} \to \mathbb{R}$ with $y_1 = g(t)$ and $g(t_0) = \yIZ$, $\dot g(t_0) = 0$, $g(t_f) = \yIT$, $\dot g(t_f) = 0$. Then we have:
+\textbf{Step 2:} Calculation of the required velocity $v$. Another function $g: \mathbb{R} \to \mathbb{R}$ is defined, with $y_1 = g(t)$ and $g(t_0) = \yIZ$, $\dot g(t_0) = 0$, $g(t_f) = \yIT$, $\dot g(t_f) = 0$. 
 \begin{align}
 v &= \sqrt{\dot y_1^2 + \dot y_2^2} = \dot y_1\sqrt{1 + (f^\prime(y_1))^2} = \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}
 \end{align}
@@ -397,29 +416,36 @@ v(t) &= \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}\\
 \varphi(t) &= \arctan\left(\frac{lf^{\prime\prime}(g(t))}{\left(1 + (f^\prime(g(t)))^2\right)^{3/2}}\right)
 \end{align}
 \end{subequations}
-
-If we choose polynomials for our two functions $f$ and $g$ we have to ensure that $f$ is of order 3 and $g$ of order 2 to make sure we get a smooth control law. The resulting $f(g)$ is of order 5.
+Or expressed in $s$:
+\begin{subequations}
+\label{eq:controllaw_2}
+\begin{align}
+v(s) &= \dot{s} \sqrt{y_2^{\prime2}+y_1^{\prime2}}\\
+\varphi(s) &= \arctan\left(l \frac{y_2^{\prime\prime}y_1^\prime-y_1^{\prime\prime}y_2^\prime}{(y_1^{\prime2}+y_2^{\prime2})^{\frac{3}{2}}}\right) = \arctan\left(l (y_2^{\prime\prime}y_1^\prime-y_1^{\prime\prime}y_2^\prime)\right)
+\end{align}
+\end{subequations}
+If polynomials are chosen for the two functions $f$ and $g$ it has to be ensured that $f$ is of order 3 and $g$ of order 2 to make sure the control law is smooth. The resulting $f(g)$ is of order 5.
 \subsection{Implementation}
-For the implementation of the controller, we use the polynomial planner from \ref{sec:polynomialplanner}.
-At first we define all necessary simulation parameters:
+For the implementation of the controller, a the polynomial planner from \ref{sec:polynomialplanner} is used.
+At first all necessary simulation parameters are defined:
 \listcodeffcontrol{21}{27}
-The we initialize the trajectory planners:
+Initialization of the trajectory planners:
 \listcodeffcontrol{30}{45}
-Now we have to implement the control law:
+Implementation of the the control law:
 \listcodeffcontrol{70}{95}
-Now the simulation can be run by:
+Running the simulation:
 \listcodeffcontrol{298}{298}
 The results can be extracted by:
 \listcodeffcontrol{299}{299}
-To get the control vector we have to evaluate \texttt{control()} with the simulated trajectory and recalculate the values that were applied to the system. 
+To get the control vector can be done by evaluating \texttt{control()} with the simulated trajectory and recalculate the values that were applied to the system. 
 \listcodeffcontrol{300}{302}
-We have to do this in a \texttt{for}-loop, because \texttt{control()} works only for scalar time values.
-To plot the simulation results and the reference trajectories run:
+Because \texttt{control()} works only for scalar time values, this has to be done in a \texttt{for}-loop.
+Plotting the simulation results and the reference trajectories:
 \listcodeffcontrol{307}{318}
-\texttt{plot\_data()} was adopted to take \texttt{x\_ref} as an argument and plot it. See the file for details.
+\texttt{plot\_data()} was adopted to also plot \texttt{x\_ref}. The changes can be found in the corrosponding file.
 \subsubsection{Result}
 \label{subsec:result}
-As an example, the transiton from $(0, 0, 0)$ to $(5, 5, 0)$, starting at $t=1s$ ending at $t=9s$ is shown in \autoref{fig:control_trajectory}. The whole simulation time interval goes from $t=0s$ to $t=10s$.
+As an example, the transition from $(0, 0, 0)$ to $(5, 5, 0)$, starting at $t=1s$ ending at $t=9s$ is shown in \autoref{fig:control_trajectory}. The whole simulation time interval goes from $t=0s$ to $t=10s$.
 The animation shows the behaviour of the car in the plane:
 \begin{figure}[ht]
 \centering
@@ -439,43 +465,78 @@ The animation shows the behaviour of the car in the plane:
 \textbf{\py source code file: \texttt{03\_car\_feedback\_control.py}}
 
 In \autoref{sec:ffcontrol} the controller acts on the exact same system as it was designed for, but in the real world, model errors are inevidable and a feedforward control is not sufficient. Assuming the length of the car in the controller $\tilde{l}$ differs from the real car length $l$ by a factor of $0.9$, the feedfoward control of \ref{subsec:result} shows a bad performance, as can be seen in \autoref{fig:failed_control}. 
+\subsection{Deriving feedback control laws}
+To account for model errors, a feedback controller has to be designed to fulfill the objective. This is done by a feedback linearization.
+The linearization is done by introducing new inputs $w_1$ and $w_2$:
+\begin{align}
+\label{eq:new_inputs}
+w_1 = y_1^\prime \qquad w_2 = y_2^{\prime\prime}
+\end{align}
+This leads the linear system shown in \autoref{fig:linear_system}. 
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/linear_system.pdf}
+\caption{Block diagram of the linearized system}
+\label{fig:linear_system}
+\end{figure}
+The tracking error $e$ is defined as:
+\begin{align}
+\label{eq:error}
+e_i = y_i-y_{i,d} \qquad i = 1,2
+\end{align}
+A differential equation for the error term can be defined:
+\begin{align}
+\label{eq:error_ode}
+0 = e_i^{\prime\prime}+k_{1i}e_i^{\prime}+k_{0i}e_i \qquad i = 1,2 \quad k_{0i},k_{1i} \in \R^+
+\end{align}
+Substituting \eqref{eq:new_inputs} and \eqref{eq:error} in \eqref{eq:error_ode} leads to:
+\begin{subequations}
+\begin{align}
+w_1 =  y_{1,d}^\prime - k_{01}(y_{1}-y_{1,d}) \\
+w_2 = y_{2,d}^{\prime\prime}  - k_{02}(y_{2}^\prime-y_{2,d}^\prime) - k_{02}(y_{2}-y_{2,d})
+\end{align}
+\end{subequations}
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1]{img/linear_system_feedback.pdf}
+\caption{Block diagram of the feedback system}
+\label{fig:linear_system_feedback}
+\end{figure}
+These equations are substituted into \eqref{eq:controllaw_2} to obtain the feedback control law:
+\begin{subequations}
+\begin{align}
+v(s) &= \dot{s}_d\\
+\varphi(s) &= \arctan\left(l (w_2w_1-y_1^{\prime\prime}y_2^\prime)\right)
+\end{align}
+\end{subequations}
+where $\dot{s}_d$ is the desired velocity  and $y_1^{\prime\prime} = 0$.
+To reparametrize these control laws in time, the desired trajectories are expressed in $f$ and $g$:
+\begin{subequations}
+\begin{align*}
+y_{1,d} &= g(t)  &&& y_{2,d} &= f(g(t))\\
+y_{1,d}^\prime &= \frac{1}{\sqrt{1+(f^{\prime }(g(t)))^2}} &&& y_{2,d}^\prime &= \frac{f^{\prime }(g(t))}{\sqrt{1+(f^{\prime }(g(t)))^2}}\\
+\dot{s}_d &= v_d(t) = \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}&&& y_{2,d}^{\prime\prime} &= \frac{f^{\prime \prime}(g(t))}{1+(f^{\prime }(g(t)))^2}
+\end{align*}
+\end{subequations}
+\subsection{Implementation}
+To implement the controller, at first the controller parameters are defined:
+\listcodefbcontrol{91}{94}
+The controller parameters have to be hand tuned and must be $>0$ for the system to be stable.
+
+Then the desired trajectories are expressed in the planner trajectories $f$ and $g$:
+\listcodefbcontrol{103}{109}
+Afterwards $w_1$ and $w_2$ are set:
+\listcodefbcontrol{111}{113}
+In the final step, the control laws are calculated and return from the function:
+\listcodefbcontrol{115}{120}
+\subsubsection{Result}
+The experiment from \ref{subsec:result} is repeated with the same model error as in \autoref{fig:failed_control}, but now using the feedback controller instead. As it can be seen in \autoref{fig:success_control} the control objective of following the planned trajectory succeeded, even with model errors.
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/failedcontrol.pdf}
 \caption{Feedfoward control for $\tilde{l}=0.9l$}
 \label{fig:failed_control}
 \end{figure}
-\subsection{Deriving feedback control laws}
-To account for model errors, we have to design feedback control laws to fulfill the control objective. If we already have designed the feedforward control, designing a stabilizing feedback is quite simple. 
-%We linearize the system, by setting the highest derivatives that appear in the feedforward control laws $(y_1^\prime, y_2^{\prime\prime})$  equal to new inputs $w_1, w_2$:
-We want to stabilize the system along the planned trajectories. We therefore define new inputs $w_1=\dot{g}(t)$ and $w_2 = f^{\prime\prime}(y_1)$.
-\begin{align*}
-w_1 &= \dot{g}_d(t) - k_{01}(y_1(t)-g_d(t)) \\&= \dot{y_1}_d(t) - k_{01}(y_1(t)-y_{1,d}(t)) \\
-w_2 &= f_d^{\prime\prime}(y_1) -  k_{12}(f^\prime(y_1) - f^\prime_d(y_1)) - k_{02}(f(y_1) - f_d(y_1)) \\
-&= f_d^{\prime\prime}(y_1) -  k_{12}(\tan(\theta) - f^\prime_d(y_1)) - k_{02}(y_2 - f_d(y_1))
-\end{align*}
-We then substitute these new inputs in the control law \eqref{eq:controllaw}:
-\begin{subequations}
-\label{eq:fbcontrollaw}
-\begin{align}
-v(t) &= \dot g(t) \sqrt{1 + (f^\prime(g(t)))^2}
-	= w_1 \sqrt{1 + \tan^2(\theta)} \\
-\varphi(t) &= \arctan\left(\frac{lf^{\prime\prime}(g(t))}{\left(1 + (f^\prime(g(t)))^2\right)^{3/2}}\right) 
-	 = \arctan\left(\frac{lw_2}{\left(1 + \tan^2(\theta)\right)^{3/2}}\right)
-\end{align}
-\end{subequations}
-\subsection{Implementation}
-The implementation of the new feedback controller is straight forward. We just add some lines to \texttt{control(x, t, p)}.
-
-At first we define the controller parameters:
-\listcodefbcontrol{91}{94}
-After that we set $w_1$ and $w_2$:
-\listcodefbcontrol{96}{103}
-to finally define the control laws:
-\listcodefbcontrol{105}{109}
-The controller parameters have to be hand tuned and must be $>0$ for the system to be stable.
-\subsubsection{Result}
-We take the same experiment as in \ref{subsec:result} with the same model error as in \autoref{fig:failed_control}, but now using the feedback controller instead. As it can be seen in \autoref{fig:success_control} the control objective of following the planned trajectory succeeded, even with model errors.
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1]{img/successcontrol.pdf}
