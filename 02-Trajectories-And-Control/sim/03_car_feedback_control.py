@@ -20,8 +20,8 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 5      # final time
-sim_para.dt = 0.04       # step-size
+sim_para.tf = 2      # final time
+sim_para.dt = 0.01       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
 sim_para.xf = [5, 5, 0]  # final state at tf
@@ -29,8 +29,8 @@ sim_para.xf = [5, 5, 0]  # final state at tf
 
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
-traj_para.t0 = sim_para.t0 + 1 # start time of transition
-traj_para.tf = sim_para.tf - 1 # final time of transition
+traj_para.t0 = sim_para.t0 + .5 # start time of transition
+traj_para.tf = sim_para.tf - .5 # final time of transition
 
 # boundary conditions for y1
 traj_para.Y1A = np.array([sim_para.x0[0], 0])
@@ -115,7 +115,7 @@ def control(x, t, p):
 
     # control laws
     u1 = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2)
-    u2 = arctan2(0.5*p.l * (w2 * w1), 1)
+    u2 = arctan2(0.9*p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
 
@@ -152,7 +152,7 @@ def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     ax2.plot(t, np.rad2deg(xref[:, 2]), label=r'$\theta_d(t)$', lw=1, color='g')
 
     # plot control in subplot 3, left axis red, right blue
-    ax3.plot(t, np.rad2deg(u[:, 0]), label=r'$v(t)$', lw=1, color='r')
+    ax3.plot(t, u[:, 0], label=r'$v(t)$', lw=1, color='r')
     ax3.tick_params(axis='y', colors='r')
     ax33 = ax3.twinx()
     ax33.plot(t, np.rad2deg(u[:, 1]), label=r'$\phi(t)$', lw=1, color='b')
