@@ -20,7 +20,7 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
+sim_para.tf = 5      # final time
 sim_para.dt = 0.04       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
@@ -89,22 +89,33 @@ def control(x, t, p):
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
     # controller parameters
-    k01 = 2
-    k02 = 2
-    k12 = 10
+    k01 = 4
+    k02 = 4
+    k12 = 15
 
-    # flat output and f'
+    # state vector
     y1 = x[0]
     y2 = x[1]
-    df = tan(x[2])
+    theta = x[2]
 
-    # stabilizing feedback laws
-    w1 = g_t[1] - k01*(y1 - g_t[0])
-    w2 = f_y1[2] - k12*(df - f_y1[1]) - k02*(y2 - f_y1[0])
+    dy2 = sin(theta)
 
-    # setting control signals
-    u1 = w1 * np.sqrt(1 + df ** 2)
-    u2 = arctan2(0.9*p.l * w2, (1 + df ** 2) ** (3 / 2))
+    # reference trajectories yd, yd', yd''
+    y1d = g_t[0]
+    dy1d = 1/(np.sqrt(1 + f_y1[1] ** 2))
+
+
+    y2d = f_y1[0]
+    dy2d = dy1d*f_y1[1]
+    ddy2d = dy1d ** 2 * f_y1[2]
+
+    # stabilizing inputs
+    w1 = dy1d - k01 * (y1 - y1d)
+    w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
+
+    # control laws
+    u1 = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2)
+    u2 = arctan2(0.5*p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
 
@@ -303,7 +314,7 @@ def car_animation(x, u, t, p):
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
-    ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
+    #ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
     plt.show()
     return None
 
@@ -316,7 +327,7 @@ for i in range(0, len(sim_para.tt)):
     u_traj[i] = control(x_traj[i], sim_para.tt[i], para)
 
 # animation
-#car_animation(x_traj, u_traj, sim_para.tt, para)
+car_animation(x_traj, u_traj, sim_para.tt, para)
 
 # get reference trajectories
 y1D = traj_para.g.eval_vec(sim_para.tt)
