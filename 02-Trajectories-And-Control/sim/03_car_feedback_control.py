@@ -20,7 +20,7 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 2      # final time
+sim_para.tf = 10      # final time
 sim_para.dt = 0.01       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
@@ -29,8 +29,8 @@ sim_para.xf = [5, 5, 0]  # final state at tf
 
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
-traj_para.t0 = sim_para.t0 + .5 # start time of transition
-traj_para.tf = sim_para.tf - .5 # final time of transition
+traj_para.t0 = sim_para.t0 + 1 # start time of transition
+traj_para.tf = sim_para.tf - 1 # final time of transition
 
 # boundary conditions for y1
 traj_para.Y1A = np.array([sim_para.x0[0], 0])
@@ -89,9 +89,9 @@ def control(x, t, p):
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
     # controller parameters
-    k01 = 4
-    k02 = 4
-    k12 = 15
+    k01 = 2
+    k02 = 2
+    k12 = 10
 
     # state vector
     y1 = x[0]
@@ -104,17 +104,16 @@ def control(x, t, p):
     y1d = g_t[0]
     dy1d = 1/(np.sqrt(1 + f_y1[1] ** 2))
 
-
     y2d = f_y1[0]
-    dy2d = dy1d*f_y1[1]
-    ddy2d = dy1d ** 2 * f_y1[2]
+    dy2d = f_y1[1]/(np.sqrt(1 + f_y1[1] ** 2))
+    ddy2d = f_y1[2]/(1 + f_y1[1] ** 2)
 
     # stabilizing inputs
     w1 = dy1d - k01 * (y1 - y1d)
     w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
 
     # control laws
-    u1 = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2)
+    u1 = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2) #desired velocity
     u2 = arctan2(0.9*p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
@@ -175,7 +174,7 @@ def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     ax3.set_title('Velocity / steering angle')
     ax3.set_ylabel(r'm/s')
     ax33.set_ylabel(r'deg')
-    ax33.set_xlabel(r't in s')
+    ax3.set_xlabel(r't in s')
 
     # put a legend in the plot
     ax1.legend()
