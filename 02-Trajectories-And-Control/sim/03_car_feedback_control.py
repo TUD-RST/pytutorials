@@ -20,8 +20,8 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 10      # final time
-sim_para.dt = 0.01       # step-size
+sim_para.tf = 10         # final time
+sim_para.dt = 0.04       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
 sim_para.xf = [5, 5, 0]  # final state at tf
@@ -61,7 +61,7 @@ def ode(x, t, p):
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
                      u1 * sin(x3),
-                     1 / p.l * u1 * tan(u2)])
+                     1.1 / p.l * u1 * tan(u2)])
 
     # return state derivative
     return dxdt
@@ -89,8 +89,8 @@ def control(x, t, p):
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
     # controller parameters
-    k01 = 2
-    k02 = 2
+    k01 = 6
+    k02 = 6
     k12 = 10
 
     # state vector
@@ -113,7 +113,8 @@ def control(x, t, p):
     w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
 
     # control laws
-    u1 = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2) #desired velocity
+    ds = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2) #desired velocity
+    u1 = ds*np.sqrt(w1**2+dy2**2)
     u2 = arctan2(0.9*p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
