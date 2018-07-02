@@ -207,7 +207,17 @@ class PrototypePlanner(Planner):
 
 
 class TanhPlanner(Planner):
-    """Planner that uses a tanh approach and plans trajectories that are infinitely differentiable."""
+    """Planner that uses a Gevrey function approach and plans trajectories that are infinitely differentiable.
+               /   0                                        t < t0
+    phi(t) =  |    1/2(1 + tanh( (2T-1) / (4T(1-T))^s ))    t in [t0, tf]
+               \   1                                        t > tf
+
+    T = (t-t0)/(tf-t0)
+
+               /   yA                       t < t0
+    y_d(t) =  |    yA + (yB - yA)*phi(t)    t in [t0, tf]
+               \   yB                       t > tf
+    """
 
 
     def __init__(self, YA, YB, t0, tf, d):
@@ -248,9 +258,26 @@ class TanhPlanner(Planner):
         return Y
 
 
-    def dtanh(self, t, s):
-        """Calculates y = tanh(2 * (2t/T-1) / (4t/T * (1-t/T))^s) and it's derivatives up to order d"""
-        T = self.tf - self.t0  # transition time interval
+    def Y(self, t, s):
+        """Calculates phi(t) = 1/2(1 + tanh( (2T-1) / (4T(1-T))^s )) and it's derivatives up to order d"""
+        T = max(min(1,(t - self.t0)/(self.tf - self.t0)),0)  # transition time interval (in [0, 1])
+
+
+    def phi(self, t, s):
+        """Calculates y = 1/2(1 + tanh( (2T-1) / (4T(1-T))^s ))"""
+        phi = 1/2*(1 + np.tanh((2*t - 1) / (4*t*(1 - t))**s))
+        return phi
+
+    def a(self, t, n, s):
+        if n == 0:
+            a = ((4*t*(1*t))**(1-s))/(2*(s-1))
+        elif n == 1:
+            a = (2*t-1)*(s-1)/(t*(1-t))*self.a(t,0)
+        else:
+            a = 1/(t*(1-t))*((s-2+n)*(2*t-1)**self.a(t,n-1)+(n-1)*(2*s-4+n)*self.a(t,n-2))
+        return a
+
+
 
 
 
