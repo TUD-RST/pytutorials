@@ -1,6 +1,8 @@
 import numpy as np
 import abc # abstract base class
 import math
+import scipy as sp
+from scipy import special
 
 class Planner(object):
     """ Base class for a trajectory planner.
@@ -105,6 +107,7 @@ class PolynomialPlanner(Planner):
         tf = self.tf
 
         Y = np.append(self.YA, self.YB)
+        print(Y)
 
         T0 = self.TMatrix(t0)
         Tf = self.TMatrix(tf)
@@ -135,7 +138,7 @@ class PrototypePlanner(Planner):
         elif t > self.tf:
             Y = self.YB
         else:
-            Y = np.zeros([(self.d + 1),1])
+            Y = np.zeros([(self.d + 1)])
             for i in range(0, self.d + 1):
                 Y[i] = self.YA[i] + sum(
                     (self.bin_coeff(i, j) * (self.YB[i - j] - self.YA[i - j]) * (1 / (self.tf - self.t0)) ** j * phi[j]) for j in
@@ -167,7 +170,7 @@ class PrototypePlanner(Planner):
         Returns: phi (vector of phi and its successive derivatives)
 
         """
-        phi = np.zeros([self.d + 1, 1])
+        phi = np.zeros([self.d + 1])
 
         summation = sum([self.bin_coeff(self.d, k) * (-1) ** k * t ** (k + self.d + 1) / (self.d + k + 1)
                          for k in range(0, self.d + 1)])
@@ -206,7 +209,7 @@ class PrototypePlanner(Planner):
         return result
 
 
-class TanhPlanner(Planner):
+class GevreyPlanner(Planner):
     """Planner that uses a Gevrey function approach and plans trajectories that are infinitely differentiable.
                /   0                                        t < t0
     phi(t) =  |    1/2(1 + tanh( (2T-1) / (4T(1-T))^s ))    t in [t0, tf]
@@ -220,9 +223,9 @@ class TanhPlanner(Planner):
     """
 
 
-    def __init__(self, YA, YB, t0, tf, d):
-        super(TanhPlanner, self).__init__(YA, YB, t0, tf, d)
-
+    def __init__(self, YA, YB, t0, tf, d, s):
+        super(GevreyPlanner, self).__init__(YA, YB, t0, tf, d)
+        self.s = s
 
     def eval(self, t):
         """Evaluates the planned trajectory at time t.
@@ -238,7 +241,14 @@ class TanhPlanner(Planner):
         elif t > self.tf:
             Y = self.YB
         else:
-            Y = np.dot(self.TMatrix(t),self.c)
+            T = min(max((t-self.t0)/(self.tf-self.t0),0.001),0.999)
+            phi = self.Y(T)
+            Y = np.zeros([(self.d + 1)])
+            for i in range(0, self.d + 1):
+                Y[i] = self.YA[i] + sum(
+                    (sp.special.binom(i, j) * (self.YB[i - j] - self.YA[i - j]) * (1 / (self.tf - self.t0)) ** j * phi[j])
+                    for j in
+                    range(0, i + 1))
         return Y
 
 
@@ -257,26 +267,43 @@ class TanhPlanner(Planner):
             Y[i] = self.eval(tt[i])
         return Y
 
+    def Y(self, t):
+        Y = np.zeros([self.d + 1])
+        Y[0] = 1/2*(1 + self.y(t, 0))
+        for i in range(1, self.d + 1):
+            Y[i] = 1/2*self.y(t, i)
+        return Y
 
-    def Y(self, t, s):
-        """Calculates phi(t) = 1/2(1 + tanh( (2T-1) / (4T(1-T))^s )) and it's derivatives up to order d"""
-        T = max(min(1,(t - self.t0)/(self.tf - self.t0)),0)  # transition time interval (in [0, 1])
 
-
-    def phi(self, t, s):
-        """Calculates y = 1/2(1 + tanh( (2T-1) / (4T(1-T))^s ))"""
-        phi = 1/2*(1 + np.tanh((2*t - 1) / (4*t*(1 - t))**s))
-        return phi
-
-    def a(self, t, n, s):
+    def y(self, t, n):
+        """Calculates phi(t) = 1/2(1 + tanh( 2(2T-1) / (4T(1-T))^s )) and it's derivatives up to order d"""
+        s = self.s
         if n == 0:
-            a = ((4*t*(1*t))**(1-s))/(2*(s-1))
+            y = np.tanh(2*(2*t - 1) / ((4*t*(1 - t))**s))
         elif n == 1:
-            a = (2*t-1)*(s-1)/(t*(1-t))*self.a(t,0)
+            y = self.a(t, 2)*(1 - self.y(t, 0)**2)
         else:
-            a = 1/(t*(1-t))*((s-2+n)*(2*t-1)**self.a(t,n-1)+(n-1)*(2*s-4+n)*self.a(t,n-2))
+            y = sum(sp.special.binom(n - 1, k)*self.a(t, k + 2)*self.z(t, n - 1 - k) for k in range(0, n))
+        return y
+
+
+    def a(self, t, n):
+        s = self.s
+        if n == 0:
+            a = ((4*t*(1 - t))**(1 - s))/(2*(s - 1))
+        elif n == 1:
+            a = 2*(2*t - 1) / ((4*t*(1 - t))**s)
+        else:
+            a = 1/(t*(1 - t))*((s - 2+n)*(2*t - 1)*self.a(t, n - 1) + (n - 1)*(2*s - 4 + n)*self.a(t, n - 2))
         return a
 
+
+    def z(self, t, n):
+        if n == 0:
+            z = (1-self.y(t, 0)**2)
+        else:
+            z = - sum(sp.special.binom(n, k)*self.y(t, k)*self.y(t, n - k) for k in range(0, n + 1))
+        return z
 
 
 
