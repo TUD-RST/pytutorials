@@ -187,7 +187,7 @@ This leads to a linear equation system:
 Because $\begin{bmatrix}
 \mathbf{T}(t_0) \\
 \mathbf{T}(t_f) 
-\end{bmatrix}$ is quadratic and not singular for $t_0,t_f\neq 0$, this linear equation system can be solved explicitly:
+\end{bmatrix}$ is quadratic and not singular for $t_0\neq t_f$, this linear equation system can be solved explicitly:
 \begin{align}
 \label{eq:2}
 \mathbf{c} &= \begin{bmatrix}
@@ -216,7 +216,7 @@ A slightly different approach for a polynomial reference trajectory $y_d(t)$ is 
 \label{eq:5}
 y_d(t) = \begin{cases} y^A &\textrm{if } t<t_0 \\ y^A + (y^B-y^A)\varphi_\gamma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\y^B &\textrm{if } t>T\end{cases}
 \end{align}
-$\tau \rightarrow \varphi_\gamma(\tau)$ is a protoype function, where $\gamma$ indicates how often $\varphi_\gamma(\tau)$ is continuously differentiable. The function has to meet the following conditions, such that the reference trajectory is feasible:
+$\tau \rightarrow \varphi_\gamma(\tau)$ is a protoype function, where $\gamma$ indicates how often $\varphi_\gamma(\tau)$ is continuously differentiable. The function has to meet the following boundary conditions:
 \begin{subequations}
 \label{eq:6}
 \begin{align}
@@ -251,22 +251,29 @@ and it's $n$-th derivative:
 \end{align}
 In the last step the $n$-th derivative of \eqref{eq:5} $(n=1,...,\gamma$) is derived.
 \begin{align}
-y_d^{(n)}(t) = \begin{cases} y_d^{(n)}(t_0) & \textrm{if } t<t_0 \\ 
-y_d^{(n)} + \sum_{i=0}^{n}\binom{n}{i}(y_d^{(n-i)}(t)-y_d^{(n-i)}(t_0))\left(\frac{1}{t_f-t_0}\right)^i\varphi_\gamma^{(i)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
-y_d^{(n)}(t_f)&\textrm{if } t>t_f\end{cases}
+y_d^{(n)}(t) = \begin{cases} 0 & \textrm{if } t<t_0 \\ 
+\frac{(y^B-y^A)}{(t_f-t_0)^n}\varphi_\gamma^{(n)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
+0&\textrm{if } t>t_f\end{cases}
 \end{align}
-The main difference of this method over the one presented in \ref{sec:polynomials} is, that no linear equation system has to be solved. This can have runtime advantages when applied on a real system.
+The main difference of this method over the one presented in \ref{sec:polynomials} is, that no linear equation system has to be solved. This can have runtime advantages when applied on a real system. The disadvantage is, that the boundary conditions for the derivative are fixed (see \eqref{eq:6}).
 \subsection{Gevrey-functions}
-It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example when you are controling an infinite dimensional system.}. A polynomial approach can't be used in this case, because an infinite number of parameters is needed to construct such a polynomial. One approach to deal with this problem is to use so called Gevrey-funtions.
+It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example in infinite dimensional systems control.}. A polynomial approach can't be used in this case, because an infinite number of parameters is needed to construct such a polynomial. One approach to deal with this problem is to use Gevrey-funtions instead.
 \begin{defi}[Gevrey-function] A function $y(t):\Omega \mapsto \R$ is called a Gevrey-function of order $\alpha$, if $y(t) \in C^\infty(\Omega)$ and positive constants $M, R$ exist, such that
 \begin{align*}
 \sup_{t\in\Omega}{|y^{(n)}(t)| \leq \frac{M}{R^n}(n!)^\alpha}.
 \end{align*}
 \end{defi}
-One function that belongs to the Gevrey class of functions is:
+As in the other examples, 
 \begin{align}
-\tan(blala)
+y_d(t) = \begin{cases} y^A & \textrm{if } t<t_0 \\ 
+y^A + (y^B-y^A)\varphi_\sigma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
+y^B &\textrm{if } t>t_f\end{cases}
 \end{align}
+With
+\begin{align}
+\varphi_\sigma\left(\tau\right) = \frac{1}{2}\left(1 + \tanh \left( \frac{2(2\tau-1)}{(4\tau(1-\tau))^\sigma}\right)\right)
+\end{align}
+a function that belongs to the Gevrey class.
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning at first a \emph{Planner} base class is implemented. Then a new subclass for each new planning algorithm is created.
 
@@ -285,19 +292,18 @@ The planned trajectory has to be evaluated at runtime, but how the this function
 \subsubsection{The \emph{PolynomialPlanner} subclass}
 \label{sec:polynomialplanner}
 To implement the planning algorithm that was developed in \autoref{sec:polynomials}, a new class \texttt{PolynomialPlanner} is created that inherits from the previously defined class \texttt{Planner}. All the attributes and methods of \texttt{Planner} are now also attributes and methods of \texttt{PolynomialPlanner}.
-\listcodeplanner{28}{33}
+\listcodeplanner{30}{36}
 To solve for the parameter vector $\mathbf{c}$, the matrix $\mathbf{T}(t)$ from \eqref{eq:1} is calculated and a method \texttt{TMatrix()} is therefore created:
-\listcodeplanner{73}{94}
+\listcodeplanner{76}{97}
 Then a method, that solves \eqref{eq:2} and returns the parameter vector $\mathbf{c}$ is needed:
-\listcodeplanner{97}{116}
+\listcodeplanner{100}{119}
 Because the parameters don't change, ones they are calculated, a new attribute \texttt{c} is created:
-\listcodeplanner{35}{79}
+\listcodeplanner{38}{40}
 Finally a method \texttt{eval()} that implements \eqref{eq:3} is defined:
-\listcodeplanner{39}{54}
+\listcodeplanner{42}{57}
 as well as a second method \texttt{eval\_vec()}, that can handle a time array as an input:
-\listcodeplanner{57}{70}
+\listcodeplanner{60}{73}
 The polynomial trajectory planner is now successfully implemented and can be tested.
-
 \textbf{Example:}
 
 \textbf{\py source code file: \texttt{01\_trajectory\_planning.py}}
@@ -326,7 +332,9 @@ At last, the results are plotted.
 \includegraphics[scale=0.9]{img/planned_trajectory.pdf}
 \end{figure}
 \subsubsection{The \emph{PrototypePlanner} subclass}
-Implementation can be found in the file.
+\textbf{\py source code file: \texttt{Planner.py}}
+\subsubsection{The \emph{GevreyPlanner} subclass}
+\textbf{\py source code file: \texttt{Planner.py}}
 \newpage
 \section{Feedforward control design}
 \label{sec:ffcontrol}
