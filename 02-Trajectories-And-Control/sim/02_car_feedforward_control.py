@@ -5,7 +5,7 @@ import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
 from Planner import PolynomialPlanner
-#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 class Parameters(object):

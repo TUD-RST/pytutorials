@@ -19,7 +19,6 @@
 \usepackage{xcolor}
 \usepackage{placeins} % -> floatbarrier
 \usepackage{siunitx}  % -> handling of units
-
 % code
 \usepackage{listings}
 \lstset{
@@ -96,7 +95,7 @@ showstringspaces=false} % spacing between strings not showed
 \usepackage[printwatermark]{xwatermark}
 \usepackage{lipsum}
 
-\newwatermark[allpages,color=red!10,angle=45,scale=3,xpos=0,ypos=0]{DRAFT}
+\newwatermark[allpages,color=red!30,angle=45,scale=1.8,xpos=0,ypos=0]{DRAFT ONLY, NOT APPROVED}
 
 
 % ----------------------------------------------------------------------------
@@ -122,7 +121,6 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 \item Implementation of different trajectory generators in a class hierarchy \py,
 \item Flatness based feedforward control
 \item Flatness based feedback control.
-
 \end{itemize}
 
 Later in this tutorial the designed trajectory generators are used to design control strategies for the car model. 
@@ -487,6 +485,7 @@ This leads the linear system shown in \autoref{fig:linear_system}.
 \caption{Block diagram of the linearized system}
 \label{fig:linear_system}
 \end{figure}
+
 The tracking error $e$ is defined as:
 \begin{align}
 \label{eq:error}
@@ -535,7 +534,7 @@ Then the desired trajectories are expressed in the planner trajectories $f$ and 
 \listcodefbcontrol{103}{109}
 Afterwards $w_1$ and $w_2$ are set:
 \listcodefbcontrol{111}{113}
-In the final step, the control laws are calculated and return from the function:
+In the final step, the control laws are calculated and returned from the function:
 \listcodefbcontrol{115}{120}
 \subsubsection{Result}
 The experiment from \ref{subsec:result} is repeated with the same model error as in \autoref{fig:failed_control}, but now using the feedback controller instead. As it can be seen in \autoref{fig:success_control} the control objective of following the planned trajectory succeeded, even with model errors.
@@ -547,11 +546,10 @@ The experiment from \ref{subsec:result} is repeated with the same model error as
 \end{figure}
 \begin{figure}[ht]
 \centering
-\includegraphics[scale=1]{img/successcontrol.pdf}
+\includegraphics[scale=0.9]{img/successcontrol.pdf}
 \caption{Feedback control for $\tilde{l}=0.9l$}
 \label{fig:success_control}
 \end{figure}
-\printglossaries
 \end{document}
 
 %%% Local Variables:

@@ -219,6 +219,9 @@ class GevreyPlanner(Planner):
                /   yA                       t < t0
     y_d(t) =  |    yA + (yB - yA)*phi(t)    t in [t0, tf]
                \   yB                       t > tf
+
+    based on: "J. Rudolph, J. Winkler, F. Woittenek: Flatnes Based Control of Distributed Parameter Systems: 
+    Examples and Computer Exercises from Various Technological Domains" Pages 88ff.
     """
 
 
@@ -313,8 +316,3 @@ class GevreyPlanner(Planner):
             # eq. for n-th derivative of z
             z = - sum(sp.special.binom(n, k)*self.y(t, k)*self.y(t, n - k) for k in range(0, n + 1))
         return z
-
-
-
-
-
