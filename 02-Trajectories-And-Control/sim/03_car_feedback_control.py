@@ -20,7 +20,7 @@ para.w = para.l * 0.3  # define car width
 # Simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
+sim_para.tf = 10       # final time
 sim_para.dt = 0.04       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
@@ -61,7 +61,7 @@ def ode(x, t, p):
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
                      u1 * sin(x3),
-                     1.1 / p.l * u1 * tan(u2)])
+                     1 / p.l * u1 * tan(u2)])
 
     # return state derivative
     return dxdt
@@ -89,9 +89,9 @@ def control(x, t, p):
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
     # controller parameters
-    k01 = 6
-    k02 = 6
-    k12 = 10
+    k01 = 1
+    k02 = 1
+    k12 = 5
 
     # state vector
     y1 = x[0]
