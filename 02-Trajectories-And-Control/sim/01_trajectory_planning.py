@@ -9,7 +9,7 @@ YB = np.array([2, 0, 0]) # t = tf
 t0 = 0 # start time of transition
 tf = 3 # final time of transition
 tt = np.linspace(t0-1, tf+1, 500) # -1 to 4 in 500 steps
-d = 3 # smooth derivative up to order d
+d = 2 # smooth derivative up to order d
 yd = PolynomialPlanner(YA, YB, t0, tf, d)
 
 # display the parameter vector
