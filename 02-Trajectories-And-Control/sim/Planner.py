@@ -8,8 +8,8 @@ class Planner(object):
     """ Base class for a trajectory planner.
 
     Attributes:
-        YA (int, float, ndarray): start value
-        YB (int, float, ndarray): final value
+        YA (int, float, ndarray): start value (size = d+1)
+        YB (int, float, ndarray): final value (size = d+1)
         t0 (int, float): start time
         tf (int, float): final time
         d (int): trajectory is smooth up at least to the d-th derivative
@@ -220,7 +220,7 @@ class GevreyPlanner(Planner):
     y_d(t) =  |    yA + (yB - yA)*phi(t)    t in [t0, tf]
                \   yB                       t > tf
 
-    based on: "J. Rudolph, J. Winkler, F. Woittenek: Flatnes Based Control of Distributed Parameter Systems: 
+    based on: "J. Rudolph, J. Winkler, F. Woittenek: Flatness Based Control of Distributed Parameter Systems:
     Examples and Computer Exercises from Various Technological Domains" Pages 88ff.
     """
 
