@@ -5,7 +5,7 @@ import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
 from Planner import PolynomialPlanner
-#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 class Parameters(object):
@@ -305,7 +305,7 @@ for i in range(0, len(sim_para.tt)):
 car_animation(x_traj, u_traj, sim_para.tt, para)
 
 # get reference trajectories
-y1D = traj_para.g.eval_vec(tt)
+y1D = traj_para.g.eval_vec(sim_para.tt)
 y2D = traj_para.f.eval_vec(y1D[:,0])
 
 x_ref = np.zeros_like(x_traj)
