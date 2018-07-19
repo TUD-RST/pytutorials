@@ -6,7 +6,9 @@
 \usepackage{xspace} % proper space after macros with 0 args
 \usepackage{bm}
 \usepackage{fancyref}
-
+\usepackage[toc,page]{appendix}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{ref.bib}
 % mathematics
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -14,11 +16,14 @@
 % figures, tables, etc.
 \usepackage{hyperref} %
 \usepackage{graphicx}
+\usepackage{pdfpages}
 \usepackage{tikz}
 \usepackage{pgf}
 \usepackage{xcolor}
+\usepackage{epstopdf}
 \usepackage{placeins} % -> floatbarrier
 \usepackage{siunitx}  % -> handling of units
+
 % code
 \usepackage{listings}
 \lstset{
@@ -64,8 +69,8 @@ showstringspaces=false} % spacing between strings not showed
 
 % manage glossaries
 \usepackage{glossaries}
-\makeglossaries
-\newacronym{ivp}{IVP}{initial value problem}
+%\makeglossaries
+%\newacronym{ivp}{IVP}{initial value problem}
 
 % define shortcuts
 \newcommand{\ad}{\mathrm{ad}}
@@ -97,7 +102,7 @@ showstringspaces=false} % spacing between strings not showed
 
 \newwatermark[allpages,color=red!30,angle=45,scale=1.8,xpos=0,ypos=0]{DRAFT ONLY, NOT APPROVED}
 
-
+\input{gevrey-package.tex}
 % ----------------------------------------------------------------------------
 \subject{Control Theory Tutorial}% optional
 \title{Car-Like Mobile Robot}
@@ -106,9 +111,7 @@ showstringspaces=false} % spacing between strings not showed
 \date{}
 % ----------------------------------------------------------------------------
 
-
 \begin{document}
-
 \maketitle% create title
 
 \tableofcontents
@@ -254,24 +257,6 @@ y_d^{(n)}(t) = \begin{cases} 0 & \textrm{if } t<t_0 \\
 0&\textrm{if } t>t_f\end{cases}
 \end{align}
 The main difference of this method over the one presented in \ref{sec:polynomials} is, that no linear equation system has to be solved. This can have runtime advantages when applied on a real system. The disadvantage is, that the boundary conditions for the derivative are fixed (see \eqref{eq:6}).
-\subsection{Gevrey-functions}
-It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example in infinite dimensional systems control.}. A polynomial approach can't be used in this case, because an infinite number of parameters is needed to construct such a polynomial. One approach to deal with this problem is to use Gevrey-funtions instead.
-\begin{defi}[Gevrey-function] A function $y(t):\Omega \mapsto \R$ is called a Gevrey-function of order $\alpha$, if $y(t) \in C^\infty(\Omega)$ and positive constants $M, R$ exist, such that
-\begin{align*}
-\sup_{t\in\Omega}{|y^{(n)}(t)| \leq \frac{M}{R^n}(n!)^\alpha}.
-\end{align*}
-\end{defi}
-As in the other examples, 
-\begin{align}
-y_d(t) = \begin{cases} y^A & \textrm{if } t<t_0 \\ 
-y^A + (y^B-y^A)\varphi_\sigma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
-y^B &\textrm{if } t>t_f\end{cases}
-\end{align}
-With
-\begin{align}
-\varphi_\sigma\left(\tau\right) = \frac{1}{2}\left(1 + \tanh \left( \frac{2(2\tau-1)}{(4\tau(1-\tau))^\sigma}\right)\right)
-\end{align}
-a function that belongs to the Gevrey class.
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning at first a \emph{Planner} base class is implemented. Then a new subclass for each new planning algorithm is created.
 
@@ -330,8 +315,6 @@ At last, the results are plotted.
 \includegraphics[scale=0.9]{img/planned_trajectory.pdf}
 \end{figure}
 \subsubsection{The \emph{PrototypePlanner} subclass}
-\textbf{\py source code file: \texttt{Planner.py}}
-\subsubsection{The \emph{GevreyPlanner} subclass}
 \textbf{\py source code file: \texttt{Planner.py}}
 \newpage
 \section{Feedforward control design}
@@ -546,10 +529,120 @@ The experiment from \ref{subsec:result} is repeated with the same model error as
 \end{figure}
 \begin{figure}[ht]
 \centering
-\includegraphics[scale=0.9]{img/successcontrol.pdf}
+\includegraphics[scale=1]{img/successcontrol.pdf}
 \caption{Feedback control for $\tilde{l}=0.9l$}
 \label{fig:success_control}
 \end{figure}
+\newpage
+\clearpage
+\begin{appendices}
+\section{Gevrey function planner}
+\textbf{Reference:}
+
+\fullcite{Rud03}
+
+It is sometimes necessary, that a planned trajectory is infinitely differentiable \footnote{For example in infinite dimensional systems control.}. A polynomial approach can't be used in this case, because an infinite number of parameters is needed to construct such a polynomial. One approach to deal with this problem is to use Gevrey-funtions instead.
+\begin{align*}
+y_d(t) = \begin{cases} y^A & \textrm{if } t<t_0 \\ 
+y^A + (y^B-y^A)\varphi_\sigma\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
+y^B &\textrm{if } t>t_f\end{cases}
+\end{align*}
+\subsection{Definition}
+A function $\varphi:[0, T] \rightarrow \domR$ the derivatives of which are bounded on the interval $[0,T]$  by
+\begin{equation}\label{eq:gevrey:limit}
+  \sup_{t \in [0,T]} \left| \varphi^{(k)}(t) \right| \leq m
+  \frac{(k!)^{\alpha}}{\gamma^k}, \; \mbox{with} \;
+  \alpha,\gamma,m,t   \in \domR, \quad k \geq 0
+\end{equation}
+is called a Gevrey function of order $\alpha$ on $[0, T]$.
+\begin{figure}[ht]
+  \begin{center}
+    \subfigure{\includegraphics[width=7cm]{img/gevrey0}}
+    \subfigure{\includegraphics[width=7cm]{img/gevrey1}}
+    \caption{Plot of function $\varphi_{\sigma,T}$  and its first derivative for different parameters.}
+    \label{fig:gevrey}
+  \end{center}
+\end{figure}
+Here we deal with the Gevrey function
+\begin{align}
+\varphi_\sigma\left(\tau\right) = \frac{1}{2}\left(1 + \tanh \left( \frac{2(2\tau-1)}{(4\tau(1-\tau))^\sigma}\right)\right)
+\end{align}
+which is based on the tangens hyperbolicus. Some example plots of this function and its derivatives are given in
+Fig.\ \ref{fig:gevrey}. The parameter $\sigma$ influences the steepness of the transition, for $\tau=\frac{t}{T}$, $T$ defines the length
+of the interval where the transition takes place. The order  $\alpha$ is given by $\alpha=1+1/\sigma$.
+%\begin{align}
+%\label{eq:gevrey:tanh:klasse} \alpha=1+1/\sigma.
+%\end{align}
+
+The function is not analytic in  $t=0 (\tau = 0)$ and $t=T (\tau = 1)$, all of its derivatives are zero in these points.
+\subsection{Efficient calculation of derivatives}
+\textbf{Problem:} Find an algorithm which calculates all derivatives of
+\begin{equation}\label{eq:defy}
+  y:=\tanh\left(\frac{2(2\tau-1)}{(4\tau(1-\tau))^{\sigma}}\right)
+\end{equation}
+in an efficient way.
+
+Eq.\ \eqref{eq:defy} can be written as
+\begin{equation}\label{eq:shorty}
+  y=\tanh(\dot{a}),\quad a=\frac{(4\tau(1-\tau))^{1-\sigma}}{2(\sigma-1)}.
+\end{equation}
+
+At first we assume that all derivatives $a^{(n)},n \ge 0$ are known and we show that an iteration formula can be given for $y^{(n)}$.
+
+Differentiating eq.\ \eqref{eq:shorty} leads to
+\begin{equation}\label{eq:ydot}
+ \dot{y}=\ddot{a}(1-\tanh^2(\dot{a}))=\ddot{a}(1-y^2).
+\end{equation}
+
+Introducing the new variable
+\begin{equation} \label{eq:defz}
+ z:=(1-y^2)
+\end{equation}
+
+and differentiating \eqref{eq:ydot} $(n-1)$ times gives
+\begin{equation} \label{eq:formely_mit_z_und_a}
+y^{(n)}=\sum_{k=0}^{n-1}\tbinom
+{n-1}{k}a^{(k+2)}z^{(n-1-k)}.
+\end{equation}
+
+
+\textbf{Problem:} In \eqref{eq:formely_mit_z_und_a} derivatives of $z$ up to order $(n-1)$ are needed. These can be
+obtained by differentiating \eqref{eq:defz} $(n-1)$ times:
+\begin{equation*} 
+%\label{eq:formelz}
+z^{(n-1)}=-\sum_{k=0}^{n-1}\tbinom
+{n-1}{k}y^{(k)}y^{(n-1-k)}.
+\end{equation*}
+
+
+Inspecting  \eqref{eq:formely_mit_z_und_a} one finds that an iteration formula for the derivatives of $a$ is missing. Using \eqref{eq:shorty} one gets
+\begin{equation*}
+\dot{a}=\frac{2(2\tau-1)}{(4\tau(1-\tau))^{-\sigma}}=\frac{(2\tau-1)(\sigma-1)}{\tau(1-\tau)}a.
+\end{equation*}
+
+Multiply this with ${\tau(1-\tau)}$ and differentiate it $(n-1)$ times:
+\begin{equation*}
+\sum_{k=0}^{n-1}\tbinom{n-1}{k} a^{(n-k)}\frac{d^k}{dt^k}(\tau(1-\tau))={(\sigma-1)}\sum_{k=0}^{n-1}\tbinom
+{n-1}{k} a^{(n-k-1)}\frac{d^k}{dt^k}(2\tau-1).
+\end{equation*}
+
+Solving for $a^{(n)}$ one gets
+\small
+\begin{align*}%\label{eq:formelalong}
+a^{(n)}&=\frac{1}{\tau(1-\tau)}\left((\sigma-1)\sum_{k=0}^{n-1}\tbinom{n-1}{k} a^{(n-k-1)}\frac{d^k}{dt^k}(2\tau-1)+\sum_{k=0}^{n-2}\tbinom{n-1}{k+1} a^{(n-k-1)}\frac{d^k}{dt^k}(2\tau-1)\right).
+\end{align*}
+\normalsize
+%%\begin{equation}
+%%a^{(2)}=\frac{4}{4\tau(1-\tau)}\left({\sigma}a^{(1)}(2\tau-1)+2(\sigma-1)a^{(0)}))\right)
+%%\end{equation}
+
+Note: The sums in the preceeding equation have to be evaluated up to the second order only because higher derivatives of $(2\tau-1)$ vanish. The result reads
+\begin{equation*}
+a^{(n)}=\frac{1}{\tau(1-\tau)}\left((\sigma-2+n)(2\tau-1)a^{(n-1)}+(n-1)(2\sigma-4+n)a^{(n-2)}\right), n\ge 2.
+\end{equation*}
+\subsection{The \emph{GevreyPlanner} subclass}
+The implementation can be found in the \textbf{\py source code file: \texttt{Planner.py}}.
+\end{appendices}
 \end{document}
 
 %%% Local Variables:
