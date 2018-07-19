@@ -6,9 +6,11 @@ from Planner import PolynomialPlanner, PrototypePlanner, GevreyPlanner
 # example 1 - polynomial planner
 YA = np.array([0, 0, 0]) # t = t0
 YB = np.array([1, 0, 0]) # t = tf
+
 t0 = 0 # start time of transition
 tf = 1 # final time of transition
 tt = np.linspace(t0, tf, 100) # -1 to 4 in 500 steps
+
 d = 2 # smooth derivative up to order d
 yd = PolynomialPlanner(YA, YB, t0, tf, d)
 
@@ -69,5 +71,3 @@ plt.title(r'$y = \varphi^{(1)}_{\sigma,T}(t)$')
 plt.legend([r'$\sigma = 1.1$', r'$\sigma = 1.9$'])
 plt.xlabel(r't in s')
 plt.grid(True)
-plt.show()
-

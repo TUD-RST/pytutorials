@@ -23,6 +23,8 @@
 \usepackage{epstopdf}
 \usepackage{placeins} % -> floatbarrier
 \usepackage{siunitx}  % -> handling of units
+\usepackage[printwatermark]{xwatermark}
+\newwatermark[allpages,color=red!50,angle=45,scale=1.8,xpos=0,ypos=0]{\textsf{DRAFT ONLY,NOT APPROVED}}
 
 % code
 \usepackage{listings}
@@ -96,13 +98,8 @@ showstringspaces=false} % spacing between strings not showed
 \definecolor{dark-green}{rgb}{0, 0.5, 0}
 \definecolor{gray}{rgb}{0.5, 0.5, 0.5}
 
-%draft 
-\usepackage[printwatermark]{xwatermark}
-\usepackage{lipsum}
-
-\newwatermark[allpages,color=red!30,angle=45,scale=1.8,xpos=0,ypos=0]{DRAFT ONLY, NOT APPROVED}
-
 \input{gevrey-package.tex}
+
 % ----------------------------------------------------------------------------
 \subject{Control Theory Tutorial}% optional
 \title{Car-Like Mobile Robot}
@@ -256,7 +253,6 @@ y_d^{(n)}(t) = \begin{cases} 0 & \textrm{if } t<t_0 \\
 \frac{(y^B-y^A)}{(t_f-t_0)^n}\varphi_\gamma^{(n)}\left(\frac{t-t_0}{t_f-t_0}\right) &\textrm{if } t \in [t_0, t_f] \\ 
 0&\textrm{if } t>t_f\end{cases}
 \end{align}
-The main difference of this method over the one presented in \ref{sec:polynomials} is, that no linear equation system has to be solved. This can have runtime advantages when applied on a real system. The disadvantage is, that the boundary conditions for the derivative are fixed (see \eqref{eq:6}).
 \subsection{Implementation in \py}
 In order to automate the process of trajectory planning at first a \emph{Planner} base class is implemented. Then a new subclass for each new planning algorithm is created.
 
@@ -315,7 +311,10 @@ At last, the results are plotted.
 \includegraphics[scale=0.9]{img/planned_trajectory.pdf}
 \end{figure}
 \subsubsection{The \emph{PrototypePlanner} subclass}
+
 \textbf{\py source code file: \texttt{Planner.py}}
+
+Implementation can be found in the file.
 \newpage
 \section{Feedforward control design}
 \label{sec:ffcontrol}
@@ -468,7 +467,6 @@ This leads the linear system shown in \autoref{fig:linear_system}.
 \caption{Block diagram of the linearized system}
 \label{fig:linear_system}
 \end{figure}
-
 The tracking error $e$ is defined as:
 \begin{align}
 \label{eq:error}
@@ -529,7 +527,7 @@ The experiment from \ref{subsec:result} is repeated with the same model error as
 \end{figure}
 \begin{figure}[ht]
 \centering
-\includegraphics[scale=1]{img/successcontrol.pdf}
+\includegraphics[scale=0.9]{img/successcontrol.pdf}
 \caption{Feedback control for $\tilde{l}=0.9l$}
 \label{fig:success_control}
 \end{figure}
@@ -643,6 +641,7 @@ a^{(n)}=\frac{1}{\tau(1-\tau)}\left((\sigma-2+n)(2\tau-1)a^{(n-1)}+(n-1)(2\sigma
 \subsection{The \emph{GevreyPlanner} subclass}
 The implementation can be found in the \textbf{\py source code file: \texttt{Planner.py}}.
 \end{appendices}
+\printglossaries
 \end{document}
 
 %%% Local Variables:
