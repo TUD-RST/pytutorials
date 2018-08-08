@@ -1,5 +1,5 @@
 # Jupyter Notebook and SymPy
-This tutorial shows how to model and analyse the cart-pole system using a Jupyter Notebook and the symbolic mathematics library SymPy 
+This tutorial shows how to model and analyze the cart-pole system using a Jupyter Notebook and the symbolic mathematics library SymPy 
 
 ## The following topics are covered by the tutorial
 - Derivation of the equations of motion through scientific computing
