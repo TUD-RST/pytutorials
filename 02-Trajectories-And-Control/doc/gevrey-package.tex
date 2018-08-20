@@ -1,0 +1,52 @@
+\usepackage{amsfonts,amsthm}
+\usepackage{framed}
+\usepackage{makeidx}
+\usepackage{floatflt}
+\usepackage{subfigure}
+\usepackage{lscape}
+\hyphenation{con-di-tion}
+\numberwithin{equation}{section}
+
+% Partielle Ableitung  #1: Zaehler, #2: Nenner
+\newcommand{\pdiff}[2]
+{
+ \frac{\partial #1}{\partial #2}
+}
+
+\newtheorem{lmm}{Lemma}[section]
+\newtheorem{thrm}[lmm]{Theorem}
+\newtheorem{note}[lmm]{Note}
+
+\newcommand{\pAbl}[1]{\frac{\partial}{\partial #1}} % partielle Ableitung
+% Einige Wertebereiche
+\newcommand{\domC}{\mathbb{C}} %Natuerliche Zahlen
+\newcommand{\domN}{\mathbb{N}} %Natuerliche Zahlen
+\newcommand{\domR}{\mathbb{R}} %Reelle Zahle
+\def\RR{\mathbb R}
+\newcommand{\domRp}{\mathbb{R}^+} %Positive Reele Zahlen
+\newcommand{\Gras}[1]{{#1}}%\boldmath
+\newcommand{\bolpi}{{\Gras \pi}}
+\newcommand{\bols}{{\Gras s}}
+\newcommand{\Deltas}{{\Gras \delta}}
+\newcommand{\boltheta}{{\Gras \theta}}
+\newcommand{\bolsigma}{{\Gras \sigma}}
+\newcommand{\bolbeta}{{\Gras \beta}}
+\newcommand{\bolepsilon}{{\Gras \epsilon}}
+ \newcommand{\ie}{{i.e.},\ }
+ \newcommand{\cf}{{cf.}\ }
+\newcommand{\quoted}[1]{{\glqq #1\grqq}}
+\newcommand{\myparagraph}[1]{\underline{\textbf{#1}}\\[0ex]}
+\newcounter{exercise}%[chapter]
+\numberwithin{exercise}{section}
+\newenvironment{mycompexer}{%
+\refstepcounter{exercise}%
+\pagebreak[3]
+\begin{shadedwithicon}{13.5}{\protect{\parbox{1cm}{\center\includegraphics[width=0.75cm]{ico_compexer}}}\nopagebreak}%
+{\noindent\underline{\textbf{Exercise \theexercise:}}\\[0.5ex]}%
+}{\end{shadedwithicon}}
+\newcommand{\df}{\mathrm{d}}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

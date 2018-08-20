@@ -280,7 +280,7 @@ class GevreyPlanner(Planner):
 
 
     def y(self, t, n):
-        """Calculates y = tanh( 2(2t-1) / (4T(1-t))^s )) and it's derivatives up to order n"""
+        """Calculates y = tanh( 2(2t-1) / (4t(1-t))^s )) and it's derivatives up to order n"""
         s = self.s
         if n == 0:
             # eq. A.3
