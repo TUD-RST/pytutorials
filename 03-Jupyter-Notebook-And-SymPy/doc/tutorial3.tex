@@ -112,7 +112,7 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 
 Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{\py List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial} if you are not familiar with the handling of containers and arrays in \py. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}.
 
-For information on \jp visit \href{https://jupyter.org}{jupyter}. 
+For information on \jp visit \href{https://jupyter.org}{\jp}. 
 \section{\jp}
 The \jp app is a browser based interactive environment to display and execute code. The created notebook documents are based on cells of text and/or code (preferebly \py). They are widely used in the scientific community and can be used to display results and make them easily reproducable.
 \subsection{Installation}
@@ -120,14 +120,14 @@ For information on how to install \jp, please refer to \href{https://jupyter.rea
 
 It is assumed \jp and all necessary dependencies are successfully installed on your computer.
 \subsection{Running notebooks}
-To run \jp on Linux and macOS:
+To run \jp:
 \begin{enumerate}
 \item Open the terminal (Linux and macOS) or the command prompt (Windows)
-\item Go to the folder, where the notebook file is located (not necessary)
+\item Go to the folder, where the notebook file is located (optional)
 	\subitem \texttt{cd ../03-Jupyter-Notebook-And-SymPy/sim}
 \item Run \jp: 
 	\subitem \texttt{jupyter notebook}
-	\subitem The following window should open in the default browser:
+	\subitem The following window should open in your default browser:
 \begin{figure}[htb]
 \centering
 \includegraphics[scale=0.4]{img/jupyter_screenshot}
@@ -136,9 +136,13 @@ To run \jp on Linux and macOS:
 \end{enumerate}  
 \newpage
 \section{SymPy}
-\sympy is a \py library for symbolic mathematics. It enables the user to solve equation, integrals work in progress.
-\subsection{Basic operations}
+\sympy is a \py library for symbolic mathematics. It enables the user to solve equations, integrals and other mathematical problems and aims to become a full computer algebra system.
 
+A useful \href{http://daabzlatex.s3.amazonaws.com/9065616cce623384fe5394eddfea4c52.pdf}{cheat sheet} contains basic operations on one page. Remember, when importing \sympy with \texttt{import sympy as sp}, all function calls have to be made with the prefix \texttt{sp.function\_name}.
+
+For further information on \sympy, please consult its latest documentation:
+
+\href{http://docs.sympy.org/latest/index.html}{\sympy documentation} 
 \end{document}
 
 %%% Local Variables:
