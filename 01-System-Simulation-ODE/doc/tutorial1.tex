@@ -258,8 +258,25 @@ The return value \emph{sol} is an \emph{OdeResult} object. To extract the simula
 \begin{lstlisting}
 x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 \end{lstlisting}
+\subsection{Time-Events}
+It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \texttt{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection.
+\begin{lstlisting}
+def event(t, x):
+	"""Returns 0, if simulation should be terminated"""
+	
+	x_max = 5 # bound of the state variable x
+	if abs(x) > x_max:
+		return 0 # terminate simulation
+	else: 
+		return 1
+		
+# set the attribute 'terminate' of event, to stop the simulation
+event.terminate = True
 
-
+# simulate the system with event detection
+sol = solve_ivp(lambda t, x: ode(x, t, para), 
+               (t0, tf), x0, method='RK45',t_eval=tt, events=event)
+\end{lstlisting}
 \printglossaries
 \end{document}
 
