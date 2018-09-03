@@ -53,9 +53,11 @@ showstringspaces=false} % spacing between strings not showed
 }
 
 % manage glossaries
+% Call makeglossaries on a command prompt after LaTeX compiling,
+% the re-run LaTeX
 \usepackage{glossaries}
 \setacronymstyle{long-short}
-%\makeglossaries
+\makeglossaries
 \newacronym{ivp}{IVP}{initial value problem}
 \newacronym{ode}{ODE}{ordinary differential equation}
 
@@ -294,6 +296,7 @@ x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 
 
 \printglossaries
+
 \end{document}
 
 %%% Local Variables:
