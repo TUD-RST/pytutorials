@@ -25,8 +25,8 @@ def ode(x, t, p):
     """Function of the robots kinematics
 
     Args:
-        x: state
-        t: time
+        x        : state
+        t        : time
         p(object): parameter container class
 
     Returns:
@@ -64,12 +64,12 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     """Plotting function of simulated state and actions
 
     Args:
-        x(ndarray): state-vector trajectory
-        u(ndarray): control vector trajectory
-        t(ndarray): time vector
-        fig_width: figure width in cm
-        fig_height: figure height in cm
-        save (bool) : save figure (default: False)
+        x(ndarray) : state-vector trajectory
+        u(ndarray) : control vector trajectory
+        t(ndarray) : time vector
+        fig_width  : figure width in cm
+        fig_height : figure height in cm
+        save (bool): save figure (default: False)
     Returns: None
 
     """
