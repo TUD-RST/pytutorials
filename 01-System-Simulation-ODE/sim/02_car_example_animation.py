@@ -4,7 +4,7 @@ from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
-#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 class Parameters(object):
@@ -253,7 +253,7 @@ def car_animation(x, u, t, p):
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
-    ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
+    ani.save('animation.mp4', writer='ffmpeg', fps=1 / (t[1] - t[0]))
     plt.show()
     return None
 
