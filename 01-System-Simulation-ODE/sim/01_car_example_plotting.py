@@ -128,7 +128,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     # save the figure in the working directory
     if save:
         plt.savefig('state_trajectory.pdf')  # save output as pdf
-        plt.savefig('state_trajectory.pgf')  # for easy export to LaTex
+        # plt.savefig('state_trajectory.pgf')  # for easy export to LaTeX, needs a lot of extra packages
     return None
 
 

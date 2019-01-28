@@ -130,7 +130,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     # save the figure in the working directory
     if save:
         plt.savefig('state_trajectory.pdf')  # save output as pdf
-        plt.savefig('state_trajectory.pgf')  # for easy export to LaTex
+        #plt.savefig('state_trajectory.pgf')  # for easy export to LaTeX, needs a lot of extra packages
     return None
 
 
@@ -252,8 +252,10 @@ def car_animation(x, u, t, p):
     ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
+
     file_format = 'mp4'
     ani.save('animation.'+file_format, writer='ffmpeg', fps=1 / (t[1] - t[0]))
+
     plt.show()
     return None
 
