@@ -21,7 +21,7 @@ sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
 
 
-def ode(x, t, p):
+def ode(t, x, p):
     """Function of the robots kinematics
 
     Args:
@@ -33,7 +33,7 @@ def ode(x, t, p):
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
-    u1, u2 = control(x, t)  # control vector
+    u1, u2 = control(t, x)  # control vector
 
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
@@ -44,7 +44,7 @@ def ode(x, t, p):
     return dxdt
 
 
-def control(x, t):
+def control(t, x):
     """Function of the control law
 
     Args:
@@ -74,7 +74,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
 
     """
     # creating a figure with 3 subplots, that share the x-axis
-    fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+    fig1, (ax1, ax2, ax3) = plt.subplots(3)
 
     # set figure size to desired values
     fig1.set_size_inches(fig_width / 2.54, fig_height / 2.54)
@@ -112,7 +112,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     ax3.set_title('Velocity / steering angle')
     ax3.set_ylabel(r'm/s')
     ax33.set_ylabel(r'deg')
-    ax33.set_xlabel(r't in s')
+    ax3.set_xlabel(r't in s')
 
     # put a legend in the plot
     ax1.legend()
@@ -139,8 +139,9 @@ tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 x0 = [0, 0, 0]
 
 # simulation
-x_traj = sci.odeint(ode, x0, tt, args=(para, ))
-u_traj = control(x_traj, tt)
+sol = sci.solve_ivp(lambda t, x: ode(t, x, para), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
+x_traj = sol.y.T
+u_traj = control(tt, x_traj)
 
 # plot
 plot_data(x_traj, u_traj, tt, 12, 16, save=True)
