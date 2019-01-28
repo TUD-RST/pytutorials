@@ -147,3 +147,4 @@ u_traj = control(tt, x_traj)
 plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 
 plt.show()
+

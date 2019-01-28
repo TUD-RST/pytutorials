@@ -287,16 +287,18 @@ Now the system can be simulated with animated results.
         
 
 \section{Time-Events}
-It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \texttt{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection. The solver detects the sign switch of  \texttt{event(t,x)} while calculating the solution of the \gls{ode}.
+\textbf{\py source code file: \texttt{03\_events.py}}
+
+It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \texttt{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection. The solver detects the sign switch of \texttt{event(t,x)} while calculating the solution of the \gls{ode}.
 \begin{lstlisting}
 def event(t, x):
 	"""Returns 0, if simulation should be terminated"""
 	
 	x_max = 5 # bound of the state variable x
-	abs(x)-x_max
+	return np.abs(x)-x_max
 		
-# set the attribute 'terminate' of event, to stop the simulation
-event.terminate = True
+# set the attribute 'terminal' of event, to stop the simulation, when zero-crossing is detected.
+event.terminal = True
 
 # simulate the system with event detection
 sol = solve_ivp(lambda t, x: ode(x, t, para), 
