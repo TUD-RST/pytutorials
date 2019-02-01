@@ -143,7 +143,7 @@ If not familiar with the handling of containers and arrays in \py one should ref
   \caption{Car-like mobile robot}
   \label{fig:car}
 \end{figure}
-Given is a nonlinear kinematic model of a car-like mobile robot, cf.~Figure \ref{fig:car}, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the vehicle's lateral velocity $v=\left| \mathbf{v} \right| $: 
+Given is a nonlinear kinematic model of a car-like mobile robot, cf.~\autoref{fig:car}, with the following system variables: position $(y_1, y_2)$ and orientation $\theta$ in the plane, the steering angle $\phi$ and the vehicle's lateral velocity $v=\left| \mathbf{v} \right| $: 
 \begin{subequations}\label{eq:syseq}
 \begin{alignat}{2}
 \dot{y}_1(t)&=v \cos (\theta(t)) &\qquad y_1(0) &= y_{10}\\
@@ -212,21 +212,31 @@ Furthermore, attention has to be paid how the two functions above are documented
 
 
 \subsection{Solution of the initial value problem using \scipy}
-Having implemented the system dynamics the numerical integration of system \eqref{eq:odesys} can be performed. At first, a vector \texttt{tt} specifying the time values at which one would like to obtain the computed values of $\x$ has to be defined. Then the initial vector $\xZero$ is defined and the  \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.odeint.html}{odeint} function of the \scipy \emph{integrate} package is called to perform the simulation\footnote{Consider using the more advanced integrators offered by \scipy, see Section \ref{sec:ScipyLambda}.}. The function \texttt{odeint} implements an adaptive variable step solver although it outputs the result at equally spaced time steps defined by the user in \texttt{tt} here. The output is an array of shape \texttt{len(tt)}$\times$\texttt{len(x0)}. Finally, the control input values are calculated from the obtained trajectory of $\x$ (the values for $\uu$ in the \texttt{ode} function cannot be directly saved because the function is also repeatedly called between the specified time steps by the solver).
-\listcodeplot{135}{143}
-Note that the interval specified by \texttt{np.arange} is open on the right hand side. Hence, \texttt{dt} is added to obtain also values for $\x$ at \texttt{tf}. 
+Having implemented the system dynamics the numerical integration of system \eqref{eq:odesys} can be performed. At first, a vector \texttt{tt} specifying the time values at which one would like to obtain the computed values of $\x$ has to be defined. Then the initial vector $\xZero$ is defined and the  \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html}{solve\_ivp} function of the \scipy \emph{integrate} package is called to perform the simulation.  The function \texttt{solve\_ivp} takes a function of the type \texttt{func(t, x)} calculating the value of the right hand side of \eqref{eq:odesys}. Further parameters are not allowed. In order to be able to use the previously defined ode-function \texttt{ode(t, x, p)} which additionally takes the parameter structure \texttt{p}, a so-called \emph{lambda-function} is used. The solver is called as follows:
+\begin{lstlisting}
+sol = solve_ivp(lambda t, x: ode(x, t, para), 
+(t0, tf), x0, method='RK45',t_eval=tt)
+\end{lstlisting}
+This way the \texttt{ode} function is encapsulated in an anonymous function, that has just (\texttt{t}, \texttt{x}) as arguments (as required by \texttt{solve\_ivp}) but evaluates as \texttt{ode(t, x, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \texttt{solve\_ivp}: A tuple \texttt{(t0, tf)} which defines the simulation interval and the initial value \texttt{x0}. Furthermore, the optional arguments \emph{method} (the integration method used, default: Runge-Kutta 45), and \emph{t\_eval} (defining the values at which the solution should be sampled) can be passed.
 
+The return value \texttt{sol} is a \texttt{Bunch} object. To extract the simulated state trajectory, one has to execute:
+\begin{lstlisting}
+x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
+\end{lstlisting}
+Finally, the control input values are calculated from the obtained trajectory of $\x$ (the values for $\uu$ in the \texttt{ode} function cannot be directly saved because the function is also repeatedly called between the specified time steps by the solver).
+\listcodeplot{135}{144}
+Note that the interval specified by \texttt{np.arange} is open on the right hand side. Hence, \texttt{dt} is added to obtain also values for $\x$ at \texttt{tf}. 
 
 \section{Plotting using \mpl} \label{sec:plot}
 Usually one wants to publish the results with descriptive illustrations. For this purpose the required plotting instructions are encapsulated in a function. This way, one can easily modify parameters of the plot, for example figure width, or if the figure should be saved on the hard drive.
 \listcodeplot{63}{132}
 Having defined the plotting function, one can execute it passing the calculated trajectories.
-\listcodeplot{145}{148}
-The result can be found in Figure \ref{fig:state_traj}. Other properties of the plot, like line width or line color and many others, can be easily changed. One may refer to the \href{https://matplotlib.org/api/pyplot_summary.html}{documentation of \mpl} or consult the exhaustive \href{https://matplotlib.org/gallery/index.html}{\mpl example gallery}.
+\listcodeplot{146}{148}
+The result can be found in \autoref{fig:state_traj}. Other properties of the plot, like line width or line color and many others, can be easily changed. One may refer to the \href{https://matplotlib.org/api/pyplot_summary.html}{documentation of \mpl} or consult the exhaustive \href{https://matplotlib.org/gallery/index.html}{\mpl example gallery}.
 \begin{figure}[h!]
 \label{fig:state_traj}
    \centering      
-   \includegraphics[width=0.8\textwidth]{img/state_trajectory.pdf}      
+   \includegraphics[width=0.6\textwidth]{img/state_trajectory.pdf}      
  \caption{State and control trajectory plot created with \mpl.}
  \label{fig:Test}
 \end{figure} 
@@ -266,7 +276,7 @@ Finally an object of type \texttt{FuncAnimation} is instancciated. It is provide
 Note that all lines from 138 to 258 belong to the function \texttt{car\_animation}!
 
 Now the system can be simulated with animated results.
-\listcodeanim{274}{277}
+\listcodeanim{275}{277}
 
 \begin{figure}[ht]
   \centering
@@ -276,41 +286,23 @@ Now the system can be simulated with animated results.
 \end{figure}
         
 
+\section{Time-Events}
+\textbf{\py source code file: \texttt{03\_events.py}}
 
-
-\section{Simulation with \scipy's new \emph{solve\_ivp} module and the \emph{lambda} function}\label{sec:ScipyLambda}
-
-\textbf{\py source code file: \texttt{03\_car\_example\_scipy\_solve\_ivp.py}}
-
-In addition to the solution in \autoref{sec:simulation} using \texttt{odeint}, \scipy's integrate package contains some newer and more powerful solver functions. One of them is the function \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html}{\texttt{solve\_ivp}}. The function \texttt{solve\_ivp} takes a function of the type \texttt{func(t, x)} calculating the value of the right hand side of \eqref{eq:odesys}. Further parameters are not allowed. In order to be able to use the previously defined ode-function \texttt{ode(x, t, p)} which additionally takes the parameter structure \texttt{p} and has a different order for \texttt{t}  and \texttt{x}, a so-called \emph{lambda-function} is used. The solver is called as follows:
-\begin{lstlisting}
-sol = solve_ivp(lambda t, x: ode(x, t, para), 
-               (t0, tf), x0, method='RK45',t_eval=tt)
-\end{lstlisting}
-This way the \texttt{ode} function is encapsulated in an anonymous function, that has just (\texttt{t}, \texttt{x}) as arguments (as required by \texttt{solve\_ivp}) but evaluates as \texttt{ode(x, t, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \texttt{solve\_ivp}: A tuple \texttt{(t0, tf)} which defines the simulation interval and the initial value \texttt{x0}. Furthermore, the optional arguments \emph{method} (the integration method used, in this case Runge-Kutta), and \emph{t\_eval} (defining the values at which the solution should be sampled) are passed.
-
-The return value \texttt{sol} is an \texttt{OdeResult} object. To extract the simulated state trajectory, one has to execute:
-\begin{lstlisting}
-x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
-\end{lstlisting}
-\subsection{Time-Events}
-It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \texttt{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection.
+It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \texttt{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection. The solver detects the sign switch of \texttt{event(t,x)} while calculating the solution of the \gls{ode}.
 \begin{lstlisting}
 def event(t, x):
 	"""Returns 0, if simulation should be terminated"""
 	
 	x_max = 5 # bound of the state variable x
-	if abs(x) > x_max:
-		return 0 # terminate simulation
-	else: 
-		return 1
+	return np.abs(x)-x_max
 		
-# set the attribute 'terminate' of event, to stop the simulation
-event.terminate = True
+# set the attribute 'terminal' of event, to stop the simulation, when zero-crossing is detected.
+event.terminal = True
 
 # simulate the system with event detection
 sol = solve_ivp(lambda t, x: ode(x, t, para), 
-               (t0, tf), x0, method='RK45',t_eval=tt, events=event)
+               (t0, tf), x0, method='RK45', t_eval=tt, events=event)
 \end{lstlisting}
 \printglossaries
 
