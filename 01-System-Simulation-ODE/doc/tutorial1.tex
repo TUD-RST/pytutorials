@@ -166,7 +166,7 @@ Now, the \gls{ivp} \eqref{eq:syseq} can be expressed in the general form $\dot{\
 \begin{align} \label{eq:odesys}
 \underbrace{\begin{pmatrix} \dot{x}_1(t) \\ \dot{x}_2(t) \\ \dot{x}_3(t) \end{pmatrix}}_{\dot{\x}(t)} = \underbrace{\begin{pmatrix}  u_1(t) \cos(x_3(t)) \\ u_1(t) \sin(x_3(t)) \\ \frac{1}{l}u_1(t) \tan(u_2(t)) \end{pmatrix}}_{\f(\x(t),\uu(t))} \qquad \x(0) = \xZero.
 \end{align}
-Usually, this explicit formulation of the \gls{ivp} is the basis for implementing a system simulation by numerical integration. In the following a simulation using \py is setup which shows the dynamic behavior of the vehicle when driving with a continously decreasing velocity under a constant steering angle. Of course, in this simple case, the result is known in advance: The vehicle will drive on a circle until it stops for $v = 0$. In the following the \py-script for simulating the system will be derived step by step.
+Usually, this explicit formulation of the \gls{ivp} is the basis for implementing a system simulation by numerical integration. In the following a simulation using \py is setup which shows the dynamic behavior of the vehicle when driving with a continuously decreasing velocity under a constant steering angle. Of course, in this simple case, the result is known in advance: The vehicle will drive on a circle until it stops for $v = 0$. In the following the \py-script for simulating the system will be derived step by step.
 
 
 \section{Libraries and Packages}
@@ -204,7 +204,7 @@ Alternatively, one could use the datatype \emph{dictionary}. However, the result
 \subsection{Implementation of the model} \label{sec:implementation-model}
 In order to simulate the \gls{ivp} \eqref{eq:odesys} using the numerical integrators offered by \scipy's integrate package a function returning the right hand side of \eqref{eq:odesys} evaluated for given values of $\x$, $\uu$ and the parameters has to implemented:
 \listcodeplot{24}{44}
-The \texttt{ode} functions calls the control law function \texttt{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for expample a feedback law $\uu=k(\x)$, can be implemented.
+The \texttt{ode} functions calls the control law function \texttt{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for expample a feedback law $\uu=k(\x)$, can be implemented.
 \listcodeplot{47}{60}
 It is important that the function needs to handle also time arrays as input in order to calculate the control for a bunch of values at once (not during the numerical integration but later for analysis purposes). That's why \numpy's array capable \href{https://docs.scipy.org/doc/numpy/reference/generated/numpy.maximum.html}{maximum function} is used here with appropriately adjusted shape of \texttt{u2}.
 
@@ -264,7 +264,7 @@ In the animation a representation of the vehicle has to be subsequently drawn. T
 \listcodeanim{167}{223}
 Note that \texttt{car\_plot} is in the scope of the \texttt{car\_animation} function and, hence, has full acess to the handle \texttt{h\_car} here.
 
-Two further functions are required: \texttt{init()} and \texttt{animate(i)}. They will be later called by \mpl to initialize and perform the animation. The \texttt{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
+Two further functions are required: \texttt{init()} and \texttt{animate(i)}. They will be called later by \mpl to initialize and perform the animation. The \texttt{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
 \listcodeanim{225}{234}
 
 The \emph{animate(i)}-function assigns data to the changing objects, here the car, trajectory plots and the simulation time (as part of the axis):
