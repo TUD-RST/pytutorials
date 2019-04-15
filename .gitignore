@@ -355,3 +355,5 @@ ENV/
 /02-Trajectories-And-Control/doc/tutorial2.pdf
 *.xwm
 /01-System-Simulation-ODE/doc/tutorial1.pdf
+99-Jupyter-Cheat-Sheets/array.npy
+99-Jupyter-Cheat-Sheets/array.txt
