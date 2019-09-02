@@ -132,7 +132,7 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 
 Later the simulation is extended by a visualization of the moving vehicle and some advanced methods for numerical integration of \glspl{ode}.
 
-If not familiar with the handling of containers and arrays in \py one should refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{\py List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}. If the reader is completely new to \py the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint} maybe helpful as a first starting point.
+If not familiar with the handling of containers and arrays in \py one should refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{\py List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}. If the reader is completely new to \py the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint} may be helpful as a first starting point.
 
 \section{Kinematic model of a vehicle}
 \label{sec:model}
@@ -204,7 +204,7 @@ Alternatively, one could use the datatype \emph{dictionary}. However, the result
 \subsection{Implementation of the model} \label{sec:implementation-model}
 In order to simulate the \gls{ivp} \eqref{eq:odesys} using the numerical integrators offered by \scipy's integrate package a function returning the right hand side of \eqref{eq:odesys} evaluated for given values of $\x$, $\uu$ and the parameters has to implemented:
 \listcodeplot{24}{44}
-The \texttt{ode} functions calls the control law function \texttt{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for expample a feedback law $\uu=k(\x)$, can be implemented.
+The \texttt{ode} functions calls the control law function \texttt{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for example a feedback law $\uu=k(\x)$, can be implemented.
 \listcodeplot{47}{60}
 It is important that the function needs to handle also time arrays as input in order to calculate the control for a bunch of values at once (not during the numerical integration but later for analysis purposes). That's why \numpy's array capable \href{https://docs.scipy.org/doc/numpy/reference/generated/numpy.maximum.html}{maximum function} is used here with appropriately adjusted shape of \texttt{u2}.
 
