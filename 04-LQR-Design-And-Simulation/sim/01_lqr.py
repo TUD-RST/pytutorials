@@ -12,6 +12,96 @@ class Parameters(object):
     pass
 
 
+def calc_system_matrices(x):
+    x1, x2 = x
+    A = np.array([[0, para.a * cos(x2)],
+                  [-2 * x1, 0]])
+
+    B = np.array([[0],
+                  [1]])
+
+    return A, B
+
+
+def calc_trajectory_functions():
+    planner = PolynomialPlanner([traj_para.y0, 0, 0], [traj_para.yf, 0, 0], traj_para.t0, traj_para.tf, 2)
+
+    def traj_fun(tt):
+        if np.isscalar(tt):
+            tt = np.array([tt])
+
+        x1d_and_derivatives = planner.eval_vec(tt)
+
+        x1d = x1d_and_derivatives[:, 0]
+        x1d_dot = x1d_and_derivatives[:, 1]
+        x1d_ddot = x1d_and_derivatives[:, 2]
+        x2d = np.arcsin(x1d_dot / para.a)
+        x2d_dot = x1d_ddot / np.sqrt(para.a ** 2 - np.square(x1d_dot))
+
+        xd = np.stack((x1d, x2d), axis=1)
+        ud = x2d_dot + np.square(x1d)
+
+        if len(tt) == 1:
+            xd = xd[0]
+            ud = ud[0]
+
+        return xd, ud
+
+    return traj_fun
+
+
+def calc_static_lqr(A, B, Q, R):
+    P = scilin.solve_continuous_are(A, B, Q, R)
+    K = 1 / R * B.T @ P
+
+    return K
+
+
+def triu_to_full(triu):
+    n = int(round((np.sqrt(1+8*len(triu))-1)/2))
+    mask = np.triu(np.ones((n, n), dtype=bool))
+
+    full = np.empty((n, n))
+    full[mask] = triu
+    full = full.T
+    full[mask] = triu
+
+    return full
+
+
+def full_to_triu(full):
+    mask = np.triu(np.ones(full.shape, dtype=bool))
+    return full[mask]
+
+
+def calc_variant_lqr(Q, R, S):
+    def riccati_rhs(t, P_triu):
+        P = triu_to_full(P_triu)
+
+        xd, _ = traj_fun(t)
+        A, B = calc_system_matrices(xd)
+
+        dP = (P @ B * 1/R) @ B.T @ P - A.T @ P - P @ A - Q
+
+        dP_triu = full_to_triu(dP)
+        return dP_triu
+
+    t_traj = np.arange(traj_para.t0, traj_para.tf + traj_para.dt, traj_para.dt)
+    Ptf_triu = full_to_triu(S)
+    sol = sci.solve_ivp(riccati_rhs, (traj_para.t0, traj_para.tf), Ptf_triu, t_eval=t_traj)
+    P_triu_traj = sol.y.T[-1:0:-1, :]
+    P_triu_interp = sciinterp.interp1d(t_traj, P_triu_traj, axis=0)
+
+    def calc_feedback(t):
+        P = triu_to_full(P_triu_interp(t))
+        xd, _ = traj_fun(t)
+        _, B = calc_system_matrices(xd)
+        K = 1/R*B.T*P
+        return K
+
+    return calc_feedback
+
+
 # Physical parameter
 para = Parameters()  # instance of class Parameters
 para.a = 1           # model parameter
@@ -20,7 +110,7 @@ para.a = 1           # model parameter
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
 sim_para.tf = 20         # final time
-sim_para.dt = 0.05       # step-size
+sim_para.dt = 0.01       # step-size
 
 # Controller parameters
 Q = np.diag([1, 1])
@@ -32,51 +122,28 @@ tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 # initial state
 x0 = [-2.1, 0.2]
 
+# Trajectory parameters
+traj_para = Parameters()
+traj_para.y0 = -2
+traj_para.yf = 2
+traj_para.t0 = 0
+traj_para.tf = 10
+traj_para.dt = 0.01
 
-def calc_system_matrices(x, p):
-    x1, x2 = x
-    A = np.array([[0, p.a*cos(x2)],
-                  [-2*x1, 0]])
+traj_fun = calc_trajectory_functions()
 
-    B = np.array([[0],
-                  [1]])
+Ad, Bd = calc_system_matrices(np.array([0, 0]))
 
-    return A, B
-
-
-def calc_trajectory():
-    planner = PolynomialPlanner([-2, 0, 0], [2, 0, 0], 0, 10, 2)
-    x1d_and_derivatives = planner.eval_vec(tt)
-    x1d = x1d_and_derivatives[:, 0]
-    x1d_dot = x1d_and_derivatives[:, 1]
-    x1d_ddot = x1d_and_derivatives[:, 2]
-    x2d = np.arcsin(x1d_dot / para.a)
-    x2d_dot = x1d_ddot / np.sqrt(para.a ** 2 - np.square(x1d_dot))
-
-    ud = x2d_dot + np.square(x1d)
-    ud_interp = sciinterp.interp1d(tt, ud)
-
-    xd = np.stack((x1d, x2d), axis=1)
-    xd_interp = sciinterp.interp1d(tt, xd, axis=0)
-
-    return xd_interp, ud_interp
+# K = calc_static_lqr(Ad, Bd, Q, R)
+feedback_fun = calc_variant_lqr(Q, R, np.diag([1, 1]))
 
 
-xd_interp, ud_interp = calc_trajectory()
-
-Ad, Bd = calc_system_matrices(np.array([0, 0]), para)
-
-P = scilin.solve_continuous_are(Ad, Bd, Q, R)
-K = -1/R * Bd.T @ P
-
-
-def ode(t, x, p):
+def ode(t, x):
     """Function of the robots kinematics
 
     Args:
         x        : state
         t        : time
-        p(object): parameter container class
 
     Returns:
         dxdt: state derivative
@@ -85,7 +152,7 @@ def ode(t, x, p):
     u = control(t, x)  # control vector
 
     # dxdt = f(x, u):
-    dxdt = np.array([p.a * sin(x2),
+    dxdt = np.array([para.a * sin(x2),
                      -x1**2 + u])
 
     # return state derivative
@@ -103,22 +170,22 @@ def control(t, x):
         u: control signal
 
     """
-    xd_t = xd_interp(t)
-    ud_t = ud_interp(t)
+    xd, ud = traj_fun(t)
 
-    u = K @ (x - xd_t) + ud_t
+    K = feedback_fun(t)
+    u = - K @ (x - xd) + ud
 
     return u
 
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(t, x, para), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(t, x), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
 x_traj = sol.y.T
 u_traj = np.array([control(tt[i], x_traj[i]) for i in range(len(tt))])
 
-xd_traj = xd_interp(tt)
-ud_traj = ud_interp(tt)
+xd_traj, ud_traj = traj_fun(tt)
 
+# plotting
 plt.figure()
 
 plt.subplot(211)
