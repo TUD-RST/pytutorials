@@ -1,0 +1,144 @@
+\documentclass[a4paper,11pt,headinclude=true,headsepline,parskip=half,DIV=13]{scrartcl}
+
+% font, style, etc.
+\usepackage[utf8]{inputenc} % defines
+\usepackage[automark]{scrlayer-scrpage}
+\usepackage{csquotes}
+\usepackage{xspace} % proper space after macros with 0 args
+
+% mathematics
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% figures, tables, etc.
+\usepackage{hyperref} %
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{xcolor}
+\usepackage{placeins} % -> floatbarrier
+\usepackage{siunitx}  % -> handling of units
+%\usepackage[printwatermark]{xwatermark}
+%\newwatermark[allpages,color=red!50,angle=45,scale=1.8,xpos=0,ypos=0]{\textsf{DRAFT ONLY,NOT APPROVED}}
+
+% code
+\usepackage{listings}
+\lstset{
+language=Python, 
+backgroundcolor = \color{light-gray},
+basicstyle=\scriptsize\sffamily,
+stringstyle=\color{orange},
+breaklines=true,
+numberstyle=\tiny\color{gray},
+keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
+commentstyle=\color{dark-green}, % print comments dark-green
+showstringspaces=false} % spacing between strings not showed
+
+\newcommand{\listcode}[3]{\lstinputlisting[numbers=left,firstnumber=#1,firstline=#1,lastline=#2]{#3}}
+\newcommand{\listcodeplot}[2]{\listcode{#1}{#2}{../sim/01_car_example_plotting.py}}
+\newcommand{\listcodeanim}[2]{\listcode{#1}{#2}{../sim/02_car_example_animation.py}}
+
+% others
+\usepackage{acronym}
+\usepackage{luacode}
+
+% theorems
+\newtheorem{defi}{Definition}[section]
+
+% setup the appearance of links
+\hypersetup{
+    colorlinks = true, % false -> red box arround links (not very nice)
+    linkcolor={blue!100!black},
+    citecolor={blue!100!black},
+    urlcolor={blue!100!black},
+}
+
+% manage glossaries
+% Call makeglossaries on a command prompt after LaTeX compiling,
+% the re-run LaTeX
+\usepackage{glossaries}
+\setacronymstyle{long-short}
+\makeglossaries
+\newacronym{ivp}{IVP}{initial value problem}
+\newacronym{ode}{ODE}{ordinary differential equation}
+
+% define shortcuts
+\newcommand{\ad}{\mathrm{ad}}
+\renewcommand{\d}{\mathrm{d}} % d vor differential forms
+\newcommand{\NV}{{\cal N}\,}
+\newcommand{\rang}{\mathrm{rang}}
+\newcommand{\im}{\mathrm{im}}
+\newcommand{\spann}{\mathrm{span}}
+\newcommand{\R}{\mathbb{R}} %  set of real numbers
+\newcommand{\py}{\emph{Python}\xspace}
+\newcommand{\scipy}{\emph{SciPy}\xspace}
+\newcommand{\numpy}{\emph{NumPy}\xspace}
+\newcommand{\mpl}{\emph{Matplotlib}\xspace}
+\newcommand{\uu}{\mathbf{u}}
+\newcommand{\f}{\mathbf{f}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\xZero}{\mathbf{x}_0}
+
+% color definitions
+\definecolor{light-gray}{gray}{0.95}
+\definecolor{dark-blue}{rgb}{0, 0, 0.5}
+\definecolor{dark-red}{rgb}{0.5, 0, 0}
+\definecolor{dark-green}{rgb}{0, 0.5, 0}
+\definecolor{gray}{rgb}{0.5, 0.5, 0.5}
+
+% Avoid ugly indentations in footnotes.
+\deffootnote[1em]{1em}{0em}{%
+\textsuperscript{\thefootnotemark}%
+}
+
+\luadirect{dofile("luainputlisting.lua")}
+\newcommand*\luainputlisting[2]{
+    \luadirect{print_listing(\luastring{#1}, \luastring{#2})}
+}
+
+% ----------------------------------------------------------------------------
+\subject{\py for simulation, animation and control}
+\title{Design and Simulation of LQR Control}
+\subtitle{An introductory tutorial for the design and implementation of LQR controllers for time-invariant and time-variant linear systems}
+\author{Robert Heedt\thanks{Institute for Control Theory, Faculty of Electrical and Computer Engineering, Technische Universität Dresden, Germany} \and Jan Winkler\footnotemark[1]}
+\publishers{}
+\date{\today}
+% ----------------------------------------------------------------------------
+
+% Headings
+\pagestyle{scrheadings}
+\ihead{\leftmark}
+\chead{}
+\ohead{Page \pagemark}
+\ifoot{}
+\cfoot{Python Control Tutorial 4}
+\ofoot{}
+
+\begin{document}
+
+\maketitle
+
+
+
+
+\tableofcontents
+
+\newpage
+
+Converting from and to upper triangular matrices:
+\luainputlisting{../sim/01_lqr.py}{triu}
+
+Determining the trajectory:
+\luainputlisting{../sim/01_lqr.py}{trajectory}
+
+
+\printglossaries
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
