@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from numpy import cos, sin, tan, pi
-import scipy.integrate as sci
 import scipy.linalg as scilin
-import scipy.interpolate as sciinterp
 import matplotlib.pyplot as plt
 from Planner import PolynomialPlanner
 
@@ -15,7 +13,7 @@ class Parameters(object):
 # define simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 30         # final time
+sim_para.tf = 10         # final time
 sim_para.dt = 0.1       # step-size
 sim_para.x0 = [-2.2, 0.2]
 
@@ -56,14 +54,14 @@ def system_matrices(t, x, u, para):
 # define controller parameters
 Q = np.diag([1, 1])
 R = np.array([[1]])
-S = np.array([[4.5, 0.1], [0.1, 1.2]])
+# S = np.array([[4.5, 0.1], [0.1, 1.2]])
 
 # trajectory parameters
 traj_para = Parameters()
 traj_para.y0 = -2
 traj_para.yf = 2
 traj_para.t0 = 0
-traj_para.tf = 20
+traj_para.tf = 10
 
 # calculate trajectory
 planner = PolynomialPlanner([traj_para.y0, 0, 0], [traj_para.yf, 0, 0], traj_para.t0, traj_para.tf, 2)
@@ -100,6 +98,8 @@ def full_to_triu(full):
     return full[mask]
 
 
+A_f, B_f = system_matrices(t_traj[-1], xd_traj[-1], ud_traj[-1], sys_para)
+S = scilin.solve_continuous_are(A_f, B_f, Q, R)
 Ptilde_triu_traj = np.empty((n_samples, int(sys_para.n*(sys_para.n + 1)/2)))
 Ptilde_triu_traj[0, :] = full_to_triu(S)
 
@@ -170,19 +170,22 @@ plt.figure()
 
 plt.subplot(211)
 plt.plot(t_traj, x_traj)
-plt.plot(t_traj, xd_traj)
+plt.plot(t_traj, xd_traj, '--')
 plt.legend(["x1", "x2", "x1d", "x2d"])
 
 plt.subplot(212)
 plt.plot(t_traj, u_traj)
-plt.plot(t_traj, ud_traj)
+plt.plot(t_traj, ud_traj, '--')
+plt.legend(["u", "ud"])
 
 plt.figure()
 
 plt.subplot(211)
 plt.plot(t_traj, Ptilde_triu_traj[::-1, :])
+plt.legend(["p11", "p12", "p22"])
 
 plt.subplot(212)
-plt.plot(t_traj, dPdt_triu_traj)
+plt.plot(t_traj, K_traj.reshape((n_samples, sys_para.n)))
+plt.legend(["k1", "k2"])
 
 plt.show()
