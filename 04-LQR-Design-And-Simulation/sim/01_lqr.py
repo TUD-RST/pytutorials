@@ -15,9 +15,9 @@ class Parameters(object):
 # define simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 20         # final time
+sim_para.tf = 30         # final time
 sim_para.dt = 0.1       # step-size
-sim_para.x0 = [-2.1, 0.2]
+sim_para.x0 = [-2.2, 0.2]
 
 # already prepare the time vector because we'll need it very soon
 n_samples = int((sim_para.tf - sim_para.t0) / sim_para.dt) + 1
@@ -56,12 +56,12 @@ def system_matrices(t, x, u, para):
 # define controller parameters
 Q = np.diag([1, 1])
 R = np.array([[1]])
-S = np.array([[-4.6, 0.123], [0.123, -1.12]])
+S = np.array([[4.5, 0.1], [0.1, 1.2]])
 
 # trajectory parameters
 traj_para = Parameters()
 traj_para.y0 = -2
-traj_para.yf = 0
+traj_para.yf = 2
 traj_para.t0 = 0
 traj_para.tf = 20
 
@@ -146,6 +146,12 @@ for i in range(n_samples):
         x_traj[i + 1] = x_i + sim_para.dt * dxdt_i
 
 # verification
+A_static, B_static = system_matrices(0, xd_traj[0], ud_traj[0], sys_para)
+P_static = scilin.solve_continuous_are(A_static, B_static, Q, R)
+K_static = scilin.inv(R) * B_static.T @ P_static
+
+print(P_static)
+
 dPdt_triu_traj = np.empty((n_samples, 3))
 
 for i in range(n_samples):
@@ -174,11 +180,9 @@ plt.plot(t_traj, ud_traj)
 plt.figure()
 
 plt.subplot(211)
-#plt.plot(t_traj[1500:], Ptilde_triu_traj[500::-1, :])
 plt.plot(t_traj, Ptilde_triu_traj[::-1, :])
 
 plt.subplot(212)
-#plt.plot(t_traj[1500:], dPdt_triu_traj[1500:, :])
 plt.plot(t_traj, dPdt_triu_traj)
 
 plt.show()
