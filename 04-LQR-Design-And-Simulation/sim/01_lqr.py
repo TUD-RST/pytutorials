@@ -12,7 +12,37 @@ class Parameters(object):
     pass
 
 
-def calc_system_matrices(x):
+# define simulation parameters
+sim_para = Parameters()  # instance of class Parameters
+sim_para.t0 = 0          # start time
+sim_para.tf = 20         # final time
+sim_para.dt = 0.1       # step-size
+sim_para.x0 = [-2.1, 0.2]
+
+# already prepare the time vector because we'll need it very soon
+n_samples = int((sim_para.tf - sim_para.t0) / sim_para.dt) + 1
+t_traj = sim_para.t0 + np.arange(n_samples) * sim_para.dt
+
+# -- START SYSTEM SPECIFIC PART --
+# define system functions
+sys_para = Parameters()  # instance of class Parameters
+sys_para.n = 2           # number of states
+sys_para.m = 1           # number of inputs
+sys_para.a = 1           # model parameter
+
+
+def system_rhs(t, x, u, para):
+    x1, x2 = x  # state vector
+
+    # dxdt = f(x, u):
+    dxdt = np.array([para.a * sin(x2),
+                     -x1**2 + u])
+
+    # return state derivative
+    return dxdt
+
+
+def system_matrices(t, x, u, para):
     x1, x2 = x
     A = np.array([[0, para.a * cos(x2)],
                   [-2 * x1, 0]])
@@ -23,39 +53,36 @@ def calc_system_matrices(x):
     return A, B
 
 
-def calc_trajectory_functions():
-    planner = PolynomialPlanner([traj_para.y0, 0, 0], [traj_para.yf, 0, 0], traj_para.t0, 10, 2)
+# define controller parameters
+Q = np.diag([1, 1])
+R = np.array([[1]])
+S = np.array([[-4.6, 0.123], [0.123, -1.12]])
 
-    def traj_fun(tt):
-        if np.isscalar(tt):
-            tt = np.array([tt])
+# trajectory parameters
+traj_para = Parameters()
+traj_para.y0 = -2
+traj_para.yf = 0
+traj_para.t0 = 0
+traj_para.tf = 20
 
-        x1d_and_derivatives = np.array([list(planner.eval(t)) if t <= 10 else [traj_para.yf, 0, 0] for t in tt])
+# calculate trajectory
+planner = PolynomialPlanner([traj_para.y0, 0, 0], [traj_para.yf, 0, 0], traj_para.t0, traj_para.tf, 2)
 
-        x1d = x1d_and_derivatives[:, 0]
-        x1d_dot = x1d_and_derivatives[:, 1]
-        x1d_ddot = x1d_and_derivatives[:, 2]
-        x2d = np.arcsin(x1d_dot / para.a)
-        x2d_dot = x1d_ddot / np.sqrt(para.a ** 2 - np.square(x1d_dot))
+x1d_and_derivatives = planner.eval_vec(t_traj)
+x1d = x1d_and_derivatives[:, 0]
+x1d_dot = x1d_and_derivatives[:, 1]
+x1d_ddot = x1d_and_derivatives[:, 2]
+x2d = np.arcsin(x1d_dot / sys_para.a)
+x2d_dot = x1d_ddot / np.sqrt(sys_para.a ** 2 - np.square(x1d_dot))
 
-        xd = np.stack((x1d, x2d), axis=1)
-        ud = x2d_dot + np.square(x1d)
-
-        if len(tt) == 1:
-            xd = xd[0]
-            ud = ud[0]
-
-        return xd, ud
-
-    return traj_fun
+xd_traj = np.stack((x1d, x2d), axis=1)
+ud_traj = x2d_dot + np.square(x1d)
 
 
-def calc_static_lqr(A, B, Q, R):
-    P = scilin.solve_continuous_are(A, B, Q, R)
-    K = 1 / R * B.T @ P
+# -- END SYSTEM SPECIFIC PART --
 
-    return K
 
+# solve matrix riccati ODE
 def triu_to_full(triu):
     n = int(round((np.sqrt(1+8*len(triu))-1)/2))
     mask = np.triu(np.ones((n, n), dtype=bool))
@@ -72,138 +99,86 @@ def full_to_triu(full):
     mask = np.triu(np.ones(full.shape, dtype=bool))
     return full[mask]
 
-def calc_variant_lqr(Q, R, S):
-    def riccati_rhs(tau, P_triu):
-        P = triu_to_full(P_triu)
 
-        xd, _ = traj_fun(traj_para.tf - tau)
-        A, B = calc_system_matrices(xd)
+Ptilde_triu_traj = np.empty((n_samples, int(sys_para.n*(sys_para.n + 1)/2)))
+Ptilde_triu_traj[0, :] = full_to_triu(S)
 
-        dP = (P @ B * 1/R) @ B.T @ P - A.T @ P - P @ A - Q
+K_traj = np.empty((n_samples, sys_para.m, sys_para.n))
 
-        dP_triu = full_to_triu(dP)
-        return dP_triu
+for i_tau in range(n_samples):
+    i_t = n_samples - 1 - i_tau
+    t_i = t_traj[i_t]
+    tau_i = t_traj[i_tau]
+    xd_i = xd_traj[i_t]
+    ud_i = ud_traj[i_t]
+    A_i, B_i = system_matrices(t_i, xd_i, ud_i, sys_para)
+    Ptilde_triu_i = Ptilde_triu_traj[i_tau]
+    Ptilde_i = triu_to_full(Ptilde_triu_i)
 
-    t_traj = traj_para.t0 + np.arange(traj_para.n_samples) * traj_para.dt
-    Ptf_triu = full_to_triu(S)
+    K_traj[i_t] = scilin.inv(R) @ B_i.T @ Ptilde_i
 
-    sol = sci.solve_ivp(riccati_rhs, (traj_para.t0, traj_para.tf), Ptf_triu, t_eval=t_traj)
-    P_triu_traj = sol.y.T[::-1, :]
-    P_triu_interp = sciinterp.interp1d(t_traj, P_triu_traj, axis=0)
+    if i_tau < n_samples - 1:
+        dPtilde_dtau = - Ptilde_i @ B_i @ scilin.inv(R) @ B_i.T @ Ptilde_i + Ptilde_i @ A_i + A_i.T @ Ptilde_i + Q
+        dPtilde_dtau_triu = full_to_triu(dPtilde_dtau)
 
-    def calc_feedback(t):
-        P = triu_to_full(P_triu_interp(t))
-        xd, _ = traj_fun(t)
-        _, B = calc_system_matrices(xd)
-        K = 1/R*B.T@P
-        return K
-
-    return calc_feedback
+        Ptilde_triu_traj[i_tau + 1] = Ptilde_triu_i + sim_para.dt * dPtilde_dtau_triu  # one Euler step
 
 
-# Physical parameter
-para = Parameters()  # instance of class Parameters
-para.a = 1           # model parameter
+# main simulation loop
+x_traj = np.empty((n_samples, sys_para.n))
+x_traj[0] = sim_para.x0
+u_traj = np.empty((n_samples, sys_para.m))
 
-# Simulation parameter
-sim_para = Parameters()  # instance of class Parameters
-sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
-sim_para.dt = 0.01       # step-size
-sim_para.n_samples = int((sim_para.tf - sim_para.t0) / sim_para.dt) + 1
+for i in range(n_samples):
+    x_i = x_traj[i]
 
-# Controller parameters
-Q = np.diag([1, 1])
-R = 1
+    xd_i = xd_traj[i]
+    ud_i = ud_traj[i]
 
-# time vector
-tt = sim_para.t0 + np.arange(sim_para.n_samples) * sim_para.dt
+    K_i = K_traj[i]
 
-# initial state
-x0 = [-2.1, 0.2]
+    u_i = ud_i - K_i @ (x_i - xd_i)
+    dxdt_i = system_rhs(t_traj[i], x_i, u_i, sys_para)
 
-# Trajectory parameters
-traj_para = Parameters()
-traj_para.y0 = -2
-traj_para.yf = 2
-traj_para.t0 = 0
-traj_para.tf = 20
-traj_para.dt = 0.01
-traj_para.n_samples = int((traj_para.tf - traj_para.t0) / traj_para.dt) + 1
+    u_traj[i] = u_i
 
-traj_fun = calc_trajectory_functions()
+    if i < n_samples - 1:
+        x_traj[i + 1] = x_i + sim_para.dt * dxdt_i
 
-Ad, Bd = calc_system_matrices(x0)
+# verification
+dPdt_triu_traj = np.empty((n_samples, 3))
 
-K = calc_static_lqr(Ad, Bd, Q, R)
-print(K)
-feedback_fun = calc_variant_lqr(Q, R, np.array([[-4.6, 0.123],
-                                                [0.123, -1.12]]))
+for i in range(n_samples):
+    t_i = t_traj[i]
+    xd_i = xd_traj[i]
+    ud_i = ud_traj[i]
+    A_i, B_i = system_matrices(t_i, xd_i, ud_i, sys_para)
+    P_triu_i = Ptilde_triu_traj[n_samples - 1 - i]
+    P_i = triu_to_full(P_triu_i)
 
-def ode(t, x):
-    """Function of the robots kinematics
-
-    Args:
-        x        : state
-        t        : time
-
-    Returns:
-        dxdt: state derivative
-    """
-    x1, x2 = x  # state vector
-    u = control(t, x)  # control vector
-
-    # dxdt = f(x, u):
-    dxdt = np.array([para.a * sin(x2),
-                     -x1**2 + u])
-
-    # return state derivative
-    return dxdt
-
-
-def control(t, x):
-    """Function of the control law
-
-    Args:
-        x: state vector
-        t: time
-
-    Returns:
-        u: control signal
-
-    """
-    xd, ud = traj_fun(t)
-
-    K = feedback_fun(t)
-    u = - K @ (x - xd) + ud
-
-    return u
-
-
-# simulation
-sol = sci.solve_ivp(lambda t, x: ode(t, x), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
-x_traj = sol.y.T
-u_traj = np.array([control(tt[i], x_traj[i]) for i in range(len(tt))])
-
-xd_traj, ud_traj = traj_fun(tt)
-K_traj = np.array([list(feedback_fun(t).flatten()) for t in tt])
+    dPdt = P_i @ B_i @ scilin.inv(R) @ B_i.T @ P_i - P_i @ A_i - A_i.T @ P_i - Q
+    dPdt_triu_traj[i] = full_to_triu(dPdt)
 
 # plotting
 plt.figure()
 
-plt.subplot(311)
-plt.plot(tt, x_traj)
-plt.plot(tt, xd_traj, '--')
-plt.legend(['x1', 'x2', 'x1d', 'x2d'])
-plt.grid()
+plt.subplot(211)
+plt.plot(t_traj, x_traj)
+plt.plot(t_traj, xd_traj)
+plt.legend(["x1", "x2", "x1d", "x2d"])
 
-plt.subplot(312)
-plt.plot(tt, u_traj)
-plt.plot(tt, ud_traj, '--')
-plt.grid()
+plt.subplot(212)
+plt.plot(t_traj, u_traj)
+plt.plot(t_traj, ud_traj)
 
-plt.subplot(313)
-plt.plot(tt, K_traj)
-plt.grid()
+plt.figure()
+
+plt.subplot(211)
+#plt.plot(t_traj[1500:], Ptilde_triu_traj[500::-1, :])
+plt.plot(t_traj, Ptilde_triu_traj[::-1, :])
+
+plt.subplot(212)
+#plt.plot(t_traj[1500:], dPdt_triu_traj[1500:, :])
+plt.plot(t_traj, dPdt_triu_traj)
 
 plt.show()
