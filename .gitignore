@@ -355,3 +355,7 @@ ENV/
 /02-Trajectories-And-Control/doc/tutorial2.pdf
 *.xwm
 /01-System-Simulation-ODE/doc/tutorial1.pdf
+
+# additions
+/.idea
+*.code-workspace
