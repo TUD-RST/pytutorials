@@ -15,7 +15,7 @@ sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
 sim_para.tf = 10         # final time
 sim_para.dt = 0.1       # step-size
-sim_para.x0 = [-2.2, 0.2]
+sim_para.x0 = [2.1, 0.1]
 
 # already prepare the time vector because we'll need it very soon
 n_samples = int((sim_para.tf - sim_para.t0) / sim_para.dt) + 1
@@ -58,8 +58,8 @@ R = np.array([[1]])
 
 # trajectory parameters
 traj_para = Parameters()
-traj_para.y0 = -2
-traj_para.yf = 2
+traj_para.y0 = 2
+traj_para.yf = -2
 traj_para.t0 = 0
 traj_para.tf = 10
 
@@ -123,6 +123,13 @@ for i_tau in range(n_samples):
 
         Ptilde_triu_traj[i_tau + 1] = Ptilde_triu_i + sim_para.dt * dPtilde_dtau_triu  # one Euler step
 
+# compute static LQR feedback
+t_static = 10
+x_static = xd_traj[-1]
+ud_static = ud_traj[-1]
+A_static, B_static = system_matrices(t_static, x_static, ud_static, sys_para)
+P_static = scilin.solve_continuous_are(A_static, B_static, Q, R)
+K_static = scilin.inv(R) * B_static.T @ P_static
 
 # main simulation loop
 x_traj = np.empty((n_samples, sys_para.n))
@@ -136,6 +143,7 @@ for i in range(n_samples):
     ud_i = ud_traj[i]
 
     K_i = K_traj[i]
+    #K_i = K_static
 
     u_i = ud_i - K_i @ (x_i - xd_i)
     dxdt_i = system_rhs(t_traj[i], x_i, u_i, sys_para)
@@ -144,26 +152,6 @@ for i in range(n_samples):
 
     if i < n_samples - 1:
         x_traj[i + 1] = x_i + sim_para.dt * dxdt_i
-
-# verification
-A_static, B_static = system_matrices(0, xd_traj[0], ud_traj[0], sys_para)
-P_static = scilin.solve_continuous_are(A_static, B_static, Q, R)
-K_static = scilin.inv(R) * B_static.T @ P_static
-
-print(P_static)
-
-dPdt_triu_traj = np.empty((n_samples, 3))
-
-for i in range(n_samples):
-    t_i = t_traj[i]
-    xd_i = xd_traj[i]
-    ud_i = ud_traj[i]
-    A_i, B_i = system_matrices(t_i, xd_i, ud_i, sys_para)
-    P_triu_i = Ptilde_triu_traj[n_samples - 1 - i]
-    P_i = triu_to_full(P_triu_i)
-
-    dPdt = P_i @ B_i @ scilin.inv(R) @ B_i.T @ P_i - P_i @ A_i - A_i.T @ P_i - Q
-    dPdt_triu_traj[i] = full_to_triu(dPdt)
 
 # plotting
 plt.figure()
