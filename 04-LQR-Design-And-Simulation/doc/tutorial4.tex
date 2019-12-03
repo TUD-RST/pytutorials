@@ -41,6 +41,7 @@ showstringspaces=false} % spacing between strings not showed
 % others
 \usepackage{acronym}
 \usepackage{luacode}
+\usepackage{soul}
 
 % theorems
 \newtheorem{defi}{Definition}[section]
@@ -127,12 +128,70 @@ showstringspaces=false} % spacing between strings not showed
 
 \newpage
 
-Converting from and to upper triangular matrices:
-\luainputlisting{../sim/01_lqr.py}{triu}
+\section{Introduction}
+The goal of this tutorial is to teach the usage of the programming language \py as a tool for developing and simulating control systems.
+The following topics are covered:
+\begin{itemize}
+    \item Flatness based feedforward control using existing trajectory generators
+    \item Feedback control using LQR for linear time-invariant (LTI) system
+    \item Demonstration of problematic situations
+    \item Feedback control using LQR linear time-variant (LTV) system
+\end{itemize}
+Later in this tutorial this process is applied to design control strategies for the cart-pole system from a previous tutorial.
 
-Determining the trajectory:
-\luainputlisting{../sim/01_lqr.py}{trajectory}
+\section{Implementing the System}
+In order to demonstrate the design methods discussed in the following, a simple academic example from \hl{??} will be used.
+The system state~$x=(x_1, x_2)$ has two components and the scalar input is called~$u$.
+Written in state-space-form, the system equation then is:
+\begin{equation}
+\dot x = F(x, u) = 
+\begin{pmatrix}
+a \sin(x_2)\\
+-x_1^2+u\\
+\end{pmatrix}\,.
+\label{eq:academic_example_ss}
+\end{equation}
+Later, the jacobians
+\begin{equation}
+A(x^*, u^*) := \left.\frac{\partial F}{\partial x}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 & a \cos(x^*_2)\\-2 x^*_1 & 0\end{pmatrix}
+\end{equation}
+and
+\begin{equation}
+B(x^*, u^*) := \left.\frac{\partial F}{\partial u}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 \\ 1\end{pmatrix}
+\end{equation}
+will also be needed.
 
+Implementing this system in Python then simply means expressing these terms as functions containing these computations. 
+\luainputlisting{../sim/01_lqr.py}{defsystem}
+Notable are mainly the usage of NumPy arrays for all vectors and the \lstinline{Parameters} class, please refer to a previous tutorial if unsure about these aspects.
+
+\section{Trajectory Planning and Feedforward}
+
+Similar to previous tutorials, feedforward control design can be simplified significantly by exploiting the flatness property of this system.
+Specifically, the flat output is~$y=x_1$.
+Recall, this means a desired trajectory $t \mapsto x_1^*(t)$ can be freely chosen (as long as it is sufficiently often differentiable).
+Then, the trajectories for all other system variables (states and inputs) is calculated analytically without integration.
+
+To this effect, the first system equation in~\eqref{eq:academic_example_ss} is solved for~$x_2$, yielding
+\begin{equation}
+x_2 = \arcsin\left(\frac{\dot x_1}{a}\right)
+\label{eq:flatness_x2}
+\end{equation}
+which also introduces the constraint~$\forall t: |\dot x_1(t)| \leq |a|$ to trajectory planning.
+
+After differentiating~\eqref{eq:flatness_x2} w.\,r.\,t.\ time, resulting in
+$$
+\dot x_2 = \frac{\ddot x_1}{\sqrt{a^2-\dot x_1^2}}\,,
+$$
+a term for $u$ is obtained by solving the second component of~\eqref{eq:academic_example_ss}:
+$$
+u = \dot x_2 + x_1^2 =  \frac{\ddot x_1}{\sqrt{a^2-\dot x_1^2}} + x_1^2\, .
+$$
+For the \py implementation, the trajectory planner from a previous tutorial is reused to obtain a polynomial that transitions from~$y(t_0) = y_0$ to~$y(t_f) = y_f$.
+This function is then evaluated at the time values stored in vector \lstinline{t_traj}.
+\luainputlisting{../sim/01_lqr.py}{plantraj}
+The previously derived formulas are then translated into NumPy operations to obtain the values for~$x_2$ and~$u$ at every time step.
+\luainputlisting{../sim/01_lqr.py}{flatness}
 
 \printglossaries
 

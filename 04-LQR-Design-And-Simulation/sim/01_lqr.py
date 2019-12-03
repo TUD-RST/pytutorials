@@ -23,6 +23,7 @@ n_samples = int((sim_para.tf - sim_para.t0) / sim_para.dt) + 1
 t_traj = sim_para.t0 + np.arange(n_samples) * sim_para.dt
 
 # -- START SYSTEM SPECIFIC PART --
+# LISTING_START defsystem
 # define system functions
 sys_para = Parameters()  # instance of class Parameters
 sys_para.n = 2           # number of states
@@ -50,13 +51,14 @@ def system_matrices(t, x, u, para):
                   [1]])
 
     return A, B
-
+# LISTING_END defsystem
 
 # define controller parameters
 Q = np.diag([1, 1])
 R = np.array([[1]])
 # S = np.array([[4.5, 0.1], [0.1, 1.2]])
 
+# LISTING_START plantraj
 # trajectory parameters
 traj_para = Parameters()
 traj_para.y0 = -2
@@ -66,8 +68,10 @@ traj_para.tf = 10
 
 # calculate trajectory
 planner = PolynomialPlanner([traj_para.y0, 0, 0], [traj_para.yf, 0, 0], traj_para.t0, traj_para.tf, 2)
-
 x1d_and_derivatives = planner.eval_vec(t_traj)
+# LISTING_END plantraj
+
+# LISTING_START flatness
 x1d = x1d_and_derivatives[:, 0]
 x1d_dot = x1d_and_derivatives[:, 1]
 x1d_ddot = x1d_and_derivatives[:, 2]
@@ -76,7 +80,7 @@ x2d_dot = x1d_ddot / np.sqrt(sys_para.a ** 2 - np.square(x1d_dot))
 
 xd_traj = np.stack((x1d, x2d), axis=1)
 ud_traj = x2d_dot + np.square(x1d)
-
+# LISTING_END flatness
 
 # -- END SYSTEM SPECIFIC PART --
 
@@ -129,6 +133,7 @@ for i_tau in range(n_samples):
 
         Ptilde_triu_traj[i_tau + 1] = Ptilde_triu_i + sim_para.dt * dPtilde_dtau_triu  # one Euler step
 
+# LISTING_START linsys
 # compute static LQR feedback
 t_static = 5
 i_static = 0
@@ -137,8 +142,11 @@ while i_static < len(t_traj) - 1 and t_traj[i_static] < t_static:  # find index 
 x_static = xd_traj[i_static]
 ud_static = ud_traj[i_static]
 A_static, B_static = system_matrices(t_static, x_static, ud_static, sys_para)
+# LISTING_END linsys
+# LISTING_START solveare
 P_static = scilin.solve_continuous_are(A_static, B_static, Q, R)
 K_static = R_inv * B_static.T @ P_static
+# LISTING_END solveare
 
 # main simulation loop
 x_traj = np.empty((n_samples, sys_para.n))
@@ -146,7 +154,7 @@ x_traj[0] = sim_para.x0
 u_traj = np.empty((n_samples, sys_para.m))
 
 FeedbackMode = Literal["LTV", "LTI", "pseudoLTV"]
-feedback_mode: FeedbackMode = "LTV"
+feedback_mode: FeedbackMode = "pseudoLTV"
 
 for i in range(n_samples):
     t_i = t_traj[i]
