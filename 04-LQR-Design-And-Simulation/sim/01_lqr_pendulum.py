@@ -15,8 +15,8 @@ class Parameters(object):
 # define simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 5          # final time
-sim_para.dt = 0.01        # step-size
+sim_para.tf = 2.0        # final time
+sim_para.dt = 0.01       # step-size
 sim_para.x0 = [0, 0, np.pi, 0] # initial value
 
 # already prepare the time vector because we'll need it very soon
@@ -129,7 +129,7 @@ for i_tau in range(n_traj_samples):  # iterate forward in tau direction
 # LISTING_END riccatiint
 # LISTING_START linsys
 # compute static LQR feedback
-t_static = 0
+t_static = 2
 i_static = 0
 while i_static < len(t_traj) - 1 and t_traj[i_static] < t_static:  # find index of that time in time vector
     i_static += 1
@@ -147,10 +147,14 @@ K_static = R_inv * B_static.T @ P_static
 x_sim = np.empty((n_samples, sys_para.n))  # allocate array for state over time
 x_sim[0] = sim_para.x0  # set initial state
 u_sim = np.empty((n_samples, sys_para.m))  # allocate array for input over time
+xd_log = np.empty((n_samples, sys_para.n))
+ud_log = np.empty((n_samples, sys_para.m))
 K_log = np.empty((n_samples, sys_para.m, sys_para.n))  # allocate array for feedback over time
 
 FeedbackMode = Literal["LTV", "LTI", "pseudoLTV"]
-feedback_mode: FeedbackMode = "LTV"
+feedback_mode: FeedbackMode = "LTI"
+
+feedback_after_swingup = False
 
 for i in range(n_samples):
     t_i = t_sim[i]
@@ -170,9 +174,14 @@ for i in range(n_samples):
         P_i = scilin.solve_continuous_are(A_i, B_i, Q, R)  # retune feedback for current state from reference trajectory
         K_i = R_inv * B_i.T @ P_i
 
-    u_i = ud_i - K_i @ (x_i - xd_i)  # the actual control law u_tilde=-K*x_tilde
+    if feedback_after_swingup and i < n_traj_samples:
+        u_i = ud_i
+    else:
+        u_i = ud_i - K_i @ (x_i - xd_i)  # the actual control law u_tilde=-K*x_tilde
 
     u_sim[i] = u_i
+    xd_log[i] = xd_i
+    ud_log[i] = ud_i
     K_log[i] = K_i
 
     if i < n_samples - 1:  # have we reached the end yet? if not, integrate one step
@@ -181,7 +190,7 @@ for i in range(n_samples):
 # LISTING_END sim
 
 # storing the results
-store_dict = dict(t=t_sim, x=x_sim, xd=xd_traj, u=u_sim, ud=ud_traj, K=K_log, P_triu=Pbar_triu_traj[::-1, :])
+store_dict = dict(t=t_sim, x=x_sim, xd=xd_log, u=u_sim, ud=ud_log, K=K_log, P_triu=Pbar_triu_traj[::-1, :])
 pickle.dump(store_dict, open("log.p", "wb"))
 
 # plotting
@@ -189,11 +198,11 @@ plt.figure()
 
 plt.subplot(211)
 plt.plot(t_sim, x_sim)
-plt.plot(t_traj, xd_traj, '--')
+plt.plot(t_sim, xd_log, '--')
 
 plt.subplot(212)
 plt.plot(t_sim, u_sim)
-plt.plot(t_traj, ud_traj, '--')
+plt.plot(t_sim, ud_log, '--')
 
 plt.figure()
 
