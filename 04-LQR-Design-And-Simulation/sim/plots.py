@@ -33,7 +33,7 @@ plt.legend()
 
 plt.tight_layout()
 
-plt.savefig("../doc/img/fig1.pdf")
+plt.savefig("../doc/img/ludyk_lti.pdf")
 
 fig = plt.figure(figsize=(6, 8))
 pseudoltv = pickle.load(open("ludyk_pseudoltv.p", "rb"))
@@ -56,7 +56,7 @@ plt.plot(pseudoltv["t"], pseudoltv["K"][:, 0, 1], label="$k_2$")
 plt.legend()
 plt.xlabel("$t$")
 
-plt.savefig("../doc/img/fig2.pdf")
+plt.savefig("../doc/img/ludyk_pseudoltv.pdf")
 
 fig = plt.figure(figsize=(6, 8))
 ltv = pickle.load(open("ludyk_ltv.p", "rb"))
@@ -79,5 +79,5 @@ plt.plot(ltv["t"], ltv["K"][:, 0, 1], label="$k_2$")
 plt.legend()
 plt.xlabel("$t$")
 
-plt.savefig("../doc/img/fig3.pdf")
+plt.savefig("../doc/img/ludyk_ltv.pdf")
 plt.show()

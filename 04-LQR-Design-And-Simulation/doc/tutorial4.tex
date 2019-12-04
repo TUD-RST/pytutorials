@@ -227,18 +227,18 @@ These computations -- save for the applying the actual control law, which happen
 \luainputlisting{../sim/01_lqr.py}{solveare}
 
 Now it is time to look at some simulation results.
-Shown in Figure~\ref{fig:fig1} on the left side is the combination of feedforward control and feedback control, designed for a system linearized around the planned trajectory values at $t^*=0$.
+Shown in Figure~\ref{fig:ludyk_lti} on the left side is the combination of feedforward control and feedback control, designed for a system linearized around the planned trajectory values at $t^*=0$.
 The initial state~$x(0)$ is slightly offset from the planned initial position~$x^*(0)$, but the controller manages to track the trajectory anyway.
 
 However, this choice of linearization point was arbitrary and lucky.
 When e.\,g.\ $t^*=5$ is picked instead, the closed loop system immediately starts moving away from the reference value and tracking capability is lost.
-This is demonstrated on the right side of Figure~\ref{fig:fig1}.
+This is demonstrated on the right side of Figure~\ref{fig:ludyk_lti}.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[scale=1]{img/fig1.pdf}
+    \includegraphics[scale=1]{img/ludyk_lti.pdf}
     \caption{Closed loop simulation of trajectory tracking, controller designed for different linearization points}
-    \label{fig:fig1}
+    \label{fig:ludyk_lti}
 \end{figure}
 
 In fact, simply sticking to $t^*=0$ also does not work.
@@ -249,13 +249,13 @@ It appears that tracking arbitrary trajectories with this approach is not feasib
 
 One might be tempted to improve the controller by simply re-linearizing the system and re-computing the feedback matrix at every time step.
 For this specific case this approach actually works and is very easy to implement when a normal LQR controller already exists.
-Simulation results are shown in Figure~\ref{fig:fig2}, along with a plot of the changing feedback matrix entries over time.
+Simulation results are shown in Figure~\ref{fig:ludyk_pseudoltv}, along with a plot of the changing feedback matrix entries over time.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[scale=1]{img/fig2.pdf}
+    \includegraphics[scale=1]{img/ludyk_pseudoltv.pdf}
     \caption{Closed loop simulation of trajectory tracking, controller retuned for linearized system at every time step}
-    \label{fig:fig2}
+    \label{fig:ludyk_pseudoltv}
 \end{figure}
 
 Remember this is dangerous territory though.
