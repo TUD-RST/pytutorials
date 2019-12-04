@@ -195,7 +195,7 @@ This function is then evaluated at the time values stored in vector \lstinline{t
 The previously derived formulas are then translated into NumPy operations to obtain the values for~$x_2$ and~$u$ at every time step.
 \luainputlisting{../sim/01_lqr.py}{flatness}
 
-\section{Reminder: Linear Time Invariant Systems}
+\section{Linear Time Invariant Systems}
 Before an LQR controller can be designed, the system in question must be linear.
 As a rough approximation, Taylor linearization is used to obtain a linear time-invariant (LTI) system which is valid in the proximity to the operating point $(x^*, u^*)$.
 In new coordinates $\tilde x=x - x^*$ and $\tilde u = u - u^*$ as well as by defining~$A:=A^*(x^*,u^*)$ and~$B:=B^*(x^*,u^*)$, the new state-space-form is then
@@ -213,9 +213,10 @@ J = \int_0^\infty \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t
 $$
 with the tuning matrices $Q$ and $R$ usually chosen as diagonal.
 Minimizing this function leads to the algebraic Riccati equation
-$$
+\begin{equation}
 P A + A^T P - P B R^{-1} B^T P + Q = 0
-$$
+\label{eq:riccati_are}
+\end{equation}
 having to be solved for $P$.
 In \py the SciPy package fortunately contains the routine \lstinline{solve_continuous_are} which does exactly that.
 
@@ -265,6 +266,97 @@ $$
 $$
 For a linear time-variant system, the closed loop system matrix $A(t) - B(t)K(t)$ must only contain eigenvalues $s$ with $\mathrm{Re}\,(s) < 0$, but also be \textbf{constant} in order for the closed loop to be stable!
 This property is not ensured in this controller design, using it is therefore not recommended.
+
+\FloatBarrier
+\section{Linear Time Variant Systems}
+
+Fortunately a more formal way to solve the problem demonstrated in the previous section exists.
+A time-variant linear system description provides a good compromise between reflecting the changing system properties and still being manageable using some of the tools known for linear systems.
+
+For ease of notation, first define the time-variant system matrices
+$$
+A(t):=A^*(x^*(t), u^*(t)) \quad \text{and} \quad B(t):=B^*(x^*(t),u^*(t))
+$$
+and analogous to the previous section the corresponding state-space system
+$$
+\dot{\tilde x}(t) = A(t)\tilde x(t) + B(t) u(t)\, .
+$$
+Intuitively, this linear approximation stems not from linearization at one single operating point, but from linearization along the reference trajectory.
+Therefore this approach is valid as long as it can be assumed that in the closed loop the system closely tracks the desired states.
+
+The first step in the LQR design process again is to define a cost function to be minimized.
+Similar to the previous section this function is now
+$$
+J=\tilde x^T(t_f) S \tilde x(t_f) +\int_0^{t_f} \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t\, .
+$$
+Note these two differences: for one the integration interval has changed from an infinite horizon to the finite length of the planned trajectory, also an additional end cost term with the weighting matrix~$S$ was added.
+
+To obtain the optimal state feedback, the initial value problem (IVP) defined by the matrix Riccati differential equation
+\begin{equation}
+\frac{\mathrm d P(t)}{\mathrm d t}= -P(t)A(t) - A(t)^T P(t) + P(t) B(t) R^{-1} B(t)^T P(t) - Q(t)
+\label{eq:riccati_ivp}
+\end{equation}
+and the initial value
+$$
+P(t_f) = S
+$$
+must be solved.
+
+After performing all the matrix operations this would mean simulating~$n^2$ scalar ODEs.
+It can be shown though that $P(t)$ is symmetric, which reduces the number of distinct entries to~$n(n+1)/2$ in the upper half.
+To extract these entries into a one-dimensional vector for simulation purposes, as well as to reconstruct the full matrix, the following \py code is used.
+\luainputlisting{../sim/01_lqr.py}{triuconvert}
+
+The initial value~$S$ is technically a tuning parameter and can be freely chosen.
+However, for trajectories that transfer between two setpoints, such as in the example shown here, one should consider the following suggestion.
+If the final setpoint is to be stabilized after the transfer phase ends, it is desirable for the final state feedback of the time-variant section to be identical to the feedback designed for the LTI system resulting from linearization around the final point.
+This ensures a smooth transition between the two phases.
+
+In practice this means solving the algebraic Riccati equation~\eqref{eq:riccati_are} for the reference state at~$t_f$ and using the solution as the initial value~$S$.
+The implementation is as follows:
+\luainputlisting{../sim/01_lqr.py}{riccatiinit}
+
+The last quirk of the IVP~\eqref{eq:riccati_ivp} is the `initial value' not being defined at time zero.
+While this mathematically does not make much of a difference, both our intuition and most existing software tools expect that the system `runs' in forward flowing time.
+The time reversal
+$$
+P(t) =P(t_f - \tau)=:\bar P(\tau)
+$$
+remedies this issue.
+This new function~$\bar P(\tau)$ is almost the same as~$P(t)$, only with a redefined argument, so that an increasing~$\tau$ corresponds to~$t$ decreasing from~$t_f$ in the original function.
+Utilizing the chain rule~$\frac{\mathrm d P(t)}{\mathrm d t} = -\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}$ yields a new IVP
+\begin{equation}
+\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}= -\bar P(\tau) B(T-\tau) R^{-1} B(T-\tau)^T \bar P(\tau) + \bar P(\tau)A(T-\tau)+A(T-\tau)^T \bar P(\tau) + Q
+\label{eq:riccati_new_ivp}
+\end{equation}
+where the initial value is now the more familiar
+$$
+\bar P(0)=S=P(t_f)\, .
+$$
+As only system and reference trajectory information are required, the IVP can be solved offline.
+Values for the feedback matrix
+$$
+K(t) = R^{-1} B(t)^T P(t)
+$$
+are stored for the fixed time steps and then used later in the closed loop.
+Simulation of~\eqref{eq:riccati_new_ivp} can be performed with a numerical integration algorithm of choice, a simple fixed step width Euler algorithm was used here.
+\luainputlisting{../sim/01_lqr.py}{riccatiint}
+The main difficulty is keeping the array indices corresponding to $t$ and $\tau$ straight, otherwise the code is structurally identical to the simulation of any dynamic system.
+
+Finally, the actual simulation of the closed loop happens in the main simulation loop.
+The method of numerical integration is identical here.
+\luainputlisting{../sim/01_lqr.py}{sim}
+Simulation results are shown in Figure~\ref{fig:ludyk_ltv}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=1]{img/ludyk_ltv.pdf}
+    \caption{Closed loop simulation of trajectory tracking, controller designed for linear time-variant system obtained from linearizing along reference trajectory}
+    \label{fig:ludyk_ltv}
+\end{figure}
+
+Unfortunately the final state trajectory is visually indistinguishable from the previous result.
+Still, for less benevolent systems than this academic example this method is the safer option, as it is applicable whenever the feedforward control is good enough to not deviate from the reference too far.
 
 \printglossaries
 

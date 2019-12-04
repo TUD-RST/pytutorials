@@ -120,58 +120,74 @@ For a linear time-variant system, the closed loop system matrix $A(t) - B(t)K(t)
 
 ## LQR for LTV systems
 
-- define $A(t):=A^*(x^*(t), u^*(t))$ and $B(t):=B^*(x^*(t),u^*(t))$
+Fortunately a more formal way to solve the problem demonstrated in the previous section exists. A time-variant linear system description provides a good compromise between reflecting the changing system properties and still being manageable using some of the tools known for linear systems.
 
-- alternative: actual LTV system $\dot{\tilde x}(t) = A(t)\tilde x(t) + B(t) u(t)$
+For ease of notation, first define the time-variant system matrices
+$$
+A(t):=A^*(x^*(t), u^*(t)) \quad \text{and} \quad B(t):=B^*(x^*(t),u^*(t))
+$$
+and analogous to the previous section the corresponding state-space system
+$$
+\dot{\tilde x}(t) = A(t)\tilde x(t) + B(t) u(t)\, .
+$$
+Intuitively, this linear approximation stems not from linearization at one single operating point, but from linearization along the reference trajectory. Therefore this approach is valid as long as it can be assumed that in the closed loop the system closely tracks the desired states.
 
-- $J=\tilde x^T(t_f) S \tilde x(t_f) +\int_0^{t_f} \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t$
+The first step in the LQR design process again is to define a cost function to be minimized. Similar to the previous section this function is now
+$$
+J=\tilde x^T(t_f) S \tilde x(t_f) +\int_0^{t_f} \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t\, .
+$$
+Note these two differences: for one the integration interval has changed from an infinite horizon to the finite length of the planned trajectory, also an additional end cost term with the weighting matrix $S$ was added.
 
-- optimal feedback is then obtained by solving IVP
+To obtain the optimal state feedback, the initial value problem (IVP) defined by the matrix Riccati differential equation
+$$
+\frac{\mathrm d P(t)}{\mathrm d t}= -P(t)A(t) - A(t)^T P(t) + P(t) B(t) R^{-1} B(t)^T P(t) - Q(t)
+$$
+and
+$$
+P(t_f) = S
+$$
+must be solved.
 
-- $$
-  \frac{\mathrm d P(t)}{\mathrm d t}= -P(t)A(t) - A(t)^T P(t) + P(t) B(t) R^{-1} B(t)^T P(t) - Q(t)
-  $$
+After performing all the matrix operations this would mean simulating $n^2$ scalar ODEs. It can be shown though that $P(t)$ is symmetric, which reduces the number of distinct entries to $\frac{n(n+1)}{2}$ in the upper half. To extract these entries into a one-dimensional vector for simulation purposes, as well as to reconstruct the full matrix, the following \py code is used.
 
-- with $P(t_f) = S$
+==`triuconvert`==
 
-- $P(t)$ is actually symmetric, so we don't need full matrix ODE, only for entries in upper triangular half
+The initial value $S$ is technically a tuning parameter and can be freely chosen. However, for trajectories that transfer between two setpoints, such as in the example shown here, one should consider the following suggestion. If the final setpoint is to be stabilized after the transfer phase ends, it is desirable for the final state feedback of the time-variant section to be identical to the feedback designed for the LTI system resulting from linearization around the final point. This ensures a smooth transition between the two phases.
 
-- converting to and from upper triu vector is done as such
+In practice this means solving the algebraic Riccati equation ==??== for the reference state at $t_f$ and using the solution as the initial value $S$. The implementation is as follows:
 
-- ==`triuconvert`==
+==`riccatiinit`==
 
-- what S to choose? free to do whatever, but for setpoint transition it makes sense to arrive at the feedback we would have for an LTI LQR in the endpoint --> solving ARE
+The last quirk of the IVP ==??== is the "initial value" not being defined at time zero. While this mathematically does not make much of a difference, both our intuition and most existing software tools expect that the system "runs" in forward flowing time. The time reversal
+$$
+P(t) =P(t_f - \tau)=:\bar P(\tau)
+$$
+remedies this issue. This new function $\bar P(\tau)$ is almost the same as $P(t)$, only with a redefined argument, so that an increasing $\tau$ corresponds to $t$ decreasing from $t_f$ in the original function. Utilizing the chain rule $\frac{\mathrm d P(t)}{\mathrm d t} = -\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}$ yields a new IVP
+$$
+\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}= -\bar P(\tau) B(T-\tau) R^{-1} B(T-\tau)^T \bar P(\tau) + \bar P(\tau)A(T-\tau)+A(T-\tau)^T \bar P(\tau) + Q
+$$
+where the initial value is now the more familiar
+$$
+\bar P(0)=S=P(t_f)\, .
+$$
+As only system and reference trajectory information are required, the IVP can be solved offline. Values for the feedback matrix
+$$
+K(t) = R^{-1} B(t)^T P(t)
+$$
+are stored for the fixed time steps and then used later in the closed loop. Simulation of ==??== can be performed with a numerical integration algorithm of choice, a simple fixed step width Euler algorithm was used here.
 
-- ==`riccatiinit`==
+==`riccatiint`==
 
-- issue: we (and software) is used to solving ODEs in forward time direction
+The main difficulty is keeping the array indices corresponding to $t$ and $\tau$ straight, otherwise the code is structurally identical to the simulation of any dynamic system.
 
-- solution: time reversal $P(t) =P(t_f - \tau)=:\bar P(\tau)$
+Finally, the actual simulation of the closed loop happens in the main simulation loop. The method of numerical integration is identical here.
 
-- chain rule $\frac{\mathrm d P(t)}{\mathrm d t} = -\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}$
+==`sim`==
 
-- new IVP $\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}= -\bar P(\tau) B(T-\tau) R^{-1} B(T-\tau)^T \bar P(\tau) + \bar P(\tau)A(T-\tau)+A(T-\tau)^T \bar P(\tau) + Q$ with $P(t_f)=\bar P(0)=S$
+Simulation results are shown in Figure ==??==.
 
-- now we can finally implement this. this is done "offline" using system and trajectory information. resulting K(t) is stored
+==DIAGRAM==
 
-- here we use simple euler-1
-
-- ==`riccatiint`==
-
-- pay attention to indices
-
-- now only important remaining part is simulation loop
-
-- looks similar, also just numerically integrating ODE
-
-- again uses fixed step Euler-1
-
-- ==`sim`==
-
-- now let's look at result
-
-- ==DIAGRAM==
-
-- visually indistinguishable from previous result :/ still, this is the safe option for less benevolent systems
+Unfortunately the final state trajectory is visually indistinguishable from the previous result. Still, for less benevolent systems than this academic example this method is the safer option, as it is applicable whenever the feedforward control is good enough to not deviate from the reference too far.
 
 ## Practical example: cart-pole system
