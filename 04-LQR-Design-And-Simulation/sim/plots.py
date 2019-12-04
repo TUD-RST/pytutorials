@@ -57,4 +57,27 @@ plt.legend()
 plt.xlabel("$t$")
 
 plt.savefig("../doc/img/fig2.pdf")
+
+fig = plt.figure(figsize=(6, 8))
+ltv = pickle.load(open("ludyk_ltv.p", "rb"))
+
+plt.subplot(311)
+plt.plot(ltv["t"], ltv["x"][:, 0], label="$x_1$")
+plt.plot(ltv["t"], ltv["x"][:, 1], label="$x_2$")
+plt.plot(ltv["t"], ltv["xd"][:, 0], ls='--', label="$x^*_1$")
+plt.plot(ltv["t"], ltv["xd"][:, 1], ls='--', label="$x^*_2$")
+plt.legend()
+
+plt.subplot(312)
+plt.plot(ltv["t"], ltv["u"][:], label="$u$")
+plt.plot(ltv["t"], ltv["ud"][:], ls='--', label="$u^*$")
+plt.legend()
+
+plt.subplot(313)
+plt.plot(ltv["t"], ltv["K"][:, 0, 0], label="$k_1$")
+plt.plot(ltv["t"], ltv["K"][:, 0, 1], label="$k_2$")
+plt.legend()
+plt.xlabel("$t$")
+
+plt.savefig("../doc/img/fig3.pdf")
 plt.show()

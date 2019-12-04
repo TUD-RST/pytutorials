@@ -120,15 +120,58 @@ For a linear time-variant system, the closed loop system matrix $A(t) - B(t)K(t)
 
 ## LQR for LTV systems
 
+- define $A(t):=A^*(x^*(t), u^*(t))$ and $B(t):=B^*(x^*(t),u^*(t))$
+
 - alternative: actual LTV system $\dot{\tilde x}(t) = A(t)\tilde x(t) + B(t) u(t)$
+
 - $J=\tilde x^T(t_f) S \tilde x(t_f) +\int_0^{t_f} \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t$
 
-- optimal feedback is then obtained by solving
+- optimal feedback is then obtained by solving IVP
 
 - $$
-  \frac{\mathrm d P(t)}{\mathrm d t}= -P(t)A(t) + A(t)^T P(t) - P(t) B(t) R^{-1} B(t)^T P(t) + Q(t)
+  \frac{\mathrm d P(t)}{\mathrm d t}= -P(t)A(t) - A(t)^T P(t) + P(t) B(t) R^{-1} B(t)^T P(t) - Q(t)
   $$
 
-- 
+- with $P(t_f) = S$
+
+- $P(t)$ is actually symmetric, so we don't need full matrix ODE, only for entries in upper triangular half
+
+- converting to and from upper triu vector is done as such
+
+- ==`triuconvert`==
+
+- what S to choose? free to do whatever, but for setpoint transition it makes sense to arrive at the feedback we would have for an LTI LQR in the endpoint --> solving ARE
+
+- ==`riccatiinit`==
+
+- issue: we (and software) is used to solving ODEs in forward time direction
+
+- solution: time reversal $P(t) =P(t_f - \tau)=:\bar P(\tau)$
+
+- chain rule $\frac{\mathrm d P(t)}{\mathrm d t} = -\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}$
+
+- new IVP $\frac{\mathrm d \bar P(\tau)}{\mathrm d \tau}= -\bar P(\tau) B(T-\tau) R^{-1} B(T-\tau)^T \bar P(\tau) + \bar P(\tau)A(T-\tau)+A(T-\tau)^T \bar P(\tau) + Q$ with $P(t_f)=\bar P(0)=S$
+
+- now we can finally implement this. this is done "offline" using system and trajectory information. resulting K(t) is stored
+
+- here we use simple euler-1
+
+- ==`riccatiint`==
+
+- pay attention to indices
+
+- now only important remaining part is simulation loop
+
+- looks similar, also just numerically integrating ODE
+
+- again uses fixed step Euler-1
+
+- ==`sim`==
+
+- now let's look at result
+
+- ==DIAGRAM==
+
+- visually indistinguishable from previous result :/ still, this is the safe option for less benevolent systems
 
 ## Practical example: cart-pole system

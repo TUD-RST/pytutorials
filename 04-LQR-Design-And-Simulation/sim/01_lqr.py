@@ -89,6 +89,7 @@ R_inv = scilin.inv(R)
 
 
 # solve matrix riccati ODE
+# LISTING_START triuconvert
 def triu_to_full(triu):
     n = int(round((np.sqrt(1+8*len(triu))-1)/2))
     mask = np.triu(np.ones((n, n), dtype=bool))
@@ -104,36 +105,39 @@ def triu_to_full(triu):
 def full_to_triu(full):
     mask = np.triu(np.ones(full.shape, dtype=bool))
     return full[mask]
+# LISTING_END triuconvert
 
 
+# LISTING_START riccatiinit
 # Get initial value S for matrix Riccati ODE by solving algebraic Riccati equation
 A_f, B_f = system_matrices(t_traj[-1], xd_traj[-1], ud_traj[-1], sys_para)
 S = scilin.solve_continuous_are(A_f, B_f, Q, R)
+# LISTING_END riccatiinit
+# LISTING_START riccatiint
+Pbar_triu_traj = np.empty((n_samples, int(sys_para.n*(sys_para.n + 1)/2)))  # allocate array for P
+Pbar_triu_traj[0, :] = full_to_triu(S)  # initialize with Pbar(0) = S
 
-Ptilde_triu_traj = np.empty((n_samples, int(sys_para.n*(sys_para.n + 1)/2)))
-Ptilde_triu_traj[0, :] = full_to_triu(S)
-
-K_traj = np.empty((n_samples, sys_para.m, sys_para.n))
+K_traj = np.empty((n_samples, sys_para.m, sys_para.n))  # allocate array for K
 
 # get trajectories for P and K via numerical integration
-for i_tau in range(n_samples):
-    i_t = n_samples - 1 - i_tau
+for i_tau in range(n_samples):  # iterate forward in tau direction
+    i_t = n_samples - 1 - i_tau  # index in t vector (counting down from last element)
     t_i = t_traj[i_t]
     tau_i = t_traj[i_tau]
     xd_i = xd_traj[i_t]
     ud_i = ud_traj[i_t]
     A_i, B_i = system_matrices(t_i, xd_i, ud_i, sys_para)
-    Ptilde_triu_i = Ptilde_triu_traj[i_tau]
-    Ptilde_i = triu_to_full(Ptilde_triu_i)
+    Pbar_triu_i = Pbar_triu_traj[i_tau]  # indices for Pbar run forward in tau direction
+    Pbar_i = triu_to_full(Pbar_triu_i)
 
-    K_traj[i_t] = R_inv @ B_i.T @ Ptilde_i
+    K_traj[i_t] = R_inv @ B_i.T @ Pbar_i
 
-    if i_tau < n_samples - 1:
-        dPtilde_dtau = - Ptilde_i @ B_i @ R_inv @ B_i.T @ Ptilde_i + Ptilde_i @ A_i + A_i.T @ Ptilde_i + Q
-        dPtilde_dtau_triu = full_to_triu(dPtilde_dtau)
+    if i_tau < n_samples - 1:  # are we at the end yet? if not, compute next Pbar via numerical integration
+        dPbar_dtau = - Pbar_i @ B_i @ R_inv @ B_i.T @ Pbar_i + Pbar_i @ A_i + A_i.T @ Pbar_i + Q
+        dPbar_dtau_triu = full_to_triu(dPbar_dtau)
 
-        Ptilde_triu_traj[i_tau + 1] = Ptilde_triu_i + sim_para.dt * dPtilde_dtau_triu  # one Euler step
-
+        Pbar_triu_traj[i_tau + 1] = Pbar_triu_i + sim_para.dt * dPbar_dtau_triu  # one Euler step
+# LISTING_END riccatiint
 # LISTING_START linsys
 # compute static LQR feedback
 t_static = 5
@@ -149,14 +153,15 @@ P_static = scilin.solve_continuous_are(A_static, B_static, Q, R)
 K_static = R_inv * B_static.T @ P_static
 # LISTING_END solveare
 
+# LISTING_START sim
 # main simulation loop
-x_traj = np.empty((n_samples, sys_para.n))
-x_traj[0] = sim_para.x0
-u_traj = np.empty((n_samples, sys_para.m))
-K_log = np.empty((n_samples, sys_para.m, sys_para.n))
+x_traj = np.empty((n_samples, sys_para.n))  # allocate array for state over time
+x_traj[0] = sim_para.x0  # set initial state
+u_traj = np.empty((n_samples, sys_para.m))  # allocate array for input over time
+K_log = np.empty((n_samples, sys_para.m, sys_para.n))  # allocate array for feedback over time
 
 FeedbackMode = Literal["LTV", "LTI", "pseudoLTV"]
-feedback_mode: FeedbackMode = "pseudoLTV"
+feedback_mode: FeedbackMode = "LTV"
 
 for i in range(n_samples):
     t_i = t_traj[i]
@@ -165,26 +170,28 @@ for i in range(n_samples):
     xd_i = xd_traj[i]
     ud_i = ud_traj[i]
 
+    # switch between controller types
     if feedback_mode == "LTV":
-        K_i = K_traj[i]
+        K_i = K_traj[i]  # read feedback matrix from pre-computed Riccati solution
     elif feedback_mode == "LTI":
         K_i = K_static
     elif feedback_mode == "pseudoLTV":
         A_i, B_i = system_matrices(t_i, xd_i, ud_i, sys_para)
-        P_i = scilin.solve_continuous_are(A_i, B_i, Q, R)
+        P_i = scilin.solve_continuous_are(A_i, B_i, Q, R)  # retune feedback for current state from reference trajectory
         K_i = R_inv * B_i.T @ P_i
 
-    u_i = ud_i - K_i @ (x_i - xd_i)
-    dxdt_i = system_rhs(t_traj[i], x_i, u_i, sys_para)
+    u_i = ud_i - K_i @ (x_i - xd_i)  # the actual control law u_tilde=-K*x_tilde
 
     u_traj[i] = u_i
     K_log[i] = K_i
 
-    if i < n_samples - 1:
+    if i < n_samples - 1:  # have we reached the end yet? if not, integrate one step
+        dxdt_i = system_rhs(t_traj[i], x_i, u_i, sys_para)
         x_traj[i + 1] = x_i + sim_para.dt * dxdt_i
+# LISTING_END sim
 
 # storing the results
-store_dict = dict(t=t_traj, x=x_traj, xd=xd_traj, u=u_traj, ud=ud_traj, K=K_log, P_triu=Ptilde_triu_traj[::-1, :])
+store_dict = dict(t=t_traj, x=x_traj, xd=xd_traj, u=u_traj, ud=ud_traj, K=K_log, P_triu=Pbar_triu_traj[::-1, :])
 pickle.dump(store_dict, open("log.p", "wb"))
 
 # plotting
@@ -203,7 +210,7 @@ plt.legend(["u", "ud"])
 plt.figure()
 
 plt.subplot(211)
-plt.plot(t_traj, Ptilde_triu_traj[::-1, :])
+plt.plot(t_traj, Pbar_triu_traj[::-1, :])
 plt.legend(["p11", "p12", "p22"])
 
 plt.subplot(212)
