@@ -153,12 +153,12 @@ a \sin(x_2)\\
 \end{equation}
 Later, the jacobians
 \begin{equation}
-A(x^*, u^*) := \left.\frac{\partial F}{\partial x}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 & a \cos(x^*_2)\\-2 x^*_1 & 0\end{pmatrix}
+A^*(x^*, u^*) := \left.\frac{\partial F}{\partial x}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 & a \cos(x^*_2)\\-2 x^*_1 & 0\end{pmatrix}
 \label{eq:jac_A}
 \end{equation}
 and
 \begin{equation}
-B(x^*, u^*) := \left.\frac{\partial F}{\partial u}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 \\ 1\end{pmatrix}
+B^*(x^*, u^*) := \left.\frac{\partial F}{\partial u}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 \\ 1\end{pmatrix}
 \label{eq:jac_B}
 \end{equation}
 will also be needed.
@@ -198,9 +198,9 @@ The previously derived formulas are then translated into NumPy operations to obt
 \section{Reminder: Linear Time Invariant Systems}
 Before an LQR controller can be designed, the system in question must be linear.
 As a rough approximation, Taylor linearization is used to obtain a linear time-invariant (LTI) system which is valid in the proximity to the operating point $(x^*, u^*)$.
-In new coordinates $\tilde x=x - x^*$ and $\tilde u = u - u^*$ as well as by using the Jacobians~\eqref{eq:jac_A} and~\eqref{eq:jac_B}, the new state-space-form is then
+In new coordinates $\tilde x=x - x^*$ and $\tilde u = u - u^*$ as well as by defining~$A:=A^*(x^*,u^*)$ and~$B:=B^*(x^*,u^*)$, the new state-space-form is then
 $$
-\dot{\tilde x}(t) = A(x^*, u^*) \tilde x(t) + B(x^*,u^*) \tilde u(t)\, .
+\dot{\tilde x}(t) = A \tilde x(t) + B \tilde u(t)\, .
 $$
 In \py, the operating point is defined by a time $t^*$ along the planned trajectory.
 The corresponding array index is first determined and then used to get the values~$(x^*, u^*)$, with which the system matrices are computed.
