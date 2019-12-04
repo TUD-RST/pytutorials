@@ -5,6 +5,7 @@ import scipy.linalg as scilin
 import matplotlib.pyplot as plt
 from Planner import PolynomialPlanner
 from typing import Literal
+import pickle
 
 
 class Parameters(object):
@@ -152,6 +153,7 @@ K_static = R_inv * B_static.T @ P_static
 x_traj = np.empty((n_samples, sys_para.n))
 x_traj[0] = sim_para.x0
 u_traj = np.empty((n_samples, sys_para.m))
+K_log = np.empty((n_samples, sys_para.m, sys_para.n))
 
 FeedbackMode = Literal["LTV", "LTI", "pseudoLTV"]
 feedback_mode: FeedbackMode = "pseudoLTV"
@@ -176,9 +178,14 @@ for i in range(n_samples):
     dxdt_i = system_rhs(t_traj[i], x_i, u_i, sys_para)
 
     u_traj[i] = u_i
+    K_log[i] = K_i
 
     if i < n_samples - 1:
         x_traj[i + 1] = x_i + sim_para.dt * dxdt_i
+
+# storing the results
+store_dict = dict(t=t_traj, x=x_traj, xd=xd_traj, u=u_traj, ud=ud_traj, K=K_log, P_triu=Ptilde_triu_traj[::-1, :])
+pickle.dump(store_dict, open("log.p", "wb"))
 
 # plotting
 plt.figure()
@@ -200,7 +207,7 @@ plt.plot(t_traj, Ptilde_triu_traj[::-1, :])
 plt.legend(["p11", "p12", "p22"])
 
 plt.subplot(212)
-plt.plot(t_traj, K_traj.reshape((n_samples, sys_para.n)))
+plt.plot(t_traj, K_log.reshape((n_samples, sys_para.n)))
 plt.legend(["k1", "k2"])
 
 plt.show()

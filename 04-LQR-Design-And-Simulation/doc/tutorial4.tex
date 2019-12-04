@@ -154,10 +154,12 @@ a \sin(x_2)\\
 Later, the jacobians
 \begin{equation}
 A(x^*, u^*) := \left.\frac{\partial F}{\partial x}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 & a \cos(x^*_2)\\-2 x^*_1 & 0\end{pmatrix}
+\label{eq:jac_A}
 \end{equation}
 and
 \begin{equation}
 B(x^*, u^*) := \left.\frac{\partial F}{\partial u}\right\vert_{(x^*, u^*)}= \begin{pmatrix}0 \\ 1\end{pmatrix}
+\label{eq:jac_B}
 \end{equation}
 will also be needed.
 
@@ -192,6 +194,77 @@ This function is then evaluated at the time values stored in vector \lstinline{t
 \luainputlisting{../sim/01_lqr.py}{plantraj}
 The previously derived formulas are then translated into NumPy operations to obtain the values for~$x_2$ and~$u$ at every time step.
 \luainputlisting{../sim/01_lqr.py}{flatness}
+
+\section{Reminder: Linear Time Invariant Systems}
+Before an LQR controller can be designed, the system in question must be linear.
+As a rough approximation, Taylor linearization is used to obtain a linear time-invariant (LTI) system which is valid in the proximity to the operating point $(x^*, u^*)$.
+In new coordinates $\tilde x=x - x^*$ and $\tilde u = u - u^*$ as well as by using the Jacobians~\eqref{eq:jac_A} and~\eqref{eq:jac_B}, the new state-space-form is then
+$$
+\dot{\tilde x}(t) = A(x^*, u^*) \tilde x(t) + B(x^*,u^*) \tilde u(t)\, .
+$$
+In \py, the operating point is defined by a time $t^*$ along the planned trajectory.
+The corresponding array index is first determined and then used to get the values~$(x^*, u^*)$, with which the system matrices are computed.
+\luainputlisting{../sim/01_lqr.py}{linsys}
+
+Now an LQR controller will be designed by the book.
+This means defining a cost-function
+$$
+J = \int_0^\infty \tilde x^T(t) Q x(t) + \tilde u^T(t) R u(t) \, \mathrm d t
+$$
+with the tuning matrices $Q$ and $R$ usually chosen as diagonal.
+Minimizing this function leads to the algebraic Riccati equation
+$$
+P A + A^T P - P B R^{-1} B^T P + Q = 0
+$$
+having to be solved for $P$.
+In \py the SciPy package fortunately contains the routine \lstinline{solve_continuous_are} which does exactly that.
+
+The cost function then is minimal if a constant state feedback~$\tilde u = - K \tilde x$ is applied, with
+$$
+K = \begin{pmatrix} k_1 & k_2 \end{pmatrix} = R^{-1} B^T P\, .
+$$
+These computations -- save for the applying the actual control law, which happens in the main simulation loop -- can now be compactly written as
+\luainputlisting{../sim/01_lqr.py}{solveare}
+
+Now it is time to look at some simulation results.
+Shown in Figure~\ref{fig:fig1} on the left side is the combination of feedforward control and feedback control, designed for a system linearized around the planned trajectory values at $t^*=0$.
+The initial state~$x(0)$ is slightly offset from the planned initial position~$x^*(0)$, but the controller manages to track the trajectory anyway.
+
+However, this choice of linearization point was arbitrary and lucky.
+When e.\,g.\ $t^*=5$ is picked instead, the closed loop system immediately starts moving away from the reference value and tracking capability is lost.
+This is demonstrated on the right side of Figure~\ref{fig:fig1}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=1]{img/fig1.pdf}
+    \caption{Closed loop simulation of trajectory tracking, controller designed for different linearization points}
+    \label{fig:fig1}
+\end{figure}
+
+In fact, simply sticking to $t^*=0$ also does not work.
+For other reference trajectories, e.\,g.\ for~$y(0)=2$ and~$y(10)=-2$ (the reverse trajectory if you will), choosing the same linearization time fails.
+In that case~$t^*=10$ must instead be used.
+
+It appears that tracking arbitrary trajectories with this approach is not feasible, since the linearized system can never sufficiently represent the more involved non-linear dynamics and a "one size fits all" constant state feedback is therefore bound to fail.
+
+One might be tempted to improve the controller by simply re-linearizing the system and re-computing the feedback matrix at every time step.
+For this specific case this approach actually works and is very easy to implement when a normal LQR controller already exists.
+Simulation results are shown in Figure~\ref{fig:fig2}, along with a plot of the changing feedback matrix entries over time.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[scale=1]{img/fig2.pdf}
+    \caption{Closed loop simulation of trajectory tracking, controller retuned for linearized system at every time step}
+    \label{fig:fig2}
+\end{figure}
+
+Remember this is dangerous territory though.
+No stability guarantees can be made here, because this ad-hoc solution corresponds to a linear system approximation with time-variant system matrices
+$$
+\dot{\tilde x}(t) = A(t)\tilde x(t) + B(t) u(t)\, .
+$$
+For a linear time-variant system, the closed loop system matrix $A(t) - B(t)K(t)$ must only contain eigenvalues $s$ with $\mathrm{Re}\,(s) < 0$, but also be \textbf{constant} in order for the closed loop to be stable!
+This property is not ensured in this controller design, using it is therefore not recommended.
 
 \printglossaries
 
