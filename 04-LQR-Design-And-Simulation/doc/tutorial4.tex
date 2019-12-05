@@ -43,6 +43,10 @@ showstringspaces=false} % spacing between strings not showed
 \usepackage{luacode}
 \usepackage{soul}
 
+% bibliography
+\usepackage[style=verbose-ibid,backend=bibtex]{biblatex}
+\bibliography{literature}
+
 % theorems
 \newtheorem{defi}{Definition}[section]
 
@@ -140,7 +144,7 @@ The following topics are covered:
 Later in this tutorial this process is applied to design control strategies for the cart-pole system from a previous tutorial.
 
 \section{Implementing the System}
-In order to demonstrate the design methods discussed in the following, a simple academic example from \hl{??} will be used.
+In order to demonstrate the design methods discussed in the following, a simple academic example\autocite{ludyk} will be used.
 The system state~$x=(x_1, x_2)$ has two components and the scalar input is called~$u$.
 Written in state-space-form, the system equation then is:
 \begin{equation}
@@ -359,6 +363,7 @@ Unfortunately the final state trajectory is visually indistinguishable from the 
 Still, for less benevolent systems than this academic example this method is the safer option, as it is applicable whenever the feedforward control is good enough to not deviate from the reference too far.
 
 \printglossaries
+%\printbibliography
 
 \end{document}
 
