@@ -15,7 +15,7 @@ class Parameters(object):
 # define simulation parameters
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
-sim_para.tf = 2.0        # final time
+sim_para.tf = 2.5        # final time
 sim_para.dt = 0.01       # step-size
 sim_para.x0 = [0, 0, np.pi, 0] # initial value
 
@@ -56,7 +56,7 @@ def system_matrices(t, x, u, para):
     B = np.array([[0],
                   [1],
                   [0],
-                  [1/para.l*cos(x3)]])
+                  [cos(x3)/para.l]])
 
     return A, B
 # LISTING_END defsystem
@@ -66,12 +66,14 @@ def system_matrices(t, x, u, para):
 Q = np.diag([1, 1, 1, 1])
 R = np.array([[1]])
 
+# LISTING_START loadcsv
 pendulum_csv = np.loadtxt("pendulum.csv", delimiter=",")
 
 t_traj = pendulum_csv[:, 0].flatten()
 n_traj_samples = len(t_traj)
 xd_traj = pendulum_csv[:, 1:5]
 ud_traj = pendulum_csv[:, 5]
+# LISTING_END loadcsv
 # -- END SYSTEM SPECIFIC PART --
 
 R_inv = scilin.inv(R)
@@ -152,9 +154,9 @@ ud_log = np.empty((n_samples, sys_para.m))
 K_log = np.empty((n_samples, sys_para.m, sys_para.n))  # allocate array for feedback over time
 
 FeedbackMode = Literal["LTV", "LTI", "pseudoLTV"]
-feedback_mode: FeedbackMode = "LTI"
+feedback_mode: FeedbackMode = "LTV"
 
-feedback_after_swingup = False
+feedback_only_after_swingup = False
 
 for i in range(n_samples):
     t_i = t_sim[i]
@@ -174,7 +176,7 @@ for i in range(n_samples):
         P_i = scilin.solve_continuous_are(A_i, B_i, Q, R)  # retune feedback for current state from reference trajectory
         K_i = R_inv * B_i.T @ P_i
 
-    if feedback_after_swingup and i < n_traj_samples:
+    if feedback_only_after_swingup and i < n_traj_samples:
         u_i = ud_i
     else:
         u_i = ud_i - K_i @ (x_i - xd_i)  # the actual control law u_tilde=-K*x_tilde
