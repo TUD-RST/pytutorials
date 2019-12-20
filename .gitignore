@@ -359,3 +359,7 @@ ENV/
 # additions
 /.idea
 *.code-workspace
+
+99-Jupyter-Cheat-Sheets/array.npy
+99-Jupyter-Cheat-Sheets/array.txt
+
