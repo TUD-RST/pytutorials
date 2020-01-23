@@ -4,7 +4,7 @@ from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 
-
+# LISTING_START ParaClass
 class Parameters(object):
     pass
 
@@ -13,14 +13,18 @@ class Parameters(object):
 para = Parameters()  # instance of class Parameters
 para.l = 0.3         # define car length
 para.w = para.l*0.3  # define car width
+# LISTING_END ParaClass
 
+# LISTING_START SimuPara
 # Simulation parameter
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
 sim_para.tf = 10         # final time
 sim_para.dt = 0.04       # step-size
+# LISTING_END SimuPara
 
 
+# LISTING_START OdeFunDef
 def ode(t, x, p):
     """Function of the robots kinematics
 
@@ -42,8 +46,10 @@ def ode(t, x, p):
 
     # return state derivative
     return dxdt
+# LISTING_END OdeFunDef
 
 
+# LISTING_START ControlFunDef
 def control(t, x):
     """Function of the control law
 
@@ -58,8 +64,10 @@ def control(t, x):
     u1 = np.maximum(0, 1.0 - 0.1 * t)
     u2 = np.full(u1.shape, 0.25)
     return np.array([u1, u2]).T
+# LISTING_END ControlFunDef
 
 
+# LISTING_START PlotFunDef
 def plot_data(x, u, t, fig_width, fig_height, save=False):
     """Plotting function of simulated state and actions
 
@@ -130,8 +138,9 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
         plt.savefig('state_trajectory.pdf')  # save output as pdf
         # plt.savefig('state_trajectory.pgf')  # for easy export to LaTeX, needs a lot of extra packages
     return None
+# LISTING_END PlotFunDef
 
-
+# LISTING_START Simulation
 # time vector
 tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
@@ -142,9 +151,10 @@ x0 = [0, 0, 0]
 sol = sci.solve_ivp(lambda t, x: ode(t, x, para), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
 x_traj = sol.y.T
 u_traj = control(tt, x_traj)
+# LISTING_END Simulation
 
+# LISTING_START PlotResult
 # plot
 plot_data(x_traj, u_traj, tt, 12, 16, save=True)
-
 plt.show()
-
+# LISTING_END PlotResult

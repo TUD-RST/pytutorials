@@ -134,6 +134,7 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     return None
 
 
+# LISTING_START CarAnimFunDef
 def car_animation(x, u, t, p):
     """Animation function of the car-like mobile robot
 
@@ -163,7 +164,9 @@ def car_animation(x, u, t, p):
     # Axis handles
     h_x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
     h_car, = ax.plot([], [], 'k', lw=2)    # car
+# LISTING_END CarAnimFunDef
 
+# LISTING_START CarPlotFunDef
     def car_plot(x, u):
         """Mapping from state x and action u to the position of the car elements
 
@@ -221,7 +224,9 @@ def car_animation(x, u, t, p):
 
         # set data
         h_car.set_data(data_y1, data_y2)
+# LISTING_END CarPlotFunDef
 
+# LISTING_START InitFunDef
     def init():
         """Initialize plot objects that change during animation.
            Only required for blitting to give a clean slate.
@@ -232,7 +237,9 @@ def car_animation(x, u, t, p):
         h_x_traj_plot.set_data([], [])
         h_car.set_data([], [])
         return h_x_traj_plot, h_car
+# LISTING_END InitFunDef        
 
+# LISTING_START AnimateFunDef
     def animate(i):
         """Defines what should be animated
 
@@ -248,18 +255,22 @@ def car_animation(x, u, t, p):
         h_x_traj_plot.set_ydata(x[0:k, 1])
         car_plot(x[k, :], control(t[k], x[k, :]))
         return h_x_traj_plot, h_car
+# LISTING_END AnimateFunDef        
 
+# LISTING_START DoAnimate
     ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
     file_format = 'mp4'
     ani.save('animation.'+file_format, writer='ffmpeg', fps=1 / (t[1] - t[0]))
+# LISTING_END DoAnimate
 
     plt.show()
     return None
 
 
+# LISTING_START DoSimulate
 # time vector
 tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
 
@@ -278,3 +289,4 @@ plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 car_animation(x_traj, u_traj, tt, para)
 
 plt.show()
+# LISTING_END DoSimulate

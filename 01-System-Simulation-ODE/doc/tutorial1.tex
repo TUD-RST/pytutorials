@@ -11,17 +11,27 @@
 \usepackage{amssymb}
 
 % figures, tables, etc.
-\usepackage{hyperref} %
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{pgf}
 \usepackage{xcolor}
 \usepackage{placeins} % -> floatbarrier
-\usepackage{siunitx}  % -> handling of units
-%\usepackage[printwatermark]{xwatermark}
-%\newwatermark[allpages,color=red!50,angle=45,scale=1.8,xpos=0,ypos=0]{\textsf{DRAFT ONLY,NOT APPROVED}}
 
-% code
+% Navigation
+\usepackage{hyperref} %
+\hypersetup{
+    colorlinks = true, % false -> red box arround links (not very nice)
+    linkcolor={blue!100!black},
+    citecolor={blue!100!black},
+    urlcolor={blue!100!black},
+}
+
+% others
+\usepackage{siunitx}  % -> handling of units
+\usepackage{acronym}
+
+% Code listings
+\usepackage{luacode}
 \usepackage{listings}
 \lstset{
 language=Python, 
@@ -32,34 +42,32 @@ breaklines=true,
 numberstyle=\tiny\color{gray},
 keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
 commentstyle=\color{dark-green}, % print comments dark-green
-showstringspaces=false} % spacing between strings not showed
-
-\newcommand{\listcode}[3]{\lstinputlisting[numbers=left,firstnumber=#1,firstline=#1,lastline=#2]{#3}}
-\newcommand{\listcodeplot}[2]{\listcode{#1}{#2}{../sim/01_car_example_plotting.py}}
-\newcommand{\listcodeanim}[2]{\listcode{#1}{#2}{../sim/02_car_example_animation.py}}
-
-% others
-\usepackage{acronym}
-
-% theorems
-\newtheorem{defi}{Definition}[section]
-
-% setup the appearance of links
-\hypersetup{
-    colorlinks = true, % false -> red box arround links (not very nice)
-    linkcolor={blue!100!black},
-    citecolor={blue!100!black},
-    urlcolor={blue!100!black},
+showstringspaces=false  % spacing between strings not showed
 }
 
+\luadirect{dofile("luainputlisting.lua")}
+\newcommand*\luainputlisting[2]{
+    \luadirect{print_code_part(\luastring{#1}, \luastring{#2})}
+}
+\newcommand*\luainputlistingline[2]{
+    \luadirect{print_code_line(\luastring{#1}, \luastring{#2})}
+}
+
+% bibliography
+\usepackage[style=verbose-ibid,backend=bibtex]{biblatex}
+\bibliography{literature}
+
 % manage glossaries
-% Call makeglossaries on a command prompt after LaTeX compiling,
+% Call makeglossaries tutorial1 on a command prompt after LaTeX compiling,
 % the re-run LaTeX
 \usepackage{glossaries}
 \setacronymstyle{long-short}
 \makeglossaries
 \newacronym{ivp}{IVP}{initial value problem}
 \newacronym{ode}{ODE}{ordinary differential equation}
+
+% theorems
+\newtheorem{defi}{Definition}[section]
 
 % define shortcuts
 \newcommand{\ad}{\mathrm{ad}}
@@ -181,20 +189,20 @@ The most relevant packages for the simulation of control systems are
 \end{itemize}
 
 It is good practice to connect the imported packages with a namespace so it can be easily seen in the code which function comes from where. For example, in case of \numpy the following statement imports the package \numpy and ensures that every function from \numpy is addressed by the prefix \texttt{np.}:
-\listcodeplot{2}{2}
+\luainputlistingline{../sim/01_car_example_plotting.py}{import numpy}
 For frequently used functions like \texttt{cos(...)}, \texttt{sin(...)}, and \texttt{tan(...)} it is annoying to prefix them like \texttt{np.cos(...)} each time. To avoid this one can directly import them as 
-\listcodeplot{3}{3}
+\luainputlistingline{../sim/01_car_example_plotting.py}{from numpy}
 To solve the \gls{ivp} \eqref{eq:ss_system} the library \scipy with its sub-package \emph{integrate} offers different solvers:
-\listcodeplot{4}{4}
+\luainputlistingline{../sim/01_car_example_plotting.py}{import scipy.integrate}
 For plotting the output of the simulation results the library \mpl with its sub-package \emph{pyplot} introduces a user experience similar to \emph{MATLAB} into \py:
-\listcodeplot{5}{5}
+\luainputlistingline{../sim/01_car_example_plotting.py}{import matplotlib.pyplot}
 
 
 \section{Storing parameters}
 In simulations usually a lot of parameters describing the system or the simulation setup have to be handled. It is a good idea to store these parameters as attributes in a structure so it is not necessary to deal with several individual variables holding the values of the parameters. Basically, such a structure can be an instance of an empty class derived from \texttt{object} to which members holding the parameter values are subsequently assigned:
-\listcodeplot{8}{15}
+\luainputlisting{../sim/01_car_example_plotting.py}{ParaClass}
 Similarily this can be done with the simulation parameters:
-\listcodeplot{17}{21}
+\luainputlisting{../sim/01_car_example_plotting.py}{SimuPara}
 
 Alternatively, one could use the datatype \emph{dictionary}. However, the resulting keyword notation (e.g., \texttt{para["l"]} instead of \texttt{para.l}) in the code using the parameters is quite annoying.
 
@@ -203,9 +211,9 @@ Alternatively, one could use the datatype \emph{dictionary}. However, the result
 
 \subsection{Implementation of the model} \label{sec:implementation-model}
 In order to simulate the \gls{ivp} \eqref{eq:odesys} using the numerical integrators offered by \scipy's integrate package a function returning the right hand side of \eqref{eq:odesys} evaluated for given values of $\x$, $\uu$ and the parameters has to implemented:
-\listcodeplot{24}{44}
+\luainputlisting{../sim/01_car_example_plotting.py}{OdeFunDef}
 The \texttt{ode} functions calls the control law function \texttt{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for example a feedback law $\uu=k(\x)$, can be implemented.
-\listcodeplot{47}{60}
+\luainputlisting{../sim/01_car_example_plotting.py}{ControlFunDef}
 It is important that the function needs to handle also time arrays as input in order to calculate the control for a bunch of values at once (not during the numerical integration but later for analysis purposes). That's why \numpy's array capable \href{https://docs.scipy.org/doc/numpy/reference/generated/numpy.maximum.html}{maximum function} is used here with appropriately adjusted shape of \texttt{u2}.
 
 Furthermore, attention has to be paid how the two functions above are documented. The text within the \texttt{"""} is called \emph{docstring}. Tools like \href{http://www.sphinx-doc.org/en/stable/}{Sphinx} are able to convert these into well formatted documentations. Docstrings can be written in several ways. Here the so-called \href{https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html}{Google Style} is used.
@@ -224,14 +232,14 @@ The return value \texttt{sol} is a \texttt{Bunch} object. To extract the simulat
 x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 \end{lstlisting}
 Finally, the control input values are calculated from the obtained trajectory of $\x$ (the values for $\uu$ in the \texttt{ode} function cannot be directly saved because the function is also repeatedly called between the specified time steps by the solver).
-\listcodeplot{135}{144}
+\luainputlisting{../sim/01_car_example_plotting.py}{Simulation}
 Note that the interval specified by \texttt{np.arange} is open on the right hand side. Hence, \texttt{dt} is added to obtain also values for $\x$ at \texttt{tf}. 
 
 \section{Plotting using \mpl} \label{sec:plot}
 Usually one wants to publish the results with descriptive illustrations. For this purpose the required plotting instructions are encapsulated in a function. This way, one can easily modify parameters of the plot, for example figure width, or if the figure should be saved on the hard drive.
-\listcodeplot{63}{132}
+\luainputlisting{../sim/01_car_example_plotting.py}{PlotFunDef}
 Having defined the plotting function, one can execute it passing the calculated trajectories.
-\listcodeplot{146}{148}
+\luainputlisting{../sim/01_car_example_plotting.py}{PlotResult}
 The result can be found in \autoref{fig:state_traj}. Other properties of the plot, like line width or line color and many others, can be easily changed. One may refer to the \href{https://matplotlib.org/api/pyplot_summary.html}{documentation of \mpl} or consult the exhaustive \href{https://matplotlib.org/gallery/index.html}{\mpl example gallery}.
 \begin{figure}[h!]
 \label{fig:state_traj}
@@ -249,7 +257,7 @@ The result can be found in \autoref{fig:state_traj}. Other properties of the plo
 \textbf{\py source code file: \texttt{02\_car\_example\_animation.py}}
 
 Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visual representation of the system dynamics in order to get a better understanding of what is actually happening. This applies especially for mechanical systems. \mpl provides the sub-package \texttt{animation}, which can be used for such a purpose. One has to add
-\listcodeanim{6}{6}
+\luainputlistingline{../sim/02_car_example_animation.py}{import matplotlib}
 at the top of the code used in the previous sections. Under Windows it might be necessary to explicitely specify the path to the \emph{FFMPG} library, e.g.:
 \begin{lstlisting}
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\path\\to\\ffmpg\\ffmpeg.exe'
@@ -257,26 +265,26 @@ plt.rcParams['animation.ffmpeg_path'] = 'C:\\path\\to\\ffmpg\\ffmpeg.exe'
 \emph{FFMPG} can be downloaded from \url{https://www.ffmpeg.org/download.html}.
 
 All processing steps required for the animation are encapsulated in a function called \texttt{car\_animation()}. At first this functions creates a figure with two empty plots into which the car and the curve of the trajectory dependung on the state $\x$, the control input $\uu$ and the parameters are plotted later:
-\listcodeanim{137}{165}
+\luainputlisting{../sim/02_car_example_animation.py}{CarAnimFunDef}
 The handles \texttt{h\_x\_traj\_plot} and \texttt{h\_car} are used later to draw onto the axes.
 
 In the animation a representation of the vehicle has to be subsequently drawn. This is done by plotting lines. All lines that represent the vehicle are defined by points, which depend on the current state $\x$ and the control input $\uu$. Hence, one needs a function inside \texttt{car\_animation()} that maps from $\x$ and $\uu$ to a set of points in the $(Y_1,Y_2)$-plane using geometric relations and passes these to the plot instance \texttt{car}:
-\listcodeanim{167}{223}
+\luainputlisting{../sim/02_car_example_animation.py}{CarPlotFunDef}
 Note that \texttt{car\_plot} is in the scope of the \texttt{car\_animation} function and, hence, has full acess to the handle \texttt{h\_car} here.
 
 Two further functions are required: \texttt{init()} and \texttt{animate(i)}. They will be called later by \mpl to initialize and perform the animation. The \texttt{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
-\listcodeanim{225}{234}
+\luainputlisting{../sim/02_car_example_animation.py}{InitFunDef}
 
 The \emph{animate(i)}-function assigns data to the changing objects, here the car, trajectory plots and the simulation time (as part of the axis):
-\listcodeanim{236}{250}
+\luainputlisting{../sim/02_car_example_animation.py}{AnimateFunDef}
 
 Finally an object of type \texttt{FuncAnimation} is instancciated. It is provided by the animation subpackage of \mpl. It takes  \texttt{animate()} and \texttt{init()} as argumets in the constructor:
-\listcodeanim{252}{258}
+\luainputlisting{../sim/02_car_example_animation.py}{DoAnimate}
 
 Note that all lines from 138 to 258 belong to the function \texttt{car\_animation}!
 
 Now the system can be simulated with animated results.
-\listcodeanim{275}{277}
+\luainputlisting{../sim/02_car_example_animation.py}{DoSimulate}
 
 \begin{figure}[ht]
   \centering
