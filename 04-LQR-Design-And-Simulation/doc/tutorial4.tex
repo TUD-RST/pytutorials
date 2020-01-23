@@ -11,17 +11,27 @@
 \usepackage{amssymb}
 
 % figures, tables, etc.
-\usepackage{hyperref} %
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{pgf}
 \usepackage{xcolor}
 \usepackage{placeins} % -> floatbarrier
-\usepackage{siunitx}  % -> handling of units
-%\usepackage[printwatermark]{xwatermark}
-%\newwatermark[allpages,color=red!50,angle=45,scale=1.8,xpos=0,ypos=0]{\textsf{DRAFT ONLY,NOT APPROVED}}
 
-% code
+% Navigation
+\usepackage{hyperref} %
+\hypersetup{
+    colorlinks = true, % false -> red box arround links (not very nice)
+    linkcolor={blue!100!black},
+    citecolor={blue!100!black},
+    urlcolor={blue!100!black},
+}
+
+% others
+\usepackage{siunitx}  % -> handling of units
+\usepackage{acronym}
+
+% Code listings
+\usepackage{luacode}
 \usepackage{listings}
 \lstset{
 language=Python, 
@@ -32,31 +42,17 @@ breaklines=true,
 numberstyle=\tiny\color{gray},
 keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
 commentstyle=\color{dark-green}, % print comments dark-green
-showstringspaces=false} % spacing between strings not showed
+showstringspaces=false  % spacing between strings not showed
+}
 
-\newcommand{\listcode}[3]{\lstinputlisting[numbers=left,firstnumber=#1,firstline=#1,lastline=#2]{#3}}
-\newcommand{\listcodeplot}[2]{\listcode{#1}{#2}{../sim/01_car_example_plotting.py}}
-\newcommand{\listcodeanim}[2]{\listcode{#1}{#2}{../sim/02_car_example_animation.py}}
-
-% others
-\usepackage{acronym}
-\usepackage{luacode}
-\usepackage{soul}
+\luadirect{dofile("luainputlisting.lua")}
+\newcommand*\luainputlisting[2]{
+    \luadirect{print_listing(\luastring{#1}, \luastring{#2})}
+}
 
 % bibliography
 \usepackage[style=verbose-ibid,backend=bibtex]{biblatex}
 \bibliography{literature}
-
-% theorems
-\newtheorem{defi}{Definition}[section]
-
-% setup the appearance of links
-\hypersetup{
-    colorlinks = true, % false -> red box arround links (not very nice)
-    linkcolor={blue!100!black},
-    citecolor={blue!100!black},
-    urlcolor={blue!100!black},
-}
 
 % manage glossaries
 % Call makeglossaries on a command prompt after LaTeX compiling,
@@ -66,6 +62,9 @@ showstringspaces=false} % spacing between strings not showed
 \makeglossaries
 \newacronym{ivp}{IVP}{initial value problem}
 \newacronym{ode}{ODE}{ordinary differential equation}
+
+% theorems
+\newtheorem{defi}{Definition}[section]
 
 % define shortcuts
 \newcommand{\ad}{\mathrm{ad}}
@@ -98,10 +97,6 @@ showstringspaces=false} % spacing between strings not showed
 \textsuperscript{\thefootnotemark}%
 }
 
-\luadirect{dofile("luainputlisting.lua")}
-\newcommand*\luainputlisting[2]{
-    \luadirect{print_listing(\luastring{#1}, \luastring{#2})}
-}
 
 % ----------------------------------------------------------------------------
 \subject{\py for simulation, animation and control}
@@ -124,9 +119,6 @@ showstringspaces=false} % spacing between strings not showed
 \begin{document}
 
 \maketitle
-
-
-
 
 \tableofcontents
 
