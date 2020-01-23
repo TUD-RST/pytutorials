@@ -47,7 +47,7 @@ showstringspaces=false  % spacing between strings not showed
 
 \luadirect{dofile("luainputlisting.lua")}
 \newcommand*\luainputlisting[2]{
-    \luadirect{print_listing(\luastring{#1}, \luastring{#2})}
+    \luadirect{print_code_part(\luastring{#1}, \luastring{#2})}
 }
 
 % bibliography
@@ -55,7 +55,7 @@ showstringspaces=false  % spacing between strings not showed
 \bibliography{literature}
 
 % manage glossaries
-% Call makeglossaries on a command prompt after LaTeX compiling,
+% Call makeglossaries tutorial4 on a command prompt after LaTeX compiling,
 % the re-run LaTeX
 \usepackage{glossaries}
 \setacronymstyle{long-short}
