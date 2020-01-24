@@ -18,6 +18,7 @@ para.l = 0.3         # define car length
 para.w = para.l * 0.3  # define car width
 
 # Simulation parameters
+# LISTING_START DefineSimPara
 sim_para = Parameters()  # instance of class Parameters
 sim_para.t0 = 0          # start time
 sim_para.tf = 10         # final time
@@ -25,8 +26,10 @@ sim_para.dt = 0.04       # step-size
 sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
 sim_para.x0 = [0, 0, 0]  # inital state at t0
 sim_para.xf = [5, 5, 0]  # final state at tf
+# LISTING_END DefineSimPara
 
 
+# LISTING_START DefineTrajPlanners
 # Trajectory parameters
 traj_para = Parameters() # instance of class Parameters
 traj_para.t0 = sim_para.t0 + 1 # start time of transition
@@ -43,6 +46,8 @@ traj_para.Y2B = np.array([sim_para.xf[1], tan(sim_para.xf[2]), 0])
 # ininitialize the planners
 traj_para.f = PolynomialPlanner(traj_para.Y2A, traj_para.Y2B, traj_para.Y1A[0], traj_para.Y1B[0], 2)
 traj_para.g = PolynomialPlanner(traj_para.Y1A, traj_para.Y1B, traj_para.t0, traj_para.tf, 1)
+# LISTING_END DefineTrajPlanners
+
 
 def ode(x, t, p):
     """Function of the robots kinematics
@@ -67,6 +72,7 @@ def ode(x, t, p):
     return dxdt
 
 
+# LISTING_START ControlLaw
 def control(x, t, p):
     """Function of the control law
 
@@ -93,6 +99,7 @@ def control(x, t, p):
     u2 = arctan2(p.l*f_y1[2], (1 + f_y1[1]**2)**(3/2))
 
     return np.array([u1, u2]).T
+# LISTING_END ControlLaw
 
 
 def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
@@ -297,14 +304,18 @@ def car_animation(x, u, t, p):
 # simulation
 sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), sim_para.x0, method='RK45',t_eval=sim_para.tt)
 x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
+
+# LISTING_START ComputeControllerOutput
 u_traj = np.zeros([len(sim_para.tt),2])
 for i in range(0, len(sim_para.tt)):
     u_traj[i] = control(x_traj[i], sim_para.tt[i], para)
+# LISTING_END ComputeControllerOutput    
 
 # animation
 car_animation(x_traj, u_traj, sim_para.tt, para)
 
 # get reference trajectories
+# LISTING_START PlotResults
 y1D = traj_para.g.eval_vec(sim_para.tt)
 y2D = traj_para.f.eval_vec(y1D[:,0])
 
@@ -314,5 +325,5 @@ x_ref[:,1] = y2D[:,0]
 x_ref[:,2] = arctan(y2D[:,1])
 
 plot_data(x_traj, x_ref, u_traj, sim_para.tt, 12, 16, save=True)
-
 plt.show()
+# LISTING_END PlotResults

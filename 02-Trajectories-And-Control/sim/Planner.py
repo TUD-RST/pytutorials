@@ -1,3 +1,4 @@
+# LISTING_START Planner
 import numpy as np
 import abc # abstract base class
 import math
@@ -25,8 +26,9 @@ class Planner(object):
     @abc.abstractmethod
     def eval(self):
         return
+# LISTING_END Planner
 
-
+#LISTING_START PolynomialPlanner
 class PolynomialPlanner(Planner):
     """Planner subclass that uses a polynomial approach for trajectory generation
 
@@ -34,11 +36,15 @@ class PolynomialPlanner(Planner):
         c (ndarray): parameter vector of polynomial
 
     """
+#LISTING_END PolynomialPlanner
 
+# LISTING_START PolynomialPlannerInitFunDef
     def __init__(self, YA, YB, t0, tf, d):
         super(PolynomialPlanner, self).__init__(YA, YB, t0, tf, d)
         self.c = self.coefficients()
+# LISTING_END PolynomialPlannerInitFunDef
 
+# LISTING_START PolynomialPlannerEvalFunDef
     def eval(self, t):
         """Evaluates the planned trajectory at time t.
 
@@ -55,8 +61,10 @@ class PolynomialPlanner(Planner):
         else:
             Y = np.dot(self.TMatrix(t), self.c)
         return Y
+# LISTING_END PolynomialPlannerEvalFunDef
 
 
+# LISTING_START PolynomialPlannerEvalVecFunDef
     def eval_vec(self, tt):
         """Samples the planned trajectory
 
@@ -71,8 +79,10 @@ class PolynomialPlanner(Planner):
         for i in range(0, len(tt)):
             Y[i] = self.eval(tt[i])
         return Y
+# LISTING_END PolynomialPlannerEvalVecFunDef
 
 
+# LISTING_START TMatrixFunDef
     def TMatrix(self, t):
         """Computes the T matrix at time t
 
@@ -95,8 +105,9 @@ class PolynomialPlanner(Planner):
         for j in range(1, n):
             T[j, j:m] = T[0, 0:m-j]
         return T
+# LISTING_END TMatrixFunDef
 
-
+# LISTING_START CoeffFunDef
     def coefficients(self):
         """Calculation of the polynomial parameter vector
 
@@ -117,6 +128,7 @@ class PolynomialPlanner(Planner):
         # solve the linear equation system for c
         c = np.linalg.solve(T, Y)
         return c
+# LISTING_END CoeffFunDef
 
 
 class PrototypePlanner(Planner):

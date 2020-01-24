@@ -88,10 +88,12 @@ def control(x, t, p):
     g_t = g.eval(t) # y1 = g(t)
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
+    # LISTING_START DefineControllerPara
     # controller parameters
     k01 = 1
     k02 = 1
     k12 = 5
+    # LISTING_END DefineControllerPara
 
     # state vector
     y1 = x[0]
@@ -100,6 +102,7 @@ def control(x, t, p):
 
     dy2 = sin(theta)
 
+    # LISTING_START DefineRefTraj
     # reference trajectories yd, yd', yd''
     y1d = g_t[0]
     dy1d = 1/(np.sqrt(1 + f_y1[1] ** 2))
@@ -107,17 +110,22 @@ def control(x, t, p):
     y2d = f_y1[0]
     dy2d = f_y1[1]/(np.sqrt(1 + f_y1[1] ** 2))
     ddy2d = f_y1[2]/(1 + f_y1[1] ** 2)
+    # LISTING_END DefineRefTraj
 
+    # LISTING_START CalcStabInputs
     # stabilizing inputs
     w1 = dy1d - k01 * (y1 - y1d)
     w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
+    # LISTING_END CalcStabInputs
 
+    # LISTING_START ControlLaw
     # control laws
     ds = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2) #desired velocity
     u1 = ds*np.sqrt(w1**2+dy2**2)
     u2 = arctan2(0.9*p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
+    # LISTING_END ControlLaw
 
 
 def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
