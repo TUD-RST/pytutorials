@@ -87,6 +87,7 @@ showstringspaces=false  % spacing between strings not showed
 \newcommand{\y}{\mathbf{y}}
 \newcommand{\z}{\mathbf{z}}
 \newcommand{\xZero}{\mathbf{x}_0}
+\newcommand{\code}[1]{\lstinline[basicstyle=\normalsize\ttfamily]{#1}}
 
 % color definitions
 \definecolor{light-gray}{gray}{0.95}
@@ -102,9 +103,9 @@ showstringspaces=false  % spacing between strings not showed
 
 % ----------------------------------------------------------------------------
 \subject{\py for simulation, animation and control}
-\title{Model of a Kinematic Vehicle}
-\subtitle{An introductory tutorial for simulation of dynamic systems}
-\author{Max Pritzkoleit\thanks{Institute for Control Theory, Faculty of Electrical and Computer Engineering, Technische Universität Dresden, Germany} \and Jan Winkler\footnotemark[1]}
+\title{Introductory tutorial for the simulation of dynamic systems}
+\subtitle{Demonstration using the model of a kinematic Vehicle}
+\author{Max Pritzkoleit\thanks{Institute of Control Theory, Faculty of Electrical and Computer Engineering, Technische Universität Dresden, Germany} \and Jan Winkler\footnotemark[1]}
 \publishers{}
 \date{\today}
 % ----------------------------------------------------------------------------
@@ -140,7 +141,8 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 
 Later the simulation is extended by a visualization of the moving vehicle and some advanced methods for numerical integration of \glspl{ode}.
 
-If not familiar with the handling of containers and arrays in \py one should refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{\py List-Dictionary-Tuple tutorial} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}. If the reader is completely new to \py the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint} may be helpful as a first starting point.
+Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial}\footnote{\code{http://cs231n.github.io/python-numpy-tutorial/#python-containers}} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}\footnote{\code{http://cs231n.github.io/python-numpy-tutorial/#numpy}} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}\footnote{\code{https://www.tutorialspoint.com/python/index.htm}}.
+
 
 \section{Kinematic model of a vehicle}
 \label{sec:model}
