@@ -59,7 +59,8 @@ the referencing line numbers in the LaTeX document.
 Usage: print_code_line{filename}{line_starts_with}
 
     filename: The name of the file from which the code line is going to be listed
-    tagname : The string the line begins with
+    tagname : The string the line begins with (arbitrary number of leading spaces
+              and tabstopss are allowed)
 
 Written by Jan Winkler, Institut für Regelungs- und Steuerungstheorie, TU Dresden, 2020
 --]]
@@ -76,8 +77,12 @@ function print_code_line(file, line_starts_with)
         else
             current_line = current_line + 1
         end
-
-        if string.match(line_str, "^" .. line_starts_with) then
+        
+        -- Escape the magics which may reside in the string ( e.g. print("%s") -> print%("%%s"%) )...
+        esacped_line = line_starts_with:gsub("[%(%)%.%%%+%-%*%?%[%]%^%$]", function(c) return "%" .. c end)
+        
+        -- Find line (incl. possible white spacesand tabstops)
+        if string.match(line_str, "^([%s\t]*)" .. esacped_line) then
             MatchFound = true
         end
     end
