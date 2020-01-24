@@ -30,7 +30,6 @@ function print_code_part(file, listing_tag)
         line_str = io.read("*line")
 
         if line_str == nil then
-            line_end = current_line - 1
             break
         -- the thing we're looking for should be at the end of the line or followed by whitespace
         -- this prevents 'tag10' erroneously matching 'tag1'
@@ -44,7 +43,14 @@ function print_code_part(file, listing_tag)
         current_line = current_line + 1
     end
 
-    local latex_command = string.format("\\lstinputlisting[numbers=left,firstnumber=%s,firstline=%s,lastline=%s]{%s}", line_start, line_start, line_end, file)
+    local latex_command = ""
+    if (line_start == 1) then
+        latex_command = string.format("\\newline \\textbf{No code-block section found starting with \\emph{%s} (or LISTING\\_END placed before LISTING\\_START)} \\newline", listing_tag)
+    elseif (line_end == 1) then
+        latex_command = string.format("\\newline \\textbf{No code-block section found ending with \\emph{%s}} \\newline", listing_tag)
+    else
+        latex_command = string.format("\\lstinputlisting[numbers=left,firstnumber=%s,firstline=%s,lastline=%s]{%s}", line_start, line_start, line_end, file)
+    end    
     tex.print(latex_command)
 end
 
