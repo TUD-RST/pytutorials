@@ -15,4 +15,4 @@ This tutorial shows how to simulate a dynamic system described by a set of ordin
 - Basic knowledge in the Python programming language, esp. lists, tupels and lambda-functions
 
 ## How to build the tutorial
-- Run `pdflatex tutorial1.tex` in the doc directory of this repository.
+- Run `lualatex tutorial1.tex` in the doc directory of this repository.
