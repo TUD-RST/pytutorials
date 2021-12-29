@@ -1,4 +1,6 @@
+<!-- LTeX: language=en-US -->
 # SystemSimulation-ODE
+
 This tutorial shows how to simulate a dynamic system described by a set of ordinary differential equations and how to illustrate the results by plots and animations.
 
 ## The following topics are covered by the tutorial
@@ -9,10 +11,20 @@ This tutorial shows how to simulate a dynamic system described by a set of ordin
 - Implementation of a flatness based feedforward and feedback control
 
 ## Prerequisites (software)
-- Python 3.6 incl. NumPy, Scipy, and MatplotLib
+
+- Python >= 3.7 incl. NumPy, Scipy, and MatplotLib
 
 ## Prerequisites (knowledge)
+
 - Basic knowledge in the Python programming language, esp. lists, tupels and lambda-functions
 
 ## How to build the tutorial
-- Run `lualatex tutorial1.tex` in the doc directory of this repository.
+
+In the doc directory of this repository run 
+
+``` bash
+lualatex tutorial1.tex
+biber tutorial1
+makeglossaries tutorial1
+lualatex tutorial1.tex
+```
