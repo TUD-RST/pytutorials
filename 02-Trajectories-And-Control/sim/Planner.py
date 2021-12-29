@@ -1,11 +1,14 @@
 # LISTING_START Planner
+import abc
+
 import numpy as np
-import abc # abstract base class
+from abc import ABC  # abstract base class
 import math
 import scipy as sp
 from scipy import special
 
-class Planner(object):
+
+class Planner(ABC):
     """ Base class for a trajectory planner.
 
     Attributes:
@@ -24,11 +27,12 @@ class Planner(object):
         self.d = d
 
     @abc.abstractmethod
-    def eval(self):
+    def eval(self, t):
         return
 # LISTING_END Planner
 
-#LISTING_START PolynomialPlanner
+
+# LISTING_START PolynomialPlanner
 class PolynomialPlanner(Planner):
     """Planner subclass that uses a polynomial approach for trajectory generation
 
@@ -36,7 +40,7 @@ class PolynomialPlanner(Planner):
         c (ndarray): parameter vector of polynomial
 
     """
-#LISTING_END PolynomialPlanner
+# LISTING_END PolynomialPlanner
 
 # LISTING_START PolynomialPlannerInitFunDef
     def __init__(self, YA, YB, t0, tf, d):
@@ -59,10 +63,9 @@ class PolynomialPlanner(Planner):
         elif t > self.tf:
             Y = self.YB
         else:
-            Y = np.dot(self.TMatrix(t), self.c)
+            Y = np.dot(self.t_matrix(t), self.c)
         return Y
 # LISTING_END PolynomialPlannerEvalFunDef
-
 
 # LISTING_START PolynomialPlannerEvalVecFunDef
     def eval_vec(self, tt):
@@ -81,9 +84,8 @@ class PolynomialPlanner(Planner):
         return Y
 # LISTING_END PolynomialPlannerEvalVecFunDef
 
-
 # LISTING_START TMatrixFunDef
-    def TMatrix(self, t):
+    def t_matrix(self, t):
         """Computes the T matrix at time t
 
         Args:
@@ -120,8 +122,8 @@ class PolynomialPlanner(Planner):
 
         Y = np.append(self.YA, self.YB)
 
-        T0 = self.TMatrix(t0)
-        Tf = self.TMatrix(tf)
+        T0 = self.t_matrix(t0)
+        Tf = self.t_matrix(tf)
 
         T = np.append(T0, Tf, axis=0)
 
@@ -162,7 +164,6 @@ class PrototypePlanner(Planner):
                 Y[i] = (1/(self.tf-self.t0))**i * (self.YB[0]-self.YA[0])*phi[i]
         return Y
 
-
     def eval_vec(self,tt):
         """Samples the planned trajectory
 
@@ -177,7 +178,6 @@ class PrototypePlanner(Planner):
         for i in range(0,len(tt)):
             Y[i] = self.eval(tt[i])
         return Y
-
 
     def prototype_fct(self, t):
         """Prototype function, that is used in the path planner and returns a polynomial and its derivatives up to order gamma.
@@ -203,14 +203,12 @@ class PrototypePlanner(Planner):
 
         return phi
 
-
     def faculty(self, x):
         """Calcualtes the faculty of x"""
         result = 1
         for i in range(2, x + 1):
             result *= i
         return result
-
 
     def prod_iter(self, k, p):
         """Calculates the iterative product"""
@@ -235,7 +233,6 @@ class GevreyPlanner(Planner):
     based on: "J. Rudolph, J. Winkler, F. Woittenek: Flatness Based Control of Distributed Parameter Systems:
     Examples and Computer Exercises from Various Technological Domains" Pages 88ff.
     """
-
 
     def __init__(self, YA, YB, t0, tf, d, s):
         super(GevreyPlanner, self).__init__(YA, YB, t0, tf, d)
@@ -266,7 +263,6 @@ class GevreyPlanner(Planner):
                 Y[i] = (1 / (self.tf - self.t0)) ** i * (self.YB[0] - self.YA[0]) * phi[i]
         return Y
 
-
     def eval_vec(self, tt):
         """Samples the planned trajectory
 
@@ -290,7 +286,6 @@ class GevreyPlanner(Planner):
             phi[i] = 1/2*self.y(t, i)
         return phi
 
-
     def y(self, t, n):
         """Calculates y = tanh( 2(2t-1) / (4t(1-t))^s )) and it's derivatives up to order n"""
         s = self.s
@@ -305,7 +300,6 @@ class GevreyPlanner(Planner):
             y = sum(sp.special.binom(n - 1, k)*self.a(t, k + 2)*self.z(t, n - 1 - k) for k in range(0, n))
         return y
 
-
     def a(self, t, n):
         s = self.s
         if n == 0:
@@ -318,7 +312,6 @@ class GevreyPlanner(Planner):
             # eq. for the n-th derivative of a
             a = 1/(t*(1 - t))*((s - 2+n)*(2*t - 1)*self.a(t, n - 1) + (n - 1)*(2*s - 4 + n)*self.a(t, n - 2))
         return a
-
 
     def z(self, t, n):
         if n == 0:
