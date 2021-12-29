@@ -5,52 +5,55 @@ import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
 from Planner import PolynomialPlanner
-#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+from dataclasses import dataclass
+from typing import Type
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
-class Parameters(object):
-    pass
+# Physical Parameters
+@dataclass
+class Para:
+    l: float = 0.3      # define car length
+    w: float = l * 0.3  # define car width
 
 
-# Physical parameters
-para = Parameters()  # instance of class Parameters
-para.l = 0.3         # define car length
-para.w = para.l * 0.3  # define car width
-
-# Simulation parameters
-sim_para = Parameters()  # instance of class Parameters
-sim_para.t0 = 0          # start time
-sim_para.tf = 10       # final time
-sim_para.dt = 0.04       # step-size
-sim_para.tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt) # time vector
-sim_para.x0 = [0, 0, 0]  # inital state at t0
-sim_para.xf = [5, 5, 0]  # final state at tf
+# Simulation Parameters
+@dataclass
+class SimPara:
+    t0: float = 0          # start time
+    tf: float = 10         # final time
+    dt: float = 0.04       # step-size
+    tt = np.arange(t0, tf + dt, dt) # time vector
+    x0 = [0, 0, 0]  # inital state at t0
+    xf = [5, 5, 0]  # final state at tf
 
 
-# Trajectory parameters
-traj_para = Parameters() # instance of class Parameters
-traj_para.t0 = sim_para.t0 + 1 # start time of transition
-traj_para.tf = sim_para.tf - 1 # final time of transition
+# Trajectory Parameters
+@dataclass
+class TrajPara:
+    t0: float = SimPara.t0 + 1  # start time of transition
+    tf: float = SimPara.tf - 1  # final time of transition
 
-# boundary conditions for y1
-traj_para.Y1A = np.array([sim_para.x0[0], 0])
-traj_para.Y1B = np.array([sim_para.xf[0], 0])
+    # boundary conditions for y1
+    Y1A = np.array([SimPara.x0[0], 0])
+    Y1B = np.array([SimPara.xf[0], 0])
 
-# boundary conditions for y2
-traj_para.Y2A = np.array([sim_para.x0[1], tan(sim_para.x0[2]), 0])
-traj_para.Y2B = np.array([sim_para.xf[1], tan(sim_para.xf[2]), 0])
+    # boundary conditions for y2
+    Y2A = np.array([SimPara.x0[1], tan(SimPara.x0[2]), 0])
+    Y2B = np.array([SimPara.xf[1], tan(SimPara.xf[2]), 0])
 
-# ininitialize the planners
-traj_para.f = PolynomialPlanner(traj_para.Y2A, traj_para.Y2B, traj_para.Y1A[0], traj_para.Y1B[0], 2)
-traj_para.g = PolynomialPlanner(traj_para.Y1A, traj_para.Y1B, traj_para.t0, traj_para.tf, 1)
+    # ininitialize the planners
+    f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
+    g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
 
-def ode(x, t, p):
+
+def ode(x, t, p: Type[Para]):
     """Function of the robots kinematics
 
     Args:
         x: state
         t: time
-        p(object): parameter container class
+        p(object): Parameter container class
 
     Returns:
         dxdt: state derivative
@@ -67,29 +70,29 @@ def ode(x, t, p):
     return dxdt
 
 
-def control(x, t, p):
+def control(x, t, p: Type[Para]):
     """Function of the control law
 
     Args:
         x (ndarray, int): state vector
         t (int): time
-        p (object): parameter container class
+        p (object): Parameter container class
 
     Returns:
         u (ndarry): control vector
 
     """
 
-    # get planners from traj_para
-    f = traj_para.f
-    g = traj_para.g
+    # get planners from TrajPara
+    f = TrajPara.f
+    g = TrajPara.g
 
     # evaluate the planned trajectories at time t
     g_t = g.eval(t) # y1 = g(t)
     f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
 
     # LISTING_START DefineControllerPara
-    # controller parameters
+    # controller Parameters
     k01 = 1
     k02 = 1
     k12 = 5
@@ -203,14 +206,14 @@ def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     return None
 
 
-def car_animation(x, u, t, p):
+def car_animation(x, u, t, p: Type[Para]):
     """Animation function of the car-like mobile robot
 
     Args:
         x(ndarray): state-vector trajectory
         u(ndarray): control vector trajectory
         t(ndarray): time vector
-        p(object): parameters
+        p(object): Parameters
 
     Returns: None
 
@@ -322,30 +325,30 @@ def car_animation(x, u, t, p):
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
-    #ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
+    ani.save('animation.mp4', writer='ffmpeg', fps=1 / (t[1] - t[0]))
     plt.show()
     return None
 
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(x, t, para), (sim_para.t0, sim_para.tf), sim_para.x0, method='RK45',t_eval=sim_para.tt)
+sol = sci.solve_ivp(lambda t, x: ode(x, t, Para), (SimPara.t0, SimPara.tf), SimPara.x0, method='RK45',t_eval=SimPara.tt)
 x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
-u_traj = np.zeros([len(sim_para.tt),2])
-for i in range(0, len(sim_para.tt)):
-    u_traj[i] = control(x_traj[i], sim_para.tt[i], para)
+u_traj = np.zeros([len(SimPara.tt),2])
+for i in range(0, len(SimPara.tt)):
+    u_traj[i] = control(x_traj[i], SimPara.tt[i], Para)
 
 # animation
-car_animation(x_traj, u_traj, sim_para.tt, para)
+car_animation(x_traj, u_traj, SimPara.tt, Para)
 
 # get reference trajectories
-y1D = traj_para.g.eval_vec(sim_para.tt)
-y2D = traj_para.f.eval_vec(y1D[:,0])
+y1D = TrajPara.g.eval_vec(SimPara.tt)
+y2D = TrajPara.f.eval_vec(y1D[:,0])
 
 x_ref = np.zeros_like(x_traj)
 x_ref[:,0] = y1D[:,0]
 x_ref[:,1] = y2D[:,0]
 x_ref[:,2] = arctan(y2D[:,1])
 
-plot_data(x_traj, x_ref, u_traj, sim_para.tt, 12, 16, save=True)
+plot_data(x_traj, x_ref, u_traj, SimPara.tt, 12, 16, save=True)
 
 plt.show()
