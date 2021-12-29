@@ -296,7 +296,8 @@ def car_animation(x, u, t, p):
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
-    ani.save('animation.mp4', writer='ffmpg', fps=1 / (t[1] - t[0]))
+    ani.save('animation.mp4', writer='ffmpeg', fps=1 / (t[1] - t[0]))
+
     plt.show()
     return None
 
