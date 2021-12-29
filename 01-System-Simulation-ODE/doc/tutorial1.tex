@@ -1,8 +1,13 @@
 % LTeX: language=en-US
-\documentclass[a4paper,11pt,headinclude=true,headsepline,parskip=half,DIV=13]{scrartcl}
+\documentclass[a4paper,11pt,headinclude=true,headsepline,parskip=half,DIV=12]{scrartcl}
+
+% Process this file with lualatex!
+% > lualatex tutorial1.tex
+% > makeglossaries tutorial1
+% > lualatex tutorial1.tex
 
 % font, style, etc.
-\usepackage[utf8]{inputenc} % defines
+%\usepackage[utf8]{inputenc} % defines
 \usepackage[automark]{scrlayer-scrpage}
 \usepackage{csquotes}
 \usepackage{xspace} % proper space after macros with 0 args
@@ -35,20 +40,6 @@
 \usepackage{luacode}
 \usepackage{listings}
 
-\makeatletter
-\lstdefinestyle{pythonstyle}{
-  language=Python, 
-  backgroundcolor = \color{light-gray},
-  basicstyle=\sffamily\lst@ifdisplaystyle\scriptsize\fi, % no scriptsize in inline code
-  stringstyle=\color{orange},
-  breaklines=true,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
-  commentstyle=\color{dark-green}, % print comments dark-green
-  showstringspaces=false  % spacing between strings not showed
-}
-\makeatother
-
 \lstset{
   language=Python, 
   backgroundcolor = \color{light-gray},
@@ -70,7 +61,7 @@
 }
 
 % bibliography
-\usepackage[style=verbose-ibid,backend=bibtex]{biblatex}
+\usepackage[backend=biber]{biblatex}
 \bibliography{literature}
 
 % manage glossaries
@@ -93,10 +84,10 @@
 \newcommand{\im}{\mathrm{im}}
 \newcommand{\spann}{\mathrm{span}}
 \newcommand{\R}{\mathbb{R}} %  set of real numbers
-\newcommand{\py}{\emph{Python}\xspace}
-\newcommand{\scipy}{\emph{SciPy}\xspace}
-\newcommand{\numpy}{\emph{NumPy}\xspace}
-\newcommand{\mpl}{\emph{Matplotlib}\xspace}
+\newcommand{\py}{Python\xspace}
+\newcommand{\scipy}{SciPy\xspace}
+\newcommand{\numpy}{NumPy\xspace}
+\newcommand{\mpl}{Matplotlib\xspace}
 \newcommand{\uu}{\mathbf{u}}
 \newcommand{\f}{\mathbf{f}}
 \newcommand{\x}{\mathbf{x}}
@@ -119,7 +110,7 @@
 
 % ----------------------------------------------------------------------------
 \subject{\py for simulation, animation and control}
-\title{Introductory tutorial for the simulation of dynamic systems}
+\title{part 1: Introductory tutorial for the simulation of dynamic systems}
 \subtitle{Demonstration using the model of a kinematic Vehicle}
 \author{Max Pritzkoleit\thanks{Institute of Control Theory, Faculty of Electrical and Computer Engineering, Technische Universität Dresden, Germany} \and Jan Winkler\footnotemark[1]}
 \publishers{}
@@ -127,12 +118,13 @@
 % ----------------------------------------------------------------------------
 
 % Headings
+\setkomafont{pagehead}{\upshape}
 \pagestyle{scrheadings}
 \ihead{\leftmark}
 \chead{}
 \ohead{Page \pagemark}
 \ifoot{}
-\cfoot{Python Control Tutorial 1}
+\cfoot{Python Control Tutorial Part 1}
 \ofoot{}
 
 \begin{document}
@@ -260,13 +252,12 @@ Usually one wants to publish the results with descriptive illustrations. For thi
 \luainputlisting{../sim/01_car_example_plotting.py}{PlotFunDef}
 Having defined the plotting function, one can execute it passing the calculated trajectories.
 \luainputlisting{../sim/01_car_example_plotting.py}{PlotResult}
-The result can be found in \autoref{fig:state_traj}. Other properties of the plot, like line width or line color and many others, can be easily changed. One may refer to the \href{https://matplotlib.org/api/pyplot_summary.html}{documentation of \mpl} or consult the exhaustive \href{https://matplotlib.org/gallery/index.html}{\mpl example gallery}.
-\begin{figure}[h!]
-\label{fig:state_traj}
+The result can be found in Figure \ref{fig:state_traj}. Other properties of the plot, like line width or line color and many others, can be easily changed. One may refer to the \href{https://matplotlib.org/api/pyplot_summary.html}{documentation of \mpl} or consult the exhaustive \href{https://matplotlib.org/gallery/index.html}{\mpl example gallery}.
+\begin{figure}[ht!]
+   \label{fig:state_traj}
    \centering      
    \includegraphics[width=0.6\textwidth]{img/state_trajectory.pdf}      
- \caption{State and control trajectory plot created with \mpl.}
- \label{fig:Test}
+   \caption{State and control trajectory plot created with \mpl.}
 \end{figure} 
 
 

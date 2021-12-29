@@ -359,7 +359,13 @@ ENV/
 # additions
 /.idea
 *.code-workspace
+.vscode
 
 99-Jupyter-Cheat-Sheets/array.npy
 99-Jupyter-Cheat-Sheets/array.txt
 
+01-System-Simulation-ODE/sim/animation.mp4
+01-System-Simulation-ODE/sim/state_trajectory.pdf
+01-System-Simulation-ODE/sim/state_trajectory.pgf
+03-Jupyter-Notebook-And-SymPy/doc/tutorial3.pdf
+04-LQR-Design-And-Simulation/doc/tutorial4.pdf
