@@ -157,7 +157,7 @@ The goal of this tutorial is to teach the usage of the programming language \py 
 
 Later the simulation is extended by a visualization of the moving vehicle and some advanced methods for numerical integration of \glspl{ode}.
 
-Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#python-containers}} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#numpy}} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}\footnote{\texttt{https://www.tutorialspoint.com/python/index.htm}}.
+Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#python-containers}} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#numpy}} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}\footnote{\texttt{https://www.tutorialspoint.com/python/index.htm}}. Additionally, the book \cite{KnollPython21} is recommended (in German only).
 
 
 \section{Kinematic model of a vehicle}
@@ -333,6 +333,7 @@ sol = solve_ivp(lambda t, x: ode(x, t, para),
                (t0, tf), x0, method='RK45', t_eval=tt, events=event)
 \end{lstlisting}
 \printglossaries
+\printbibliography
 
 \end{document}
 
