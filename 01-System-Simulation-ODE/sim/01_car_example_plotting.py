@@ -3,24 +3,25 @@ import numpy as np
 from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
+from dataclasses import dataclass
+
 
 # LISTING_START ParaClass
-class Parameters(object):
-    pass
-
-
 # Physical parameter
-para = Parameters()  # instance of class Parameters
-para.l = 0.3         # define car length
-para.w = para.l*0.3  # define car width
+@dataclass
+class Para:
+    l: float = 0.3    # define car length
+    w: float = l*0.3  # define car width
 # LISTING_END ParaClass
+
 
 # LISTING_START SimuPara
 # Simulation parameter
-sim_para = Parameters()  # instance of class Parameters
-sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
-sim_para.dt = 0.04       # step-size
+@dataclass
+class SimPara:
+    t0: float = 0          # start time
+    tf: float = 10         # final time
+    dt: float = 0.04       # step-size
 # LISTING_END SimuPara
 
 
@@ -140,15 +141,16 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
     return None
 # LISTING_END PlotFunDef
 
+
 # LISTING_START Simulation
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
+tt = np.arange(SimPara.t0, SimPara.tf + SimPara.dt, SimPara.dt)
 
 # initial state
 x0 = [0, 0, 0]
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(t, x, para), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(t, x, Para), (SimPara.t0, SimPara.tf), x0, t_eval=tt)
 x_traj = sol.y.T
 u_traj = control(tt, x_traj)
 # LISTING_END Simulation

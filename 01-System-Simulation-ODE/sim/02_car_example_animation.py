@@ -4,23 +4,23 @@ from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
+from dataclasses import dataclass
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
-class Parameters(object):
-    pass
-
-
 # Physical parameter
-para = Parameters()  # instance of class Parameters
-para.l = 0.3         # define car length
-para.w = para.l*0.3  # define car width
+@dataclass
+class Para:
+    l: float = 0.3    # define car length
+    w: float = l*0.3  # define car width
+
 
 # Simulation parameter
-sim_para = Parameters()  # instance of class Parameters
-sim_para.t0 = 0          # start time
-sim_para.tf = 10         # final time
-sim_para.dt = 0.04       # step-size
+@dataclass
+class SimPara:
+    t0: float = 0          # start time
+    tf: float = 10         # final time
+    dt: float = 0.04       # step-size
 
 
 def ode(t, x, p):
@@ -272,13 +272,13 @@ def car_animation(x, u, t, p):
 
 # LISTING_START DoSimulate
 # time vector
-tt = np.arange(sim_para.t0, sim_para.tf + sim_para.dt, sim_para.dt)
+tt = np.arange(SimPara.t0, SimPara.tf + SimPara.dt, SimPara.dt)
 
 # initial state
 x0 = [0, 0, 0]
 
 # simulation
-sol = sci.solve_ivp(lambda t, x: ode(t, x, para), (sim_para.t0, sim_para.tf), x0, t_eval=tt)
+sol = sci.solve_ivp(lambda t, x: ode(t, x, Para), (SimPara.t0, SimPara.tf), x0, t_eval=tt)
 x_traj = sol.y.T
 u_traj = control(tt, x_traj)
 
@@ -286,7 +286,7 @@ u_traj = control(tt, x_traj)
 plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 
 # animation
-car_animation(x_traj, u_traj, tt, para)
+car_animation(x_traj, u_traj, tt, Para)
 
 plt.show()
 # LISTING_END DoSimulate

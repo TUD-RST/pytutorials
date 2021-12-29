@@ -201,7 +201,9 @@ For plotting the output of the simulation results the library \mpl with its sub-
 
 
 \section{Storing parameters}
-In simulations usually a lot of parameters describing the system or the simulation setup have to be handled. It is a good idea to store these parameters as attributes in a structure so it is not necessary to deal with several individual variables holding the values of the parameters. Basically, such a structure can be an instance of an empty class derived from \texttt{object} to which members holding the parameter values are subsequently assigned:
+In simulations usually a lot of parameters describing the system or the simulation setup have to be handled. It is a good idea to store these parameters as attributes in a structure, so it is not necessary to deal with several individual variables holding the values of the parameters. In \py, such a structure can be a so-called dataclass class, a \py class with the decorator \code{@dataclass}. Dataclasses are available after putting
+\luainputlistingline{../sim/01_car_example_plotting.py}{from dataclasses}
+at the beginning of the file. Then the structures holding the required data can be defined as follows (with type annotations for the members):
 \luainputlisting{../sim/01_car_example_plotting.py}{ParaClass}
 Similarily this can be done with the simulation parameters:
 \luainputlisting{../sim/01_car_example_plotting.py}{SimuPara}
