@@ -3,8 +3,6 @@ A collection of tutorials for the Python programming language, especially for co
 
 ## Available tutorials
 
-- Simulation of a dynamical system represented by a set of nonlinear ordinary differential equations: [SystemSimulation-ODE](https://github.com/TUD-RST/pytutorials/tree/master/SystemSimulation-ODE)
+- Simulation of a dynamical system represented by a set of nonlinear ordinary differential equations: [SystemSimulation-ODE](https://github.com/TUD-RST/pytutorials/tree/master/01-System-Simulation-ODE)
 
-## Planned tutorials
-
-- Typical analysis and model deriving methods with Jupyter Notebook and SymPy
+- Trajectory planning, feedforward and feedback control of a kinematic model of a car: [SystemSimulation-ODE](https://github.com/TUD-RST/pytutorials/tree/master/02-Trajectories-And-Control)

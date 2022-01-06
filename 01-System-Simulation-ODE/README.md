@@ -20,7 +20,7 @@ This tutorial shows how to simulate a dynamic system described by a set of ordin
 
 ## How to build the tutorial
 
-In the doc directory of this repository run 
+In the `doc` directory of this repository run 
 
 ``` bash
 lualatex tutorial1.tex
