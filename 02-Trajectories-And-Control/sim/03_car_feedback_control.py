@@ -1,65 +1,93 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numpy import cos, arccos, sin, arcsin, tan, arctan, arctan2, pi
+from numpy import cos, sin, tan, arctan, arctan2
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
-from Planner import PolynomialPlanner
+from TrajGen import PolynomialTrajGen
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, List
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
-# Physical Parameters
+# Real Physical Parameters
 @dataclass
-class Para:
+class PhysPara:
     l: float = 0.3      # define car length
     w: float = l * 0.3  # define car width
 
 
+# LISTING_START DefineControllerPara
+@dataclass
+class ControllerPara:
+    k01: float = 3
+    k02: float = 2
+    k12: float = 10
+    l: float = 0.5 * PhysPara.l
+# LISTING_END DefineControllerPara
+
+
 # Simulation Parameters
+# LISTING_START DefineSimPara
 @dataclass
 class SimPara:
-    t0: float = 0          # start time
-    tf: float = 10         # final time
-    dt: float = 0.04       # step-size
-    tt = np.arange(t0, tf + dt, dt) # time vector
-    x0 = [0, 0, 0]  # inital state at t0
-    xf = [5, 5, 0]  # final state at tf
+    t0: float = 0                   # start time
+    tf: float = 10                  # final time
+    dt: float = 0.04                # step-size
+    tt = np.arange(0, tf + dt, dt)  # time vector
+    x0d = [0, 0, 0]                 # reference inital state at t0
+    xfd = [5, 5, 0]                 # reference final state at tf
+    x0real = [0.25, 0.5, 0.25]      # real inital state at t0
+# LISTING_END DefineSimPara
 
 
-# Trajectory Parameters
-@dataclass
-class TrajPara:
-    t0: float = SimPara.t0 + 1  # start time of transition
-    tf: float = SimPara.tf - 1  # final time of transition
+def setup_trajectories(sp: Type[SimPara]) -> List[PolynomialTrajGen]:
+    """Setup the trajectory objects
+
+    Args:
+        sp(SimPara): The simulation parameter
+
+    Returns:
+        A list holding two objects of type PolynomialTrajGen. The first
+        one is f, the second g.
+
+    """
+
+    # Start and final time of transistion
+    t0: float = sp.t0 + 1
+    tf: float = sp.tf - 1
 
     # boundary conditions for y1
-    Y1A = np.array([SimPara.x0[0], 0])
-    Y1B = np.array([SimPara.xf[0], 0])
+    y1_a = np.array([sp.x0d[0], 0])
+    y1_b = np.array([sp.xfd[0], 0])
 
     # boundary conditions for y2
-    Y2A = np.array([SimPara.x0[1], tan(SimPara.x0[2]), 0])
-    Y2B = np.array([SimPara.xf[1], tan(SimPara.xf[2]), 0])
+    y2_a = np.array([sp.x0d[1], tan(sp.x0d[2]), 0])
+    y2_b = np.array([sp.xfd[1], tan(sp.xfd[2]), 0])
 
-    # ininitialize the planners
-    f = PolynomialPlanner(Y2A, Y2B, Y1A[0], Y1B[0], 2)
-    g = PolynomialPlanner(Y1A, Y1B, t0, tf, 1)
+    # From Y2A to Y2B on the interval [Y1A[0], Y1B[0]]
+    f_traj = PolynomialTrajGen(y2_a, y2_b, y1_a[0], y1_b[0], 2)
+
+    # from Y1A to Y1B on the interval [t0, tf]
+    g_traj = PolynomialTrajGen(y1_a, y1_b, t0, tf, 1)
+
+    return [f_traj, g_traj]
 
 
-def ode(x, t, p: Type[Para]):
+def ode(x, t, p: Type[PhysPara], cp: Type[ControllerPara]):
     """Function of the robots kinematics
 
     Args:
         x: state
         t: time
-        p(object): Parameter container class
+        p(PhysPara):        Real physical parameter
+        cp(ControllerPara): Parameter used for simulation and control
 
     Returns:
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
-    u1, u2 = control(x, t, p)  # control vector
+    u1, u2 = control(x, t, cp)  # control vector
 
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
@@ -70,33 +98,20 @@ def ode(x, t, p: Type[Para]):
     return dxdt
 
 
-def control(x, t, p: Type[Para]):
+# LISTING_START ControlFunc
+def control(x, t, p: Type[ControllerPara]):
     """Function of the control law
 
     Args:
         x (ndarray, int): state vector
         t (int): time
-        p (object): Parameter container class
+        p (ControllerPara): Parameter
 
     Returns:
         u (ndarry): control vector
 
     """
-
-    # get planners from TrajPara
-    f = TrajPara.f
-    g = TrajPara.g
-
-    # evaluate the planned trajectories at time t
-    g_t = g.eval(t) # y1 = g(t)
-    f_y1 = f.eval(g_t[0]) # y2 = f(y1) = f(g(t))
-
-    # LISTING_START DefineControllerPara
-    # controller Parameters
-    k01 = 1
-    k02 = 1
-    k12 = 5
-    # LISTING_END DefineControllerPara
+# LISTING_END ControlFunc
 
     # state vector
     y1 = x[0]
@@ -107,6 +122,10 @@ def control(x, t, p: Type[Para]):
 
     # LISTING_START DefineRefTraj
     # reference trajectories yd, yd', yd''
+    # evaluate the planned trajectories at time t
+    g_t = g_traj_gen.eval(t)  # y1 = g(t)
+    f_y1 = f_traj_gen.eval(g_t[0])  # y2 = f(y1) = f(g(t))
+
     y1d = g_t[0]
     dy1d = 1/(np.sqrt(1 + f_y1[1] ** 2))
 
@@ -117,15 +136,15 @@ def control(x, t, p: Type[Para]):
 
     # LISTING_START CalcStabInputs
     # stabilizing inputs
-    w1 = dy1d - k01 * (y1 - y1d)
-    w2 = ddy2d - k12 * (dy2 - dy2d) - k02 * (y2 - y2d)
+    w1 = dy1d - p.k01 * (y1 - y1d)
+    w2 = ddy2d - p.k12 * (dy2 - dy2d) - p.k02 * (y2 - y2d)
     # LISTING_END CalcStabInputs
 
     # LISTING_START ControlLaw
     # control laws
-    ds = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2) #desired velocity
+    ds = g_t[1] * np.sqrt(1 + (f_y1[1]) ** 2)  # desired velocity
     u1 = ds*np.sqrt(w1**2+dy2**2)
-    u2 = arctan2(0.9*p.l * (w2 * w1), 1)
+    u2 = arctan2(p.l * (w2 * w1), 1)
 
     return np.array([u1, u2]).T
     # LISTING_END ControlLaw
@@ -135,12 +154,13 @@ def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     """Plotting function of simulated state and actions
 
     Args:
-        x(ndarray): state-vector trajectory
-        u(ndarray): control vector trajectory
-        t(ndarray): time vector
-        fig_width: figure width in cm
-        fig_height: figure height in cm
-        save (bool) : save figure (default: False)
+        x(ndarray):     state-vector trajectory
+        xref(ndarray):  reference state-vector trajectory
+        u(ndarray):     control vector trajectory
+        t(ndarray):     time vector
+        fig_width:      figure width in cm
+        fig_height:     figure height in cm
+        save (bool) :   save figure (default: False)
     Returns: None
 
     """
@@ -206,7 +226,7 @@ def plot_data(x, xref, u, t, fig_width, fig_height, save=False):
     return None
 
 
-def car_animation(x, u, t, p: Type[Para]):
+def car_animation(x, u, t, p: Type[PhysPara]):
     """Animation function of the car-like mobile robot
 
     Args:
@@ -236,19 +256,19 @@ def car_animation(x, u, t, p: Type[Para]):
     h_x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
     h_car, = ax.plot([], [], 'k', lw=2)    # car
 
-    def car_plot(x, u):
-        """Mapping from state x and action u to the position of the car elements
+    def draw_the_car(cur_x, cur_u):
+        """Mapping from state x and action cur_u to the position of the car elements
 
         Args:
-            x: state vector
-            u: action vector
+            cur_x: The current state vector
+            cur_u: The current action vector
 
         Returns:
 
         """
         wheel_length = 0.1 * p.l
-        y1, y2, theta = x
-        v, phi = u
+        y1, y2, theta = cur_x
+        v, phi = cur_u
 
         # define chassis lines
         chassis_y1 = [y1, y1 + p.l * cos(theta)]
@@ -315,10 +335,10 @@ def car_animation(x, u, t, p: Type[Para]):
 
         """
         k = i % len(t)
-        ax.set_title('Time (s): ' + str(t[k]), loc='left')
+        ax.set_title('Time (s): {:.2f}'.format(t[k]), loc='left')
         h_x_traj_plot.set_xdata(x[0:k, 0])
         h_x_traj_plot.set_ydata(x[0:k, 1])
-        car_plot(x[k, :], control(x[k, :], t[k], p))
+        draw_the_car(x[k, :], u[k, :])
         return h_x_traj_plot, h_car
 
     ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
@@ -330,25 +350,30 @@ def car_animation(x, u, t, p: Type[Para]):
     return None
 
 
-# simulation
-sol = sci.solve_ivp(lambda t, x: ode(x, t, Para), (SimPara.t0, SimPara.tf), SimPara.x0, method='RK45',t_eval=SimPara.tt)
-x_traj = sol.y.T # size(sol.y) = len(x)*len(tt) (.T -> transpose)
-u_traj = np.zeros([len(SimPara.tt),2])
-for i in range(0, len(SimPara.tt)):
-    u_traj[i] = control(x_traj[i], SimPara.tt[i], Para)
+# Setup the trajectories, we hold it as global objects here
+[f_traj_gen, g_traj_gen] = setup_trajectories(SimPara)
 
-# animation
-car_animation(x_traj, u_traj, SimPara.tt, Para)
+# simulation
+sol = sci.solve_ivp(lambda t, x: ode(x, t, PhysPara, ControllerPara), (0.0, SimPara.tf),
+                    SimPara.x0real, method='RK45', t_eval=SimPara.tt)
+x_traj = sol.y.T  # size(sol.y) = len(x)*len(tt) (.T -> transpose)
+u_traj = np.zeros([len(SimPara.tt), 2])
+for i in range(0, len(SimPara.tt)):
+    u_traj[i] = control(x_traj[i], SimPara.tt[i], ControllerPara)
 
 # get reference trajectories
-y1D = TrajPara.g.eval_vec(SimPara.tt)
-y2D = TrajPara.f.eval_vec(y1D[:,0])
+y1D = g_traj_gen.eval_vec(SimPara.tt)
+y2D = f_traj_gen.eval_vec(y1D[:, 0])
 
 x_ref = np.zeros_like(x_traj)
-x_ref[:,0] = y1D[:,0]
-x_ref[:,1] = y2D[:,0]
-x_ref[:,2] = arctan(y2D[:,1])
+x_ref[:, 0] = y1D[:, 0]
+x_ref[:, 1] = y2D[:, 0]
+x_ref[:, 2] = arctan(y2D[:, 1])
 
+# plot result
 plot_data(x_traj, x_ref, u_traj, SimPara.tt, 12, 16, save=True)
+
+# animation
+car_animation(x_traj, u_traj, SimPara.tt, PhysPara)
 
 plt.show()

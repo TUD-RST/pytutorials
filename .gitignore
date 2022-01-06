@@ -348,16 +348,9 @@ ENV/
 
 # mypy
 .mypy_cache/
-/01-System-Simulation-ODE/sim/.idea/dictionaries/*.xml
-/01-System-Simulation-ODE/sim/.idea/inspectionProfiles/*.xml
-/01-System-Simulation-ODE/sim/.idea/*.xml
-/01-System-Simulation-ODE/sim/.idea/*.iml
-/02-Trajectories-And-Control/doc/tutorial2.pdf
-*.xwm
-/01-System-Simulation-ODE/doc/tutorial1.pdf
 
 # additions
-/.idea
+.idea
 *.code-workspace
 .vscode
 
