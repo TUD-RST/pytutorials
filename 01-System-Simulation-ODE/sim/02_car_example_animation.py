@@ -5,6 +5,7 @@ import scipy.integrate as sci
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
 from dataclasses import dataclass
+from typing import Type
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
@@ -23,7 +24,7 @@ class SimPara:
     dt: float = 0.04       # step-size
 
 
-def ode(t, x, p):
+def ode(t, x, p: Type[Para]):
     """Function of the robots kinematics
 
     Args:
@@ -35,7 +36,7 @@ def ode(t, x, p):
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
-    u1, u2 = control(t, x)  # control vector
+    u1, u2 = control(t)  # control vector
 
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
@@ -46,11 +47,10 @@ def ode(t, x, p):
     return dxdt
 
 
-def control(t, x):
+def control(t):
     """Function of the control law
 
     Args:
-        x: state vector
         t: time
 
     Returns:
@@ -135,51 +135,33 @@ def plot_data(x, u, t, fig_width, fig_height, save=False):
 
 
 # LISTING_START CarAnimFunDef
-def car_animation(x, u, t, p):
+def car_animation(x, t, p: Type[Para]):
     """Animation function of the car-like mobile robot
 
     Args:
         x(ndarray): state-vector trajectory
-        u(ndarray): control vector trajectory
         t(ndarray): time vector
         p(object): parameters
 
     Returns: None
 
     """
-    # Setup two empty axes with enough space around the trajectory so the car
-    # can always be completely plotted. One plot holds the sketch of the car,
-    # the other the curve
-    dx = 1.5 * p.l
-    dy = 1.5 * p.l
-    fig2, ax = plt.subplots()
-    ax.set_xlim([min(min(x_traj[:, 0] - dx), -dx),
-                 max(max(x_traj[:, 0] + dx), dx)])
-    ax.set_ylim([min(min(x_traj[:, 1] - dy), -dy),
-                 max(max(x_traj[:, 1] + dy), dy)])
-    ax.set_aspect('equal')
-    ax.set_xlabel(r'$y_1$')
-    ax.set_ylabel(r'$y_2$')
-
-    # Axis handles
-    h_x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
-    h_car, = ax.plot([], [], 'k', lw=2)    # car
 # LISTING_END CarAnimFunDef
 
 # LISTING_START CarPlotFunDef
-    def car_plot(x, u):
-        """Mapping from state x and action u to the position of the car elements
+    def draw_the_car(cur_x, cur_y):
+        """Mapping from state x and action cur_y to the position of the car elements
 
         Args:
-            x: state vector
-            u: action vector
+            cur_x: The current state vector
+            cur_y: The current action vector
 
         Returns:
 
         """
         wheel_length = 0.1 * p.l
-        y1, y2, theta = x
-        v, phi = u
+        y1, y2, theta = cur_x
+        v, phi = cur_y
 
         # define chassis lines
         chassis_y1 = [y1, y1 + p.l * cos(theta)]
@@ -253,9 +235,29 @@ def car_animation(x, u, t, p):
         ax.set_title('Time (s): ' + '%.2f' % t[k], loc='left')
         h_x_traj_plot.set_xdata(x[0:k, 0])
         h_x_traj_plot.set_ydata(x[0:k, 1])
-        car_plot(x[k, :], control(t[k], x[k, :]))
+        draw_the_car(x[k, :], control(t[k]))
         return h_x_traj_plot, h_car
-# LISTING_END AnimateFunDef        
+# LISTING_END AnimateFunDef
+
+# LISTING_START CarAnimFunInit
+    # Setup two empty axes with enough space around the trajectory so the car
+    # can always be completely plotted. One plot holds the sketch of the car,
+    # the other the curve
+    dx = 1.5 * p.l
+    dy = 1.5 * p.l
+    fig2, ax = plt.subplots()
+    ax.set_xlim([min(min(x_traj[:, 0] - dx), -dx),
+                 max(max(x_traj[:, 0] + dx), dx)])
+    ax.set_ylim([min(min(x_traj[:, 1] - dy), -dy),
+                 max(max(x_traj[:, 1] + dy), dy)])
+    ax.set_aspect('equal')
+    ax.set_xlabel(r'$y_1$')
+    ax.set_ylabel(r'$y_2$')
+
+    # Axis handles
+    h_x_traj_plot, = ax.plot([], [], 'b')  # state trajectory in the y1-y2-plane
+    h_car, = ax.plot([], [], 'k', lw=2)    # car
+# LISTING_END CarAnimFunInit
 
 # LISTING_START DoAnimate
     ani = mpla.FuncAnimation(fig2, animate, init_func=init, frames=len(t) + 1,
@@ -280,13 +282,13 @@ x0 = [0, 0, 0]
 # simulation
 sol = sci.solve_ivp(lambda t, x: ode(t, x, Para), (SimPara.t0, SimPara.tf), x0, t_eval=tt)
 x_traj = sol.y.T
-u_traj = control(tt, x_traj)
+u_traj = control(tt)
 
 # plot
 plot_data(x_traj, u_traj, tt, 12, 16, save=True)
 
 # animation
-car_animation(x_traj, u_traj, tt, Para)
+car_animation(x_traj, tt, Para)
 
 plt.show()
 # LISTING_END DoSimulate

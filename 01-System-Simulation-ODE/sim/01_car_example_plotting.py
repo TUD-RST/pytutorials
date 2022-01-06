@@ -3,6 +3,7 @@ import numpy as np
 from numpy import cos, sin, tan
 import scipy.integrate as sci
 import matplotlib.pyplot as plt
+from typing import Type
 from dataclasses import dataclass
 
 
@@ -26,7 +27,7 @@ class SimPara:
 
 
 # LISTING_START OdeFunDef
-def ode(t, x, p):
+def ode(t, x, p: Type[Para]):
     """Function of the robots kinematics
 
     Args:
@@ -38,7 +39,7 @@ def ode(t, x, p):
         dxdt: state derivative
     """
     x1, x2, x3 = x  # state vector
-    u1, u2 = control(t, x)  # control vector
+    u1, u2 = control(t)  # control vector
 
     # dxdt = f(x, u):
     dxdt = np.array([u1 * cos(x3),
@@ -51,11 +52,10 @@ def ode(t, x, p):
 
 
 # LISTING_START ControlFunDef
-def control(t, x):
+def control(t):
     """Function of the control law
 
     Args:
-        x: state vector
         t: time
 
     Returns:
@@ -152,7 +152,7 @@ x0 = [0, 0, 0]
 # simulation
 sol = sci.solve_ivp(lambda t, x: ode(t, x, Para), (SimPara.t0, SimPara.tf), x0, t_eval=tt)
 x_traj = sol.y.T
-u_traj = control(tt, x_traj)
+u_traj = control(tt)
 # LISTING_END Simulation
 
 # LISTING_START PlotResult

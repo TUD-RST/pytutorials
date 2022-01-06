@@ -3,6 +3,7 @@
 
 % Process this file with lualatex!
 % > lualatex tutorial1.tex
+% > biber tutorial1
 % > makeglossaries tutorial1
 % > lualatex tutorial1.tex
 
@@ -47,7 +48,7 @@
   stringstyle=\color{orange},
   breaklines=true,
   numberstyle=\tiny\color{gray},
-  keywordstyle=\bfseries\color{dark-blue}\textit, % print keywords dark-blue
+  keywordstyle=\bfseries\color{dark-blue}, % print keywords dark-blue
   commentstyle=\color{dark-green}, % print comments dark-green
   showstringspaces=false  % spacing between strings not showed
 }
@@ -110,7 +111,7 @@
 
 % ----------------------------------------------------------------------------
 \subject{\py for simulation, animation and control}
-\title{part 1: Introductory tutorial for the simulation of dynamic systems}
+\title{Part 1: Introductory tutorial for the simulation of dynamic systems}
 \subtitle{Demonstration using the model of a kinematic Vehicle}
 \author{Max Pritzkoleit\thanks{Institute of Control Theory, Faculty of Electrical and Computer Engineering, Technische Universität Dresden, Germany} \and Jan Winkler\footnotemark[1]}
 \publishers{}
@@ -139,17 +140,17 @@
 \newpage
 
 \section{Introduction}
-The goal of this tutorial is to teach the usage of the programming language \py as a tool for developing and simulating control systems  represented by nonlinear \glspl{ode}. The following topics are covered:
+The goal of this tutorial is to teach the usage of the programming language Python as a tool for developing and simulating control systems  represented by nonlinear \glspl{ode}. The following topics are covered:
 \begin{itemize}
-\item Implementation of the model in \py,
+\item Implementation of the model in Python,
 \item Simulation of the model,
 \item Presentation of the results.
 \end{itemize}
-\textbf{\py source code file: \texttt{01\_car\_example\_plotting.py}}
+\textbf{Source code file: \texttt{01\_car\_example\_plotting.py}}
 
 Later the simulation is extended by a visualization of the moving vehicle and some advanced methods for numerical integration of \glspl{ode}.
 
-Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#python-containers}} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#numpy}} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to \py consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}\footnote{\texttt{https://www.tutorialspoint.com/python/index.htm}}. Additionally, the book \cite{KnollPython21} is recommended (in German only).
+Please refer to the \href{http://cs231n.github.io/python-numpy-tutorial/#python-containers}{Python List-Dictionary-Tuple tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#python-containers}} and the \href{http://cs231n.github.io/python-numpy-tutorial/#numpy}{NumPy Array tutorial}\footnote{\texttt{http://cs231n.github.io/python-numpy-tutorial/\#numpy}} if you are not familiar with the handling of containers and arrays in Python. If you are completely new to Python consult the very basic introduction on \href{https://www.tutorialspoint.com/python/index.htm}{tutorialspoint}\footnote{\texttt{https://www.tutorialspoint.com/python/index.htm}}. Additionally, the book \cite{KnollPython21} is recommended (in German only).
 
 
 \section{Kinematic model of a vehicle}
@@ -184,11 +185,11 @@ Now, the \gls{ivp} \eqref{eq:syseq} can be expressed in the general form $\dot{\
 \begin{align} \label{eq:odesys}
 \underbrace{\begin{pmatrix} \dot{x}_1(t) \\ \dot{x}_2(t) \\ \dot{x}_3(t) \end{pmatrix}}_{\dot{\x}(t)} = \underbrace{\begin{pmatrix}  u_1(t) \cos(x_3(t)) \\ u_1(t) \sin(x_3(t)) \\ \frac{1}{l}u_1(t) \tan(u_2(t)) \end{pmatrix}}_{\f(\x(t),\uu(t))} \qquad \x(0) = \xZero.
 \end{align}
-Usually, this explicit formulation of the \gls{ivp} is the basis for implementing a system simulation by numerical integration. In the following a simulation using \py is setup which shows the dynamic behavior of the vehicle when driving with a continuously decreasing velocity under a constant steering angle. Of course, in this simple case, the result is known in advance: The vehicle will drive on a circle until it stops for $v = 0$. In the following the \py-script for simulating the system will be derived step by step.
+Usually, this explicit formulation of the \gls{ivp} is the basis for implementing a system simulation by numerical integration. In the following a simulation using Python is set up which shows the dynamic behavior of the vehicle when driving with a continuously decreasing velocity under a constant steering angle. Of course, in this simple case, the result is known in advance: The vehicle will drive on a circle until it stops for $v = 0$. In the following the Python-script for simulating the system will be derived step by step.
 
 
 \section{Libraries and Packages}
-Neither the numerical solution of the \gls{ivp} \eqref{eq:syseq} nor the presentation of the results can be done comfortably in pure \py. To overcome this limitation separate packages for array handling, numerical integration, and plotting are provided. Under \py such packages should be imported at the top of the executed script\footnote{It is also possible to import them elsewhere in the code but following the official style guide PEP8 ``imports are always put at the top of the file, just after any comments and docstrings, and before globals and constants''.}.
+Neither the numerical solution of the \gls{ivp} \eqref{eq:syseq} nor the presentation of the results can be done comfortably in pure Python. To overcome this limitation separate packages for array handling, numerical integration, and plotting are provided. Under Python such packages should be imported at the top of the executed script\footnote{It is also possible to import them elsewhere in the code but following the official style guide PEP8 ``imports are always put at the top of the file, just after any comments and docstrings, and before globals and constants''.}.
 
 The most relevant packages for the simulation of control systems are
 
@@ -198,33 +199,35 @@ The most relevant packages for the simulation of control systems are
 \item \href{https://matplotlib.org/}{\mpl} for plotting.
 \end{itemize}
 
-It is good practice to connect the imported packages with a namespace so it can be easily seen in the code which function comes from where. For example, in case of \numpy the following statement imports the package \numpy and ensures that every function from \numpy is addressed by the prefix \code{np.}:
+It is good practice to connect the imported packages with a namespace, so it can be easily seen in the code which function comes from where. For example, in case of \numpy the following statement imports the package \numpy and ensures that every function from \numpy is addressed by the prefix \code{np.}:
 \luainputlistingline{../sim/01_car_example_plotting.py}{import numpy}
 For frequently used functions like \code{cos(...)}, \code{sin(...)}, and \code{tan(...)} it is annoying to prefix them like \code{np.cos(...)} each time. To avoid this one can directly import them as 
 \luainputlistingline{../sim/01_car_example_plotting.py}{from numpy}
 To solve the \gls{ivp} \eqref{eq:ss_system} the library \scipy with its sub-package \emph{integrate} offers different solvers:
 \luainputlistingline{../sim/01_car_example_plotting.py}{import scipy.integrate}
-For plotting the output of the simulation results the library \mpl with its sub-package \emph{pyplot} introduces a user experience similar to \emph{MATLAB} into \py:
+For plotting the output of the simulation results the library \mpl with its sub-package \emph{pyplot} introduces a user experience similar to \emph{MATLAB} into Python:
 \luainputlistingline{../sim/01_car_example_plotting.py}{import matplotlib.pyplot}
 
 
 \section{Storing parameters}
-In simulations usually a lot of parameters describing the system or the simulation setup have to be handled. It is a good idea to store these parameters as attributes in a structure, so it is not necessary to deal with several individual variables holding the values of the parameters. In \py, such a structure can be a so-called dataclass class, a \py class with the decorator \code{@dataclass}. Dataclasses are available after putting
+In simulations usually a lot of parameters describing the system or the simulation setup have to be handled. It is a good idea to store these parameters as attributes in a structure, so it is not necessary to deal with several individual variables holding the values of the parameters. In Python, such a structure can be a so-called dataclass class, a Python class with the decorator \code{@dataclass}. Data classes are available after putting
 \luainputlistingline{../sim/01_car_example_plotting.py}{from dataclasses}
 at the beginning of the file. Then the structures holding the required data can be defined as follows (with type annotations for the members):
 \luainputlisting{../sim/01_car_example_plotting.py}{ParaClass}
-Similarily this can be done with the simulation parameters:
+Similarly this can be done with the simulation parameters:
 \luainputlisting{../sim/01_car_example_plotting.py}{SimuPara}
 
-Alternatively, one could use the datatype \emph{dictionary}. However, the resulting keyword notation (e.g., \code{Para["l"]} instead of \code{Para.l}) in the code using the parameters is quite annoying.
+Alternatively, one could use the datatype \emph{dictionary}. However, the resulting keyword notation (e.g., \code{Para["l"]} instead of \code{Para.l}) in the code using the parameters is quite annoying. Furthermore, an IDE providing static code analysis or IntelliSense features might warn you about missing attributes if you use data classes.
 
 
 \section{Simulation with \scipy's integrate package} \label{sec:simulation}
 
 \subsection{Implementation of the model} \label{sec:implementation-model}
-In order to simulate the \gls{ivp} \eqref{eq:odesys} using the numerical integrators offered by \scipy's integrate package a function returning the right hand side of \eqref{eq:odesys} evaluated for given values of $\x$, $\uu$ and the parameters has to implemented:
+In order to simulate the \gls{ivp} \eqref{eq:odesys} using the numerical integrators offered by \scipy's integrate package a function returning the right-hand side of \eqref{eq:odesys} evaluated for given values of $\x$, $\uu$ and the parameters has to implemented:
 \luainputlisting{../sim/01_car_example_plotting.py}{OdeFunDef}
-The \code{ode} functions calls the control law function \code{control} calculating values for $v$ and $\phi$ depending on the state $\x$ and the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for example a feedback law $\uu=k(\x)$, can be implemented.
+Note that we added a type annotation here for the parameter argument \code{p}. This is not necessary for the code to execute. It just tells the static code analysis/ IntelliSense mechanism of your IDE which type the argument has, so it can correctly identify any errors in the code. This approach is recommended in order to speed up code developing and to avoid errors. You need to import the \href{https://docs.python.org/3/library/typing.html}{typing package} for this to work:
+\luainputlistingline{../sim/01_car_example_plotting.py}{from typing}
+The \code{ode} functions calls the control law function \code{control} calculating values for $v$ and $\phi$ depending on the time $t$. As a first heuristic approach, the vehicle is driven with a constant steering angle while continuously reducing the speed from \SI{0.5}{\meter\per\second} to zero. Later, an arbitrary function, for example a feedback law $\uu=k(\x)$, can be implemented.
 \luainputlisting{../sim/01_car_example_plotting.py}{ControlFunDef}
 It is important that the function needs to handle also time arrays as input in order to calculate the control for a bunch of values at once (not during the numerical integration but later for analysis purposes). That's why \numpy's array capable \href{https://docs.scipy.org/doc/numpy/reference/generated/numpy.maximum.html}{maximum function} is used here with appropriately adjusted shape of \code{u2}.
 
@@ -232,12 +235,12 @@ Furthermore, attention has to be paid how the two functions above are documented
 
 
 \subsection{Solution of the initial value problem using \scipy}
-Having implemented the system dynamics the numerical integration of system \eqref{eq:odesys} can be performed. At first, a vector \code{tt} specifying the time values at which one would like to obtain the computed values of $\x$ has to be defined. Then the initial vector $\xZero$ is defined and the  \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html}{solve\_ivp} function of the \scipy \emph{integrate} package is called to perform the simulation.  The function \code{solve_ivp} takes a function of the type \code{func(t, x)} calculating the value of the right hand side of \eqref{eq:odesys}. Further parameters are not allowed. In order to be able to use the previously defined ode-function \code{ode(t, x, p)} which additionally takes the parameter structure \code{p}, a so-called \emph{lambda-function} is used. The solver is called as follows:
+Having implemented the system dynamics the numerical integration of system \eqref{eq:odesys} can be performed. At first, a vector \code{tt} specifying the time values at which one would like to obtain the computed values of $\x$ has to be defined. Then the initial vector $\xZero$ is defined and the  \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html}{solve\_ivp} function of the \scipy \emph{integrate} package is called to perform the simulation.  The function \code{solve_ivp} takes a function of the type \code{func(t, x)} calculating the value of the right-hand side of \eqref{eq:odesys}. Further parameters are not allowed. In order to be able to use the previously defined ode-function \code{ode(t, x, p)} which additionally takes the parameter structure \code{p}, a so-called \emph{lambda-function} is used. The solver is called as follows:
 \begin{lstlisting}
 sol = solve_ivp(lambda t, x: ode(x, t, para), 
 (t0, tf), x0, method='RK45',t_eval=tt)
 \end{lstlisting}
-This way the \code{ode} function is encapsulated in an anonymous function, that has just (\code{t}, \code{x}) as arguments (as required by \code{solve_ivp}) but evaluates as \code{ode(t, x, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \code{solve_ivp}: A tuple \code{(t0, tf)} which defines the simulation interval and the initial value \code{x0}. Furthermore, the optional arguments \emph{method} (the integration method used, default: Runge-Kutta 45), and \code{t_eval} (defining the values at which the solution should be sampled) can be passed.
+This way the \code{ode} function is encapsulated in an anonymous function, that has just (\code{t}, \code{x}) as arguments (as required by \code{solve_ivp}) but evaluates as \code{ode(t, x, para)}\footnote{The lambda function corresponds to @ in \emph{MATLAB}}. Additionally, the following arguments are passed to \code{solve_ivp}: A tuple \code{(t0, tf)} which defines the simulation interval and the initial value \code{x0}. Furthermore, the optional arguments' \emph{method} (the integration method used, default: Runge-Kutta 45), and \code{t_eval} (defining the values at which the solution should be sampled) can be passed.
 
 The return value \code{sol} is a \code{Bunch} object. To extract the simulated state trajectory, one has to execute:
 \begin{lstlisting}
@@ -245,7 +248,7 @@ x_traj = sol.y.T # size=len(x)*len(tt) (.T -> transpose)
 \end{lstlisting}
 Finally, the control input values are calculated from the obtained trajectory of $\x$ (the values for $\uu$ in the \code{ode} function cannot be directly saved because the function is also repeatedly called between the specified time steps by the solver).
 \luainputlisting{../sim/01_car_example_plotting.py}{Simulation}
-Note that the interval specified by \code{np.arange} is open on the right hand side. Hence, \code{dt} is added to obtain also values for $\x$ at \code{tf}. 
+Note that the interval specified by \code{np.arange} is open on the right-hand side. Hence, \code{dt} is added to obtain also values for $\x$ at \code{tf}. 
 
 \section{Plotting using \mpl} \label{sec:plot}
 Usually one wants to publish the results with descriptive illustrations. For this purpose the required plotting instructions are encapsulated in a function. This way, one can easily modify parameters of the plot, for example figure width, or if the figure should be saved on the hard drive.
@@ -265,34 +268,41 @@ The result can be found in Figure \ref{fig:state_traj}. Other properties of the 
 
 \section{Animation using \mpl} \label{sec:animation}
 
-\textbf{\py source code file: \texttt{02\_car\_example\_animation.py}}
+\textbf{Source code file: \texttt{02\_car\_example\_animation.py}}
 
 Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visual representation of the system dynamics in order to get a better understanding of what is actually happening. This applies especially for mechanical systems. \mpl provides the sub-package \code{animation}, which can be used for such a purpose. One has to add
 \luainputlistingline{../sim/02_car_example_animation.py}{import matplotlib.animation}
-at the top of the code used in the previous sections. Under Windows it might be necessary to explicitely specify the path to the \emph{FFMPG} library, e.g.:
+at the top of the code used in the previous sections. Under Windows, it might be necessary to explicitly specify the path to the \emph{FFMPG} library, e.g.:
 \begin{lstlisting}
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\path\\to\\ffmpg\\ffmpeg.exe'
 \end{lstlisting}
 \emph{FFMPG} can be downloaded from \url{https://www.ffmpeg.org/download.html}.
 
-All processing steps required for the animation are encapsulated in a function called \code{car_animation()}. At first this functions creates a figure with two empty plots into which the car and the curve of the trajectory dependung on the state $\x$, the control input $\uu$ and the parameters are plotted later:
+The Matplotlib animation package provides the class \code{FuncAnimation}. Objects of this class can be used to realize an animation. Three items need to be handed over to an object of this class when it is instantiated: 
+\begin{enumerate}
+  \item A handle to a figure into which the animation is rendered,
+  \item an animation function responsible for drawing \emph{a single frame} of the animation. It must have the signature \code{def animate(i)} where \code{i} denotes the $i$th frame to be drawn,
+  \item an initialization function which is called before the animation starts. It cleans up the content of the figure.
+\end{enumerate}
+
+In this tutorial all this is encapsulated in a function called \code{car_animation()}. 
 \luainputlisting{../sim/02_car_example_animation.py}{CarAnimFunDef}
-The handles \code{h_x_traj_plot} and \code{h_car} are used later to draw onto the axes.
-
-In the animation a representation of the vehicle has to be subsequently drawn. This is done by plotting lines. All lines that represent the vehicle are defined by points, which depend on the current state $\x$ and the control input $\uu$. Hence, one needs a function inside \code{car_animation()} that maps from $\x$ and $\uu$ to a set of points in the $(Y_1,Y_2)$-plane using geometric relations and passes these to the plot instance \code{car}:
+This function provides the \code{init} and \code{animate} functions required by the \code{FuncAnimation} object as sub-functions. A third sub-function \code{draw_the_car} is used to draw the car in a certain state. This is done by plotting lines. All lines that represent the vehicle are defined by points, which depend on the current state $\x$ and the control input $\uu$. Hence, one needs a function inside \code{car_animation()} that maps from $\x$ and $\uu$ to a set of points in the $(Y_1,Y_2)$-plane using geometric relations and passes these to the plot instance \code{h_car}:
 \luainputlisting{../sim/02_car_example_animation.py}{CarPlotFunDef}
-Note that \code{car_plot} is in the scope of the \code{car_animation} function and, hence, has full acess to the handle \code{h_car} here.
+Note that \code{fraw_the_car} is in the scope of the \code{car_animation} function and, hence, has full access to the handle \code{h_car} defined there.
 
-Two further functions are required: \code{init()} and \code{animate(i)}. They will be called later by \mpl to initialize and perform the animation. The \code{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
+The \code{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
 \luainputlisting{../sim/02_car_example_animation.py}{InitFunDef}
 
-The \emph{animate(i)}-function assigns data to the changing objects, here the car, trajectory plots and the simulation time (as part of the axis):
+The \code{animate(i)}-function assigns data to the changing objects (the car) trajectory plots and the simulation time (as part of the axis):
 \luainputlisting{../sim/02_car_example_animation.py}{AnimateFunDef}
 
-Finally an object of type \code{FuncAnimation} is instancciated. It is provided by the animation subpackage of \mpl. It takes  \code{animate()} and \code{init()} as argumets in the constructor:
-\luainputlisting{../sim/02_car_example_animation.py}{DoAnimate}
+The main function creates a figure with two empty plots into which the car and the curve of the trajectory depending on the state $\x$, the control input $\uu$ and the parameters are plotted later:
+\luainputlisting{../sim/02_car_example_animation.py}{CarAnimFunInit}
+The handles \code{h_x_traj_plot} and \code{h_car} are used to draw onto the axes.
 
-Note that all lines from 138 to 258 belong to the function \code{car_animation}!
+Finally, an object of type \code{FuncAnimation} is instantiated. It takes the \code{animate()} and \code{init()} functions as well as the figure handle as arguments in the constructor:
+\luainputlisting{../sim/02_car_example_animation.py}{DoAnimate}
 
 Now the system can be simulated with animated results.
 \luainputlisting{../sim/02_car_example_animation.py}{DoSimulate}
@@ -306,7 +316,7 @@ Now the system can be simulated with animated results.
         
 
 \section{Time-Events}
-\textbf{\py source code file: \texttt{03\_events.py}}
+\textbf{Source code file: \texttt{03\_events.py}}
 
 It is sometimes necessary to cancel the simulation, for example if the system is unstable and the state gets very large in a short period of time. A function \code{event(t,x)} is defined, that returns 0, if a certain condition is met. This is called a zero-crossing detection. The solver detects the sign switch of \code{event(t,x)} while calculating the solution of the \gls{ode}.
 \begin{lstlisting}
