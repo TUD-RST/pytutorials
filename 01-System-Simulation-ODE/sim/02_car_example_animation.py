@@ -6,7 +6,15 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as mpla
 from dataclasses import dataclass
 from typing import Type
-plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+
+# Set up of ffmpeg for creating the animation
+# Linux:
+# Make sure ffmpeg is installed (e.g.: sudo apt install ffmpeg)
+#
+# Windows:
+# 1. Download & install ffmepg from http://www.ffmpeg.org/download.html
+# 2. Uncomment the following line and set path appropriately
+#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 # Physical parameter
@@ -264,8 +272,7 @@ def car_animation(x, t, p: Type[Para]):
                              interval=(t[1] - t[0]) * 1000,
                              blit=False)
 
-    file_format = 'mp4'
-    ani.save('animation.'+file_format, writer='ffmpeg', fps=1 / (t[1] - t[0]))
+    ani.save('animation.mp4', writer='ffmpeg', fps=1 / (t[1] - t[0]))
 # LISTING_END DoAnimate
 
     plt.show()

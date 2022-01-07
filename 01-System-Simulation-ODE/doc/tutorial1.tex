@@ -1,5 +1,5 @@
 % LTeX: language=en-US
-\documentclass[a4paper,11pt,headinclude=true,headsepline,parskip=half,DIV=12]{scrartcl}
+\documentclass[a4paper,12pt,headinclude=true,headsepline,parskip=half,DIV=12]{scrartcl}
 
 % Process this file with lualatex!
 % > lualatex tutorial1.tex
@@ -272,11 +272,12 @@ The result can be found in Figure \ref{fig:state_traj}. Other properties of the 
 
 Plotting the state trajectory is often sufficient, but sometimes it can be helpful to have a visual representation of the system dynamics in order to get a better understanding of what is actually happening. This applies especially for mechanical systems. \mpl provides the sub-package \code{animation}, which can be used for such a purpose. One has to add
 \luainputlistingline{../sim/02_car_example_animation.py}{import matplotlib.animation}
-at the top of the code used in the previous sections. Under Windows, it might be necessary to explicitly specify the path to the \emph{FFMPG} library, e.g.:
+at the top of the code used in the previous sections. You need to install the ffmpeg library. For Windows it can be downloaded from \url{https://www.ffmpeg.org/download.html}. On Ubuntu based Linux systems it might be installed via \texttt{sudo apt install ffmpeg}.
+
+Under Windows, it might be additionally necessary to explicitly specify the path to the \emph{FFMPG} library, e.g.:
 \begin{lstlisting}
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\path\\to\\ffmpg\\ffmpeg.exe'
 \end{lstlisting}
-\emph{FFMPG} can be downloaded from \url{https://www.ffmpeg.org/download.html}.
 
 The Matplotlib animation package provides the class \code{FuncAnimation}. Objects of this class can be used to realize an animation. Three items need to be handed over to an object of this class when it is instantiated: 
 \begin{enumerate}
@@ -289,7 +290,7 @@ In this tutorial all this is encapsulated in a function called \code{car_animati
 \luainputlisting{../sim/02_car_example_animation.py}{CarAnimFunDef}
 This function provides the \code{init} and \code{animate} functions required by the \code{FuncAnimation} object as sub-functions. A third sub-function \code{draw_the_car} is used to draw the car in a certain state. This is done by plotting lines. All lines that represent the vehicle are defined by points, which depend on the current state $\x$ and the control input $\uu$. Hence, one needs a function inside \code{car_animation()} that maps from $\x$ and $\uu$ to a set of points in the $(Y_1,Y_2)$-plane using geometric relations and passes these to the plot instance \code{h_car}:
 \luainputlisting{../sim/02_car_example_animation.py}{CarPlotFunDef}
-Note that \code{fraw_the_car} is in the scope of the \code{car_animation} function and, hence, has full access to the handle \code{h_car} defined there.
+Note that \code{draw_the_car} is in the scope of the \code{car_animation} function and, hence, has full access to the handle \code{h_car} defined there.
 
 The \code{init()}-function defines which objects change during the animation, in this case the two axes the handles of which are returned:
 \luainputlisting{../sim/02_car_example_animation.py}{InitFunDef}
