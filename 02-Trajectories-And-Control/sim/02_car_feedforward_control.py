@@ -7,7 +7,15 @@ import matplotlib.animation as mpla
 from TrajGen import PolynomialTrajGen
 from dataclasses import dataclass
 from typing import Type, List
-plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
+
+# Set up of ffmpeg for creating the animation
+# Linux:
+# Make sure ffmpeg is installed (e.g.: sudo apt install ffmpeg)
+#
+# Windows:
+# 1. Download & install ffmepg from http://www.ffmpeg.org/download.html
+# 2. Uncomment the following line and set path appropriately
+#plt.rcParams['animation.ffmpeg_path'] = 'C:\\Progs\\ffmpeg\\bin\\ffmpeg.exe'
 
 
 # Physical parameters
